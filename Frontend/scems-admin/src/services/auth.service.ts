@@ -8,7 +8,18 @@ export const authService = {
       password
     } as LoginRequest)
     localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
+    // Store user data directly from response
+    const userData = {
+      id: '', // Not provided by login response
+      fullName: data.fullName,
+      email: data.email,
+      phone: '', // Not provided by login response
+      role: data.role,
+      status: '', // Not provided by login response
+      createdAt: '', // Not provided by login response
+      updatedAt: '' // Not provided by login response
+    }
+    localStorage.setItem('user', JSON.stringify(userData))
     return data
   },
 

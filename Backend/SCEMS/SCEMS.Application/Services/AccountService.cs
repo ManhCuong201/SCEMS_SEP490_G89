@@ -126,6 +126,12 @@ public class AccountService : IAccountService
             return false;
         }
 
+        // Prevent deletion of admin accounts
+        if (account.Role == AccountRole.Admin)
+        {
+            throw new InvalidOperationException("Cannot delete admin accounts");
+        }
+
         _unitOfWork.Accounts.Delete(account);
         await _unitOfWork.SaveChangesAsync();
 

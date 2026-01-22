@@ -65,12 +65,12 @@ export const CreateAccountPage: React.FC = () => {
           <div className="form-group">
             <label className="form-label">Role *</label>
             <select name="role" className="form-select" value={form.role} onChange={handleChange} disabled={loading}>
-              <option>Admin</option>
-              <option>Lecturer</option>
-              <option>Student</option>
-              <option>Technician</option>
-              <option>Manager</option>
-              <option>Principal</option>
+              <option value="Admin">Admin</option>
+              <option value="RoomBookingStaff">Room Booking Staff</option>
+              <option value="AssetStaff">Asset Staff</option>
+              <option value="Security">Security</option>
+              <option value="Lecturer">Lecturer</option>
+              <option value="Student">Student</option>
             </select>
           </div>
 

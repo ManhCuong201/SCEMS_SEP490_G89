@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
       background: `linear-gradient(135deg, var(--color-primary) 0%, #0f2847 100%)`
     }}>
       <div style={{
-        background: 'var(--color-white)',
+        background: 'var(--bg-primary)',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--spacing-xl)',
         width: '100%',

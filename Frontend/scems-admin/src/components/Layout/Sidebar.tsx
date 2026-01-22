@@ -3,12 +3,15 @@ import { Link, useLocation } from 'react-router-dom'
 
 export const Sidebar: React.FC = () => {
   const location = useLocation()
-  const isActive = (path: string) => location.pathname.startsWith(path)
+  const isActive = (path: string) => {
+    if (path === '/admin/dashboard') return location.pathname === path
+    return location.pathname === path || location.pathname.startsWith(path + '/')
+  }
 
   return (
     <aside style={{
       width: '260px',
-      backgroundColor: 'var(--color-white)',
+      backgroundColor: 'var(--bg-primary)',
       borderRight: '1px solid var(--color-border)',
       position: 'sticky',
       top: '64px',
@@ -29,6 +32,7 @@ export const Sidebar: React.FC = () => {
           </p>
           <NavLink href="/admin/accounts" label="👥 Accounts" active={isActive('/admin/accounts')} />
           <NavLink href="/admin/rooms" label="🏢 Rooms" active={isActive('/admin/rooms')} />
+          <NavLink href="/admin/equipment" label="🔧 Equipment" active={isActive('/admin/equipment')} />
           <NavLink href="/admin/equipment-types" label="⚙️ Equipment Types" active={isActive('/admin/equipment-types')} />
         </div>
       </nav>

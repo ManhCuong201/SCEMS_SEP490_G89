@@ -1,32 +1,22 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { accountService } from '../../../services/account.service'
+import { Account } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 
-export const EditAccountPage: React.FC = () => {
+export const AccountDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [account, setAccount] = useState<Account | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    role: 'Student'
-  })
 
   useEffect(() => {
     const load = async () => {
       try {
-        const account = await accountService.getAccountById(id!)
-        setForm({
-          fullName: account.fullName,
-          email: account.email,
-          phone: account.phone,
-          role: account.role
-        })
+        const data = await accountService.getAccountById(id!)
+        setAccount(data)
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load')
       } finally {
@@ -36,67 +26,60 @@ export const EditAccountPage: React.FC = () => {
     load()
   }, [id])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSaving(true)
-
-    try {
-      await accountService.updateAccount(id!, form)
-      navigate('/admin/accounts')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save')
-    } finally {
-      setSaving(false)
+  const handleDelete = async () => {
+    if (confirm('Delete this account?')) {
+      try {
+        await accountService.deleteAccount(id!)
+        navigate('/admin/accounts')
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to delete')
+      }
     }
   }
 
   if (loading) return <Loading fullPage />
+  if (!account) return <Alert type="error" message="Not found" />
 
   return (
     <div className="page-container">
-      <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Edit Account</h1>
+      <div className="card-header" style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <h1>{account.fullName}</h1>
+        <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+          <Link to={`/admin/accounts/${id}/edit`} className="btn btn-primary">Edit</Link>
+          <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+          <button className="btn btn-secondary" onClick={() => navigate('/admin/accounts')}>Back</button>
+        </div>
+      </div>
+
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      <div className="card" style={{ maxWidth: '500px' }}>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input type="text" name="fullName" className="form-input" value={form.fullName} onChange={handleChange} disabled={saving} />
+      <div className="card">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--spacing-lg)' }}>
+          <div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Email</p>
+            <p style={{ fontWeight: 600 }}>{account.email}</p>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input type="email" name="email" className="form-input" value={form.email} onChange={handleChange} disabled={saving} />
+          <div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Phone</p>
+            <p style={{ fontWeight: 600 }}>{account.phone}</p>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Phone</label>
-            <input type="tel" name="phone" className="form-input" value={form.phone} onChange={handleChange} disabled={saving} />
+          <div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Role</p>
+            <p style={{ fontWeight: 600 }}>{account.role}</p>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Role</label>
-            <select name="role" className="form-select" value={form.role} onChange={handleChange} disabled={saving}>
-              <option>Admin</option>
-              <option>Lecturer</option>
-              <option>Student</option>
-              <option>Technician</option>
-              <option>Manager</option>
-              <option>Principal</option>
-            </select>
+          <div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Status</p>
+            <span className={`badge ${account.status === 'Active' ? 'badge-success' : 'badge-danger'}`}>{account.status}</span>
           </div>
-
-          <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/accounts')} disabled={saving}>Cancel</button>
+          <div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Created</p>
+            <p style={{ fontWeight: 600 }}>{new Date(account.createdAt).toLocaleString()}</p>
           </div>
-        </form>
+          <div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Updated</p>
+            <p style={{ fontWeight: 600 }}>{account.updatedAt ? new Date(account.updatedAt).toLocaleString() : 'Never'}</p>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -23,20 +23,21 @@ export const Header: React.FC = () => {
       boxShadow: 'var(--shadow-md)',
       position: 'sticky',
       top: 0,
-      zIndex: 100
+      zIndex: 1000
     }}>
       <h2 style={{ margin: 0 }}>SCEMS Admin</h2>
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => setShowMenu(!showMenu)}
           style={{
-            background: 'rgba(255,255,255,0.2)',
+            background: 'var(--bg-primary)',
             border: 'none',
-            color: 'inherit',
+            color: 'var(--color-primary)',
             padding: 'var(--spacing-sm) var(--spacing-md)',
             borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
-            fontSize: 'var(--font-size-base)'
+            fontSize: 'var(--font-size-base)',
+            fontWeight: 600
           }}
         >
           {user?.fullName || 'User'} ▼
@@ -47,8 +48,8 @@ export const Header: React.FC = () => {
             top: '100%',
             right: 0,
             marginTop: 'var(--spacing-sm)',
-            backgroundColor: 'var(--color-white)',
-            color: 'var(--color-text)',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
             minWidth: '200px',

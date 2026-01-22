@@ -16,9 +16,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<Account | null>(authService.getUser())
 
   const login = async (email: string, password: string) => {
-    const response = await authService.login(email, password)
+    await authService.login(email, password)
     setIsAuthenticated(true)
-    setUser(response.user)
+    setUser(authService.getUser())
   }
 
   const logout = () => {

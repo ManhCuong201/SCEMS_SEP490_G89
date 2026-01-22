@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Account;
 using SCEMS.Application.Services.Interfaces;
+using SCEMS.Api.Requests;
 
 namespace SCEMS.Api.Controllers;
 
@@ -82,9 +83,4 @@ public class AccountsController : ControllerBase
             return NotFound(new { message = "Account not found" });
         return Ok(new { message = "Status updated successfully" });
     }
-}
-
-public class UpdateStatusRequest
-{
-    public int Status { get; set; }
 }

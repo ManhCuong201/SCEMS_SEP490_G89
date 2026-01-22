@@ -1,4 +1,3 @@
-using AutoMapper;
 using SCEMS.Application.Services;
 using SCEMS.Application.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,11 +8,16 @@ public static class ApplicationServiceRegistration
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddAutoMapper(typeof(ApplicationServiceRegistration).Assembly);
+        // Register AutoMapper profiles manually
+        services.AddAutoMapper(config =>
+        {
+            config.AddProfile(new SCEMS.Application.Mapping.MappingProfile());
+        });
         
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IEquipmentTypeService, EquipmentTypeService>();
+        services.AddScoped<IEquipmentService, EquipmentService>();
 
         return services;
     }

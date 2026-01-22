@@ -75,7 +75,7 @@ RoomManagement/
 ### Backend Setup
 
 ```bash
-cd Backend/RoomManagementAPI
+cd Backend/SCEMS
 dotnet restore
 dotnet run
 ```

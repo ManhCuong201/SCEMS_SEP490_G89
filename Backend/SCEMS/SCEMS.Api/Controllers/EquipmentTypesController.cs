@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.EquipmentType;
 using SCEMS.Application.Services.Interfaces;
+using SCEMS.Api.Requests;
 
 namespace SCEMS.Api.Controllers;
 
 [ApiController]
-[Route("api/admin/[controller]")]
+[Route("api/admin/equipment-types")]
 [Authorize(Roles = "Admin")]
 public class EquipmentTypesController : ControllerBase
 {
@@ -82,9 +83,4 @@ public class EquipmentTypesController : ControllerBase
             return NotFound(new { message = "Equipment type not found" });
         return Ok(new { message = "Status updated successfully" });
     }
-}
-
-public class UpdateStatusRequest
-{
-    public int Status { get; set; }
 }

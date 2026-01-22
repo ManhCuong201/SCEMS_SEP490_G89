@@ -10,7 +10,7 @@ public class UnitOfWork : IUnitOfWork
     private IAccountRepository? _accountRepository;
     private IRoomRepository? _roomRepository;
     private IEquipmentTypeRepository? _equipmentTypeRepository;
-    private IGenericRepository<Equipment>? _equipmentRepository;
+    private IEquipmentRepository? _equipmentRepository;
     private IGenericRepository<Booking>? _bookingRepository;
     private IGenericRepository<IssueReport>? _issueReportRepository;
 
@@ -34,9 +34,9 @@ public class UnitOfWork : IUnitOfWork
         get { return _equipmentTypeRepository ??= new EquipmentTypeRepository(_context); }
     }
 
-    public IGenericRepository<Equipment> Equipment
+    public IEquipmentRepository Equipment
     {
-        get { return _equipmentRepository ??= new GenericRepository<Equipment>(_context); }
+        get { return _equipmentRepository ??= new EquipmentRepository(_context); }
     }
 
     public IGenericRepository<Booking> Bookings

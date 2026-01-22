@@ -39,7 +39,7 @@ export const DashboardPage: React.FC = () => {
     <Link
       to={href}
       style={{
-        backgroundColor: 'var(--color-white)',
+        backgroundColor: 'var(--bg-primary)',
         border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--spacing-lg)',

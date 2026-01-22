@@ -13,18 +13,26 @@
   --color-primary: #1f4788;
   --color-primary-dark: #163a60;
   --color-primary-light: #3d5ea6;
-  
+
   --color-success: #10b981;
   --color-success-light: #6ee7b7;
-  
+
   --color-danger: #ef4444;
   --color-danger-light: #fca5a5;
-  
+
   --color-warning: #f59e0b;
   --color-warning-light: #fcd34d;
-  
+
   --color-info: #3b82f6;
   --color-info-light: #93c5fd;
+
+  /* Base Colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border-color);
+  --color-background: var(--bg-secondary);
 
   /* Spacing Scale */
   --spacing-xs: 4px;

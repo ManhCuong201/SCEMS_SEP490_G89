@@ -5,7 +5,10 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string
-  user: Account
+  expiresIn: number
+  role: string
+  email: string
+  fullName: string
 }
 
 export interface Account {

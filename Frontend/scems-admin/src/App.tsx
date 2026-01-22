@@ -18,6 +18,9 @@ import { EquipmentTypesListPage } from './pages/Admin/EquipmentTypes/EquipmentTy
 import { CreateEquipmentTypePage } from './pages/Admin/EquipmentTypes/CreateEquipmentTypePage'
 import { EditEquipmentTypePage } from './pages/Admin/EquipmentTypes/EditEquipmentTypePage'
 import { EquipmentTypeDetailPage } from './pages/Admin/EquipmentTypes/EquipmentTypeDetailPage'
+import { EquipmentListPage } from './pages/Admin/Equipment/EquipmentListPage'
+import { CreateEquipmentPage } from './pages/Admin/Equipment/CreateEquipmentPage'
+import { EditEquipmentPage } from './pages/Admin/Equipment/EditEquipmentPage'
 
 const App: React.FC = () => {
   return (
@@ -42,6 +45,9 @@ const App: React.FC = () => {
                   <Route path="equipment-types/create" element={<CreateEquipmentTypePage />} />
                   <Route path="equipment-types/:id" element={<EquipmentTypeDetailPage />} />
                   <Route path="equipment-types/:id/edit" element={<EditEquipmentTypePage />} />
+                  <Route path="equipment" element={<EquipmentListPage />} />
+                  <Route path="equipment/create" element={<CreateEquipmentPage />} />
+                  <Route path="equipment/:id/edit" element={<EditEquipmentPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </AdminLayout>
