@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+.DS_Store
+appsettings.local.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+*.log
+Migrations/

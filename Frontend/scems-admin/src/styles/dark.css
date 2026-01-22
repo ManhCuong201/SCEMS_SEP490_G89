@@ -1,0 +1,32 @@
+/* Dark Mode Theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Semantic Colors - Dark Mode */
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-tertiary: #374151;
+    --border-color: #4b5563;
+    --border-light: #374151;
+  }
+}
+
+/* Explicit Dark Mode Class */
+html.dark-mode {
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  --border-color: #4b5563;
+  --border-light: #374151;
+  color-scheme: dark;
+}
+
+html.dark-mode body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
