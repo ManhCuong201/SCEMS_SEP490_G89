@@ -33,12 +33,18 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid email or password" });
         }
 
+        if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)
+        {
+             return Unauthorized(new { message = "Account is blocked" });
+        }
+
         var token = _jwtService.GenerateToken(account);
 
         return Ok(new
         {
             token,
             expiresIn = 900,
+            id = account.Id,
             role = account.Role.ToString(),
             email = account.Email,
             fullName = account.FullName

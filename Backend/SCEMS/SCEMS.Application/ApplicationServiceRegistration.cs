@@ -18,6 +18,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IEquipmentTypeService, EquipmentTypeService>();
         services.AddScoped<IEquipmentService, EquipmentService>();
+        services.AddScoped<IBookingService, BookingService>();
 
         return services;
     }

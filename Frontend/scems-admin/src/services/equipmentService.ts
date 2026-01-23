@@ -2,13 +2,14 @@ import api from './api';
 import { CreateEquipmentDto, UpdateEquipmentDto, PaginatedEquipment, Equipment, EquipmentStatus } from '../types/equipment';
 
 export const equipmentService = {
-    getAll: async (pageIndex = 1, pageSize = 10, search?: string, sortBy?: string): Promise<PaginatedEquipment> => {
+    getAll: async (pageIndex = 1, pageSize = 10, search?: string, sortBy?: string, status?: string): Promise<PaginatedEquipment> => {
         const params = new URLSearchParams({
             pageIndex: pageIndex.toString(),
             pageSize: pageSize.toString(),
         });
         if (search) params.append('search', search);
         if (sortBy) params.append('sortBy', sortBy);
+        if (status) params.append('status', status);
 
         const response = await api.get<PaginatedEquipment>(`/admin/equipment?${params.toString()}`);
         return response.data;
@@ -44,5 +45,16 @@ export const equipmentService = {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return data;
+    },
+
+    downloadTemplate: async (): Promise<void> => {
+        const response = await api.get('/admin/equipment/template', { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'EquipmentTemplate.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     }
 };

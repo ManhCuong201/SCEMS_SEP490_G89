@@ -9,7 +9,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class RoomsController : ControllerBase
 {
     private readonly IRoomService _roomService;
@@ -37,6 +37,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto dto)
     {
         try
@@ -51,6 +52,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateRoom(Guid id, [FromBody] UpdateRoomDto dto)
     {
         try
@@ -67,6 +69,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteRoom(Guid id)
     {
         var result = await _roomService.DeleteRoomAsync(id);
@@ -76,6 +79,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request)
     {
         var result = await _roomService.UpdateStatusAsync(id, request.Status);
@@ -83,4 +87,40 @@ public class RoomsController : ControllerBase
             return NotFound(new { message = "Room not found" });
         return Ok(new { message = "Status updated successfully" });
     }
+
+    [HttpPost("import")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ImportRooms([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { message = "No file uploaded" });
+
+        try
+        {
+            using var stream = file.OpenReadStream();
+            var count = await _roomService.ImportRoomAsync(stream);
+            return Ok(new { count });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Failed to import file: " + ex.Message });
+        }
+    }
+
+    [HttpGet("template")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetTemplate()
+    {
+        try
+        {
+            var stream = await _roomService.GetTemplateStreamAsync();
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "RoomTemplate.xlsx");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Failed to generate template: " + ex.Message });
+        }
+    }
 }
+
+

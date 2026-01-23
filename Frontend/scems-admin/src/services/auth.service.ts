@@ -10,7 +10,7 @@ export const authService = {
     localStorage.setItem('token', data.token)
     // Store user data directly from response
     const userData = {
-      id: '', // Not provided by login response
+      id: data.id,
       fullName: data.fullName,
       email: data.email,
       phone: '', // Not provided by login response

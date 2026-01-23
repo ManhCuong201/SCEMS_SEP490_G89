@@ -1,9 +1,12 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Room;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Entities;
+using SCEMS.Domain.Enums;
 using SCEMS.Infrastructure.Repositories;
+using ClosedXML.Excel;
 
 namespace SCEMS.Application.Services;
 
@@ -20,7 +23,7 @@ public class RoomService : IRoomService
 
     public async Task<PaginatedRoomsDto> GetRoomsAsync(PaginationParams @params)
     {
-        var query = _unitOfWork.Rooms.GetAll();
+        IQueryable<Room> query = _unitOfWork.Rooms.GetAll().Include(r => r.Bookings).Include(r => r.Equipment);
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
@@ -58,6 +61,7 @@ public class RoomService : IRoomService
             Capacity = r.Capacity,
             Status = r.Status,
             EquipmentCount = r.Equipment.Count,
+            PendingRequestsCount = r.Bookings.Count(b => b.Status == BookingStatus.Pending),
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         }).ToList();
@@ -73,7 +77,11 @@ public class RoomService : IRoomService
 
     public async Task<RoomResponseDto?> GetRoomByIdAsync(Guid id)
     {
-        var room = await _unitOfWork.Rooms.GetByIdAsync(id);
+        var room = await _unitOfWork.Rooms.GetAll()
+            .Include(r => r.Bookings)
+            .Include(r => r.Equipment)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
         if (room == null)
         {
             return null;
@@ -184,5 +192,87 @@ public class RoomService : IRoomService
         await _unitOfWork.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<int> ImportRoomAsync(Stream fileStream)
+    {
+        using var workbook = new XLWorkbook(fileStream);
+        var worksheet = workbook.Worksheet(1);
+        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header
+
+        var importedCount = 0;
+
+        foreach (var row in rows)
+        {
+            try
+            {
+                var code = row.Cell(1).GetValue<string>();
+                var name = row.Cell(2).GetValue<string>();
+                var capacityStr = row.Cell(3).GetValue<string>();
+                var statusStr = row.Cell(4).GetValue<string>();
+
+                if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+                    continue;
+
+                // Check duplicate
+                var existing = await _unitOfWork.Rooms.GetByRoomCodeAsync(code);
+                if (existing != null) continue;
+
+                int capacity = 30;
+                if (!int.TryParse(capacityStr, out capacity)) capacity = 30;
+
+                RoomStatus status = RoomStatus.Available;
+                if (Enum.TryParse<RoomStatus>(statusStr, true, out var parsedStatus))
+                    status = parsedStatus;
+
+                var room = new Room
+                {
+                    RoomCode = code,
+                    RoomName = name,
+                    Capacity = capacity,
+                    Status = status
+                };
+
+                await _unitOfWork.Rooms.AddAsync(room);
+                importedCount++;
+            }
+            catch
+            {
+                continue;
+            }
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        return importedCount;
+    }
+
+    public async Task<Stream> GetTemplateStreamAsync()
+    {
+        var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Room Template");
+
+        // Headers
+        worksheet.Cell(1, 1).Value = "Room Code";
+        worksheet.Cell(1, 2).Value = "Room Name";
+        worksheet.Cell(1, 3).Value = "Capacity";
+        worksheet.Cell(1, 4).Value = "Status";
+
+        // Style
+        var header = worksheet.Range("A1:D1");
+        header.Style.Font.Bold = true;
+        header.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+        // Sample
+        worksheet.Cell(2, 1).Value = "A101";
+        worksheet.Cell(2, 2).Value = "Lab Room 1";
+        worksheet.Cell(2, 3).Value = 40;
+        worksheet.Cell(2, 4).Value = "Available";
+
+        worksheet.Columns().AdjustToContents();
+
+        var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+        return stream;
     }
 }

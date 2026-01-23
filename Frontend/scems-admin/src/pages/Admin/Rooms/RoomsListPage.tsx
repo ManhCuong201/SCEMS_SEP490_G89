@@ -70,7 +70,27 @@ export const RoomsListPage: React.FC = () => {
     <div className="page-container">
       <div className="card-header" style={{ marginBottom: 'var(--spacing-lg)' }}>
         <h1>Rooms</h1>
-        <Link to="/admin/rooms/create" className="btn btn-primary">+ New</Link>
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+          <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+            Import Excel
+            <input type="file" accept=".xlsx" style={{ display: 'none' }} onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              try {
+                const { count } = await roomService.import(file)
+                setSuccess(`Imported ${count} rooms`)
+                loadRooms()
+              } catch (err: any) {
+                setError(err.response?.data?.message || 'Import failed')
+              }
+              e.target.value = ''
+            }} />
+          </label>
+          <button className="btn btn-secondary" onClick={() => roomService.downloadTemplate()}>
+            Download Template
+          </button>
+          <Link to="/admin/rooms/create" className="btn btn-primary">+ New</Link>
+        </div>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -102,15 +122,23 @@ export const RoomsListPage: React.FC = () => {
                       <td>{r.capacity}</td>
                       <td>{r.equipmentCount}</td>
                       <td>
-                        <select value={r.status} onChange={(e) => handleStatusChange(r.id, e.target.value)} style={{ padding: '4px 8px' }}>
-                          <option value="Available">Available</option>
-                          <option value="Hidden">Hidden</option>
-                          <option value="Disabled">Disabled</option>
-                        </select>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <select value={r.status} onChange={(e) => handleStatusChange(r.id, e.target.value)} style={{ padding: '4px 8px' }}>
+                            <option value="Available">Available</option>
+                            <option value="Hidden">Hidden</option>
+                            <option value="Disabled">Disabled</option>
+                          </select>
+                          {r.pendingRequestsCount > 0 && (
+                            <span className="badge" style={{ backgroundColor: 'var(--color-warning)', color: '#fff' }}>
+                              {r.pendingRequestsCount} Waiting
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <td>{new Date(r.createdAt).toLocaleDateString()}</td>
                       <td>
                         <div style={{ display: 'flex', gap: '4px' }}>
+                          <Link to={`/admin/rooms/${r.id}/book`} className="btn btn-sm btn-primary">Book</Link>
                           <Link to={`/admin/rooms/${r.id}`} className="btn btn-sm btn-secondary">View</Link>
                           <Link to={`/admin/rooms/${r.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
                           <button className="btn btn-sm btn-danger" onClick={() => handleDelete(r.id)}>Del</button>

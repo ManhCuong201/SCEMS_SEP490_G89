@@ -18,7 +18,20 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login(email, password)
-      navigate('/admin/dashboard')
+      
+      // Get user from local storage or decode token to check role
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        if (user.role === 'Admin') {
+            navigate('/admin/dashboard')
+        } else {
+            navigate('/rooms')
+        }
+      } else {
+          // Fallback
+          navigate('/rooms')
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed')
     } finally {

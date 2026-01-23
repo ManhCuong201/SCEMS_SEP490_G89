@@ -101,6 +101,11 @@ public class AccountService : IAccountService
             return null;
         }
 
+        if (account.Email == "admin@scems.com")
+        {
+            throw new InvalidOperationException("Cannot modify system account");
+        }
+
         var existingEmail = await _unitOfWork.Accounts.GetByEmailAsync(dto.Email);
         if (existingEmail != null && existingEmail.Id != id)
         {
@@ -126,10 +131,10 @@ public class AccountService : IAccountService
             return false;
         }
 
-        // Prevent deletion of admin accounts
-        if (account.Role == AccountRole.Admin)
+        // Prevent deletion of system account
+        if (account.Email == "admin@scems.com")
         {
-            throw new InvalidOperationException("Cannot delete admin accounts");
+            throw new InvalidOperationException("Cannot delete system account");
         }
 
         _unitOfWork.Accounts.Delete(account);
@@ -144,6 +149,11 @@ public class AccountService : IAccountService
         if (account == null)
         {
             return false;
+        }
+
+        if (account.Email == "admin@scems.com")
+        {
+             throw new InvalidOperationException("Cannot change status of system account");
         }
 
         account.Status = (AccountStatus)status;

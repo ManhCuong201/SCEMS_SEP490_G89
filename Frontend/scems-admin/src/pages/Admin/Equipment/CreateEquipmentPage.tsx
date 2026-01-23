@@ -11,6 +11,7 @@ export const CreateEquipmentPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
+        name: '',
         equipmentTypeId: '',
         roomId: '',
         status: EquipmentStatus.Working
@@ -39,7 +40,7 @@ export const CreateEquipmentPage: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: name === 'status' ? parseInt(value) : value }));
+        setForm(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -65,6 +66,11 @@ export const CreateEquipmentPage: React.FC = () => {
             <div className="card" style={{ maxWidth: '500px' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
+                        <label className="form-label">Name (e.g. Serial No.)</label>
+                        <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} placeholder="Optional identifier" disabled={loading} />
+                    </div>
+
+                    <div className="form-group">
                         <label className="form-label">Equipment Type *</label>
                         <select name="equipmentTypeId" className="form-select" value={form.equipmentTypeId} onChange={handleChange} required disabled={loading}>
                             <option value="" disabled>Select Type</option>
@@ -84,8 +90,8 @@ export const CreateEquipmentPage: React.FC = () => {
                         <label className="form-label">Status</label>
                         <select name="status" className="form-select" value={form.status} onChange={handleChange} disabled={loading}>
                             <option value={EquipmentStatus.Working}>Working</option>
-                            <option value={EquipmentStatus.Maintenance}>Maintenance</option>
-                            <option value={EquipmentStatus.Broken}>Broken</option>
+                            <option value={EquipmentStatus.UnderMaintenance}>Maintenance</option>
+                            <option value={EquipmentStatus.Faulty}>Broken</option>
                             <option value={EquipmentStatus.Retired}>Retired</option>
                         </select>
                     </div>

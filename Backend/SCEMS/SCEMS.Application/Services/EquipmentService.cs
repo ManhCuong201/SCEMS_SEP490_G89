@@ -24,12 +24,19 @@ public class EquipmentService : IEquipmentService
 
     public async Task<PaginatedEquipmentDto> GetEquipmentAsync(PaginationParams @params)
     {
-        var query = _unitOfWork.Equipment.GetAll();
+        IQueryable<Equipment> query = _unitOfWork.Equipment.GetAll()
+            .Include(e => e.EquipmentType)
+            .Include(e => e.Room);
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
             var search = @params.Search.ToLowerInvariant();
             query = query.Where(e => e.EquipmentType.Name.ToLower().Contains(search) || e.Room.RoomName.ToLower().Contains(search));
+        }
+
+        if (!string.IsNullOrWhiteSpace(@params.Status) && Enum.TryParse<EquipmentStatus>(@params.Status, true, out var statusEnum))
+        {
+            query = query.Where(e => e.Status == statusEnum);
         }
 
         if (!string.IsNullOrWhiteSpace(@params.SortBy))
@@ -75,7 +82,10 @@ public class EquipmentService : IEquipmentService
 
     public async Task<EquipmentResponseDto?> GetEquipmentByIdAsync(Guid id)
     {
-        var equipment = await _unitOfWork.Equipment.GetByIdAsync(id);
+        var equipment = await _unitOfWork.Equipment.GetAll()
+            .Include(e => e.EquipmentType)
+            .Include(e => e.Room)
+            .FirstOrDefaultAsync(e => e.Id == id);
         return equipment != null ? _mapper.Map<EquipmentResponseDto>(equipment) : null;
     }
 
@@ -95,6 +105,7 @@ public class EquipmentService : IEquipmentService
         var equipment = await _unitOfWork.Equipment.GetByIdAsync(id);
         if (equipment == null) return null;
 
+        if (!string.IsNullOrEmpty(dto.Name)) equipment.Name = dto.Name;
         if (dto.RoomId.HasValue) equipment.RoomId = dto.RoomId.Value;
         if (dto.Status.HasValue) equipment.Status = dto.Status.Value;
 
@@ -161,6 +172,8 @@ public class EquipmentService : IEquipmentService
 
                 var equipment = new Equipment
                 {
+                    Name = name,
+                    Description = description,
                     EquipmentTypeId = type.Id,
                     RoomId = room.Id,
                     Status = status
@@ -180,4 +193,40 @@ public class EquipmentService : IEquipmentService
     }
 
 
+    public async Task<Stream> GetTemplateStreamAsync()
+    {
+        var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Equipment Template");
+
+        // Headers
+        worksheet.Cell(1, 1).Value = "Name";
+        worksheet.Cell(1, 2).Value = "Description";
+        worksheet.Cell(1, 3).Value = "Type Name";
+        worksheet.Cell(1, 4).Value = "Room Code";
+        worksheet.Cell(1, 5).Value = "Status";
+
+        // Style
+        var header = worksheet.Range("A1:E1");
+        header.Style.Font.Bold = true;
+        header.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+        // Sample Data / Comments
+        worksheet.Cell(2, 1).Value = "Dell Monitor";
+        worksheet.Cell(2, 2).Value = "24 inch monitor";
+        worksheet.Cell(2, 3).Value = "Monitor";
+        worksheet.Cell(2, 4).Value = "A101";
+        worksheet.Cell(2, 5).Value = "Working";
+        
+        // Add comments to help user
+        worksheet.Cell(1, 3).GetComment().AddText("Must match an existing Equipment Type Name");
+        worksheet.Cell(1, 4).GetComment().AddText("Must match an existing Room Code");
+        worksheet.Cell(1, 5).GetComment().AddText("Working, Maintenance, Broken, or Retired");
+
+        worksheet.Columns().AdjustToContents();
+
+        var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+        return stream;
+    }
 }

@@ -11,4 +11,6 @@ public interface IRoomService
     Task<RoomResponseDto?> UpdateRoomAsync(Guid id, UpdateRoomDto dto);
     Task<bool> DeleteRoomAsync(Guid id);
     Task<bool> UpdateStatusAsync(Guid id, int status);
+    Task<int> ImportRoomAsync(Stream stream);
+    Task<Stream> GetTemplateStreamAsync();
 }

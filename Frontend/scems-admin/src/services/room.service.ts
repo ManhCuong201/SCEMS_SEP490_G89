@@ -30,5 +30,25 @@ export const roomService = {
 
   async updateStatus(id: string, status: number): Promise<void> {
     await api.patch(`/admin/rooms/${id}/status`, { status })
+  },
+
+  async import(file: File): Promise<{ count: number }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const { data } = await api.post<{ count: number }>('/admin/rooms/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return data
+  },
+
+  async downloadTemplate(): Promise<void> {
+    const response = await api.get('/admin/rooms/template', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'RoomTemplate.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
   }
 }

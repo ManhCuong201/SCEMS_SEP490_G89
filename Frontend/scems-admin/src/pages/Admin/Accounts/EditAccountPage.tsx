@@ -21,6 +21,11 @@ export const EditAccountPage: React.FC = () => {
     const load = async () => {
       try {
         const account = await accountService.getAccountById(id!)
+        if (account.email === 'admin@scems.com') {
+          setError('System account cannot be modified')
+          return
+        }
+
         setForm({
           fullName: account.fullName,
           email: account.email,

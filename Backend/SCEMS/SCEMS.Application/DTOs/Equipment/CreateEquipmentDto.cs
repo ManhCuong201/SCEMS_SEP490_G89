@@ -5,6 +5,8 @@ namespace SCEMS.Application.DTOs.Equipment;
 
 public class CreateEquipmentDto
 {
+    public string Name { get; set; } = string.Empty;
+
     [Required]
     public Guid EquipmentTypeId { get; set; }
 

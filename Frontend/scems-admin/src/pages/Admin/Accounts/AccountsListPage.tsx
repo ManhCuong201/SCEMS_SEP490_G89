@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { accountService } from '../../../services/account.service'
-import { Account } from '../../../types/api'
+import { Account, AccountStatus } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Pagination } from '../../../components/Common/Pagination'
@@ -57,7 +57,7 @@ export const AccountsListPage: React.FC = () => {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      const statusValue = newStatus === 'Active' ? 0 : 1
+      const statusValue = newStatus === AccountStatus.Active ? 0 : 1
       await accountService.updateStatus(id, statusValue)
       setSuccess('Status updated')
       loadAccounts()
@@ -81,8 +81,8 @@ export const AccountsListPage: React.FC = () => {
           <SearchBar placeholder="Search..." onSearch={setSearch} />
           <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '150px' }}>
             <option value="">All</option>
-            <option value="Active">Active</option>
-            <option value="Hidden">Hidden</option>
+            <option value={AccountStatus.Active}>Active</option>
+            <option value={AccountStatus.Blocked}>Blocked</option>
           </select>
         </div>
 
@@ -101,17 +101,26 @@ export const AccountsListPage: React.FC = () => {
                       <td>{a.phone}</td>
                       <td>{a.role}</td>
                       <td>
-                        <select value={a.status} onChange={(e) => handleStatusChange(a.id, e.target.value)} style={{ padding: '4px 8px' }}>
-                          <option value="Active">Active</option>
-                          <option value="Hidden">Hidden</option>
+                        <select 
+                          value={a.status} 
+                          onChange={(e) => handleStatusChange(a.id, e.target.value)} 
+                          style={{ padding: '4px 8px' }}
+                          disabled={a.email === 'admin@scems.com'}
+                        >
+                          <option value={AccountStatus.Active}>Active</option>
+                          <option value={AccountStatus.Blocked}>Blocked</option>
                         </select>
                       </td>
                       <td>{new Date(a.createdAt).toLocaleDateString()}</td>
                       <td>
                         <div style={{ display: 'flex', gap: '4px' }}>
                           <Link to={`/admin/accounts/${a.id}`} className="btn btn-sm btn-secondary">View</Link>
-                          <Link to={`/admin/accounts/${a.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
-                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a.id)}>Del</button>
+                          {a.email !== 'admin@scems.com' && (
+                            <>
+                              <Link to={`/admin/accounts/${a.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a.id)}>Del</button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

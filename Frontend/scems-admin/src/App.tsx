@@ -21,6 +21,19 @@ import { EquipmentTypeDetailPage } from './pages/Admin/EquipmentTypes/EquipmentT
 import { EquipmentListPage } from './pages/Admin/Equipment/EquipmentListPage'
 import { CreateEquipmentPage } from './pages/Admin/Equipment/CreateEquipmentPage'
 import { EditEquipmentPage } from './pages/Admin/Equipment/EditEquipmentPage'
+import { BookRoomPage } from './pages/Admin/Rooms/BookRoomPage'
+import { BookingManagementPage } from './pages/Admin/Bookings/BookingManagementPage'
+import { UserLayout } from './components/Layout/UserLayout'
+import { UserRoomsListPage } from './pages/User/Rooms/UserRoomsListPage'
+import { RoomCalendarPage } from './pages/User/Rooms/RoomCalendarPage'
+import { UserBookingsPage } from './pages/User/Bookings/UserBookingsPage'
+import { useAuth } from './context/AuthContext'
+
+const HomeRedirect = () => {
+    const { user } = useAuth()
+    if (user?.role === 'Admin') return <Navigate to="/admin/dashboard" replace />
+    return <Navigate to="/rooms" replace />
+}
 
 const App: React.FC = () => {
   return (
@@ -41,6 +54,8 @@ const App: React.FC = () => {
                   <Route path="rooms/create" element={<CreateRoomPage />} />
                   <Route path="rooms/:id" element={<RoomDetailPage />} />
                   <Route path="rooms/:id/edit" element={<EditRoomPage />} />
+                  <Route path="rooms/:id/book" element={<BookRoomPage />} />
+                  <Route path="bookings" element={<BookingManagementPage />} />
                   <Route path="equipment-types" element={<EquipmentTypesListPage />} />
                   <Route path="equipment-types/create" element={<CreateEquipmentTypePage />} />
                   <Route path="equipment-types/:id" element={<EquipmentTypeDetailPage />} />
@@ -53,7 +68,24 @@ const App: React.FC = () => {
               </AdminLayout>
             </PrivateRoute>
           } />
-          <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/rooms/*" element={
+            <PrivateRoute>
+              <UserLayout>
+                <Routes>
+                    <Route path="/" element={<UserRoomsListPage />} />
+                    <Route path="/:id/calendar" element={<RoomCalendarPage />} />
+                </Routes>
+              </UserLayout>
+            </PrivateRoute>
+          } />
+          <Route path="/my-bookings" element={
+            <PrivateRoute>
+              <UserLayout>
+                 <UserBookingsPage />
+              </UserLayout>
+            </PrivateRoute>
+          } />
+          <Route path="/" element={<HomeRedirect />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>

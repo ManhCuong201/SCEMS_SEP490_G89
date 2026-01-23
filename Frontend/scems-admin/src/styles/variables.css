@@ -14,17 +14,21 @@
   --color-primary-dark: #163a60;
   --color-primary-light: #3d5ea6;
 
-  --color-success: #10b981;
-  --color-success-light: #6ee7b7;
+  /* Status Colors (Professional Palette) */
+  --color-success: #059669; /* emerald-600 */
+  --color-success-bg: #d1fae5; /* emerald-100 */
+  
+  --color-danger: #dc2626; /* red-600 */
+  --color-danger-bg: #fee2e2; /* red-100 */
+  
+  --color-warning: #d97706; /* amber-600 */
+  --color-warning-bg: #fef3c7; /* amber-100 */
+  
+  --color-info: #2563eb; /* blue-600 */
+  --color-info-bg: #dbeafe; /* blue-100 */
 
-  --color-danger: #ef4444;
-  --color-danger-light: #fca5a5;
-
-  --color-warning: #f59e0b;
-  --color-warning-light: #fcd34d;
-
-  --color-info: #3b82f6;
-  --color-info-light: #93c5fd;
+  --color-secondary: #4b5563; /* gray-600 */
+  --color-secondary-bg: #f3f4f6; /* gray-100 */
 
   /* Base Colors */
   --color-white: #ffffff;

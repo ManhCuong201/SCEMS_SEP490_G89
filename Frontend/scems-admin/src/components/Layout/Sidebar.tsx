@@ -32,6 +32,7 @@ export const Sidebar: React.FC = () => {
           </p>
           <NavLink href="/admin/accounts" label="👥 Accounts" active={isActive('/admin/accounts')} />
           <NavLink href="/admin/rooms" label="🏢 Rooms" active={isActive('/admin/rooms')} />
+          <NavLink href="/admin/bookings" label="📅 Bookings" active={isActive('/admin/bookings')} />
           <NavLink href="/admin/equipment" label="🔧 Equipment" active={isActive('/admin/equipment')} />
           <NavLink href="/admin/equipment-types" label="⚙️ Equipment Types" active={isActive('/admin/equipment-types')} />
         </div>

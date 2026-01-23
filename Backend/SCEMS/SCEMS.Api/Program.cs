@@ -9,10 +9,13 @@ using SCEMS.Infrastructure.DbContext;
 using SCEMS.Infrastructure.Extensions;
 using SCEMS.Api.Middleware;
 using SCEMS.Api.Services;
+using SCEMS.Application.Common;
 
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<BookingSettings>(builder.Configuration.GetSection("BookingSettings"));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -24,7 +27,8 @@ builder.Services.AddSwaggerGen();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secret = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
-var key = Encoding.ASCII.GetBytes(secret);
+Console.WriteLine($"JWT Secret in Program.cs: {secret}");
+var key = Encoding.UTF8.GetBytes(secret);
 
 builder.Services.AddAuthentication(options =>
 {

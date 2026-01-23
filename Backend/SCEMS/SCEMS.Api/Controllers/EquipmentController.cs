@@ -20,9 +20,9 @@ public class EquipmentController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetEquipment([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? sortBy = null)
+    public async Task<IActionResult> GetEquipment([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? sortBy = null, [FromQuery] string? status = null)
     {
-        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, SortBy = sortBy };
+        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, SortBy = sortBy, Status = status };
         var result = await _equipmentService.GetEquipmentAsync(@params);
         return Ok(result);
     }
@@ -98,6 +98,19 @@ public class EquipmentController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { message = "Failed to import file: " + ex.Message });
+        }
+    }
+    [HttpGet("template")]
+    public async Task<IActionResult> GetTemplate()
+    {
+        try
+        {
+            var stream = await _equipmentService.GetTemplateStreamAsync();
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "EquipmentTemplate.xlsx");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Failed to generate template: " + ex.Message });
         }
     }
 }

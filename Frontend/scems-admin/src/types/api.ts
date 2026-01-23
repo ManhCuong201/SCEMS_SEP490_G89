@@ -6,9 +6,15 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   expiresIn: number
+  id: string
   role: string
   email: string
   fullName: string
+}
+
+export enum AccountStatus {
+  Active = "Active",
+  Blocked = "Blocked"
 }
 
 export interface Account {
@@ -17,7 +23,7 @@ export interface Account {
   email: string
   phone: string
   role: string
-  status: string
+  status: AccountStatus
   createdAt: string
   updatedAt: string
 }
@@ -43,6 +49,7 @@ export interface Room {
   roomName: string
   capacity: number
   equipmentCount: number
+  pendingRequestsCount: number
   status: string
   createdAt: string
   updatedAt: string
@@ -85,6 +92,37 @@ export interface PaginatedResponse<T> {
   total: number
   pageIndex: number
   pageSize: number
+}
+
+export enum BookingStatus {
+  Pending = "Pending",
+  Approved = "Approved",
+  Rejected = "Rejected",
+  Cancelled = "Cancelled"
+}
+
+export interface Booking {
+  id: string
+  roomId: string
+  requestedBy: string
+  timeSlot: string
+  duration: number
+  reason?: string
+  status: BookingStatus
+  createdAt: string
+  room?: Room
+  requestedByAccount?: Account
+}
+
+export interface CreateBookingRequest {
+  roomId: string
+  timeSlot: string
+  duration: number
+  reason?: string
+}
+
+export interface UpdateBookingStatusRequest {
+  status: BookingStatus
 }
 
 export interface ApiError {

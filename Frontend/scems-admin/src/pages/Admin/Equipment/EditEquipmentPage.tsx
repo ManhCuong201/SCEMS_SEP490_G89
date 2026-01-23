@@ -14,6 +14,7 @@ export const EditEquipmentPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
+        name: '',
         roomId: '',
         status: EquipmentStatus.Working
     });
@@ -34,6 +35,7 @@ export const EditEquipmentPage: React.FC = () => {
                 ]);
 
                 setForm({
+                    name: equipment.name,
                     roomId: equipment.roomId,
                     status: equipment.status
                 });
@@ -50,7 +52,7 @@ export const EditEquipmentPage: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: name === 'status' ? parseInt(value) : value }));
+        setForm(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -79,6 +81,11 @@ export const EditEquipmentPage: React.FC = () => {
             <div className="card" style={{ maxWidth: '500px' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
+                        <label className="form-label">Name</label>
+                        <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} disabled={submitting} />
+                    </div>
+
+                    <div className="form-group">
                         <label className="form-label">Equipment Type</label>
                         <input type="text" className="form-input" value={currentType} disabled />
                         <small style={{ color: 'var(--color-text-secondary)' }}>Type cannot be changed</small>
@@ -95,8 +102,8 @@ export const EditEquipmentPage: React.FC = () => {
                         <label className="form-label">Status</label>
                         <select name="status" className="form-select" value={form.status} onChange={handleChange} disabled={submitting}>
                             <option value={EquipmentStatus.Working}>Working</option>
-                            <option value={EquipmentStatus.Maintenance}>Maintenance</option>
-                            <option value={EquipmentStatus.Broken}>Broken</option>
+                            <option value={EquipmentStatus.UnderMaintenance}>Maintenance</option>
+                            <option value={EquipmentStatus.Faulty}>Broken</option>
                             <option value={EquipmentStatus.Retired}>Retired</option>
                         </select>
                     </div>
