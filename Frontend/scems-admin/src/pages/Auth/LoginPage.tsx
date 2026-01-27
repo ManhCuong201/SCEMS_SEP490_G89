@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Alert } from '../../components/Common/Alert'
+import { GoogleLogin } from '@react-oauth/google'
+import { authService } from '../../services/auth.service'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -18,19 +20,19 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login(email, password)
-      
+
       // Get user from local storage or decode token to check role
       const userStr = localStorage.getItem('user')
       if (userStr) {
         const user = JSON.parse(userStr)
         if (user.role === 'Admin') {
-            navigate('/admin/dashboard')
+          navigate('/admin/dashboard')
         } else {
-            navigate('/rooms')
+          navigate('/rooms')
         }
       } else {
-          // Fallback
-          navigate('/rooms')
+        // Fallback
+        navigate('/rooms')
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed')
@@ -98,6 +100,38 @@ export const LoginPage: React.FC = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div style={{ marginTop: 'var(--spacing-lg)', borderTop: '1px solid var(--border-color)', paddingTop: 'var(--spacing-md)' }}>
+          <p style={{ textAlign: 'center', marginBottom: 'var(--spacing-sm)', fontSize: '0.9rem' }}>Or sign in with</p>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  setLoading(true)
+                  if (credentialResponse.credential) {
+                    await authService.googleLogin(credentialResponse.credential)
+                    // Redirect logic same as login
+                    const userStr = localStorage.getItem('user')
+                    if (userStr) {
+                      const user = JSON.parse(userStr)
+                      if (user.role === 'Admin') navigate('/admin/dashboard')
+                      else navigate('/rooms')
+                    }
+                  }
+                } catch (err: any) {
+                  setError('Google Login Failed: ' + (err.response?.data?.message || err.message))
+                } finally {
+                  setLoading(false)
+                }
+              }}
+              onError={() => {
+                setError('Google Login Failed')
+              }}
+              useOneTap
+              theme="filled_blue"
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

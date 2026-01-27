@@ -7,20 +7,29 @@ export const authService = {
       email,
       password
     } as LoginRequest)
+    authService.setSession(data)
+    return data
+  },
+
+  async googleLogin(token: string): Promise<LoginResponse> {
+    const { data } = await api.post<LoginResponse>('/auth/google-login', { token })
+    authService.setSession(data)
+    return data
+  },
+
+  setSession(data: LoginResponse) {
     localStorage.setItem('token', data.token)
-    // Store user data directly from response
     const userData = {
       id: data.id,
       fullName: data.fullName,
       email: data.email,
-      phone: '', // Not provided by login response
+      phone: '',
       role: data.role,
-      status: '', // Not provided by login response
-      createdAt: '', // Not provided by login response
-      updatedAt: '' // Not provided by login response
+      status: 'Active',
+      createdAt: '',
+      updatedAt: ''
     }
     localStorage.setItem('user', JSON.stringify(userData))
-    return data
   },
 
   logout(): void {
