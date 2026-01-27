@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SCEMS.Application.Common.Interfaces;
 using SCEMS.Api.Services;
 using SCEMS.Infrastructure.Repositories;
 using System.Security.Cryptography;
@@ -12,11 +13,13 @@ public class AuthController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public AuthController(IUnitOfWork unitOfWork, IJwtService jwtService)
+    public AuthController(IUnitOfWork unitOfWork, IJwtService jwtService, IPasswordHasher passwordHasher)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
+        _passwordHasher = passwordHasher;
     }
 
     [HttpPost("login")]
@@ -27,8 +30,8 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Email and password are required" });
         }
 
-        var account = await _unitOfWork.Accounts.GetByEmailAsync(request.Email);
-        if (account == null || !VerifyPassword(request.Password, account.PasswordHash))
+        var account = await _unitOfWork.Accounts.GetByEmailOrCodeAsync(request.Email);
+        if (account == null || account.PasswordHash == null || !_passwordHasher.VerifyPassword(request.Password, account.PasswordHash))
         {
             return Unauthorized(new { message = "Invalid email or password" });
         }
@@ -51,27 +54,11 @@ public class AuthController : ControllerBase
         });
     }
 
-    private static bool VerifyPassword(string password, string hash)
-    {
-        var hashBytes = Convert.FromBase64String(hash);
-        var salt = new byte[16];
-        Array.Copy(hashBytes, 0, salt, 0, 16);
 
-        var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-        var hash2 = pbkdf2.GetBytes(20);
-
-        for (int i = 0; i < 20; i++)
-        {
-            if (hashBytes[i + 16] != hash2[i])
-                return false;
-        }
-
-        return true;
-    }
 }
 
 public class LoginRequest
 {
-    public string Email { get; set; }
-    public string Password { get; set; }
+    public required string Email { get; set; }
+    public required string Password { get; set; }
 }

@@ -1,6 +1,8 @@
 using SCEMS.Application.Services;
 using SCEMS.Application.Services.Interfaces;
+using SCEMS.Application.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using SCEMS.Application.Common.Interfaces;
 
 namespace SCEMS.Application;
 
@@ -19,6 +21,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IEquipmentTypeService, EquipmentTypeService>();
         services.AddScoped<IEquipmentService, EquipmentService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IImportService, ImportService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
     }

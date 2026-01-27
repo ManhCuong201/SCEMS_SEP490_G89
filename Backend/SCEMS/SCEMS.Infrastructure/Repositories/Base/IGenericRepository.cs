@@ -5,6 +5,7 @@ namespace SCEMS.Infrastructure.Repositories.Base;
 public interface IGenericRepository<T> where T : BaseEntity
 {
     IQueryable<T> GetAll();
+    Task<List<T>> GetAllAsync();
     Task<T?> GetByIdAsync(Guid id);
     Task AddAsync(T entity);
     void Update(T entity);

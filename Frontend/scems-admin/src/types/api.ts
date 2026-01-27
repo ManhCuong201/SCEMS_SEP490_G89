@@ -106,16 +106,27 @@ export interface Booking {
   roomId: string
   requestedBy: string
   timeSlot: string
+  endTime: string
   duration: number
   reason?: string
-  status: BookingStatus
+  status: string // Changed from BookingStatus enum to string to support "Approved" etc.
   createdAt: string
   room?: Room
   requestedByAccount?: Account
+  roomName?: string
+  requestedByName?: string
 }
 
 export interface CreateBookingRequest {
   roomId: string
+  timeSlot: string
+  duration: number
+  reason?: string
+}
+
+export interface CreateRoomChangeRequest {
+  originalRoomId: string
+  newRoomId: string
   timeSlot: string
   duration: number
   reason?: string

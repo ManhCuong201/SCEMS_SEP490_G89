@@ -48,7 +48,7 @@ export const UserRoomsListPage: React.FC = () => {
 
       <div className="search-container">
         <div style={{ flex: 1 }}>
-            <SearchBar onSearch={setSearch} placeholder="Search by room name or code..." />
+          <SearchBar onSearch={setSearch} placeholder="Search by room name or code..." />
         </div>
       </div>
 
@@ -56,56 +56,56 @@ export const UserRoomsListPage: React.FC = () => {
         <>
           <div className="rooms-grid">
             {rooms.map(room => (
-              <div key={room.id} className="room-card card">
+              <div key={room.id} className="room-card glass-card">
                 <div className="room-card-header">
                   <div className="room-name">
                     {room.roomName}
                     <span className="room-code">{room.roomCode}</span>
                   </div>
                 </div>
-                
+
                 <div className="room-card-body">
                   <div className="room-info-row">
                     <span className="room-info-label">Capacity:</span>
                     <span>{room.capacity} People</span>
                   </div>
-                  
+
                   <div className="room-info-row">
                     <span className="room-info-label">Equipment:</span>
                     <span className="room-stat-badge stat-equipment">
-                        {room.equipmentCount} Items
+                      {room.equipmentCount} Items
                     </span>
                   </div>
-                  
+
                   <div className="room-info-row">
                     <span className="room-info-label">Requests:</span>
                     <span className={`room-stat-badge ${room.pendingRequestsCount > 0 ? 'stat-pending' : ''}`}>
-                        {room.pendingRequestsCount} Pending
+                      {room.pendingRequestsCount} Pending
                     </span>
                   </div>
                 </div>
 
                 <div className="room-card-footer">
-                   <Link to={`/rooms/${room.id}/calendar`} className="btn btn-primary">
-                     View Calendar
-                   </Link>
+                  <Link to={`/rooms/${room.id}/calendar`} className="btn btn-primary">
+                    View Calendar
+                  </Link>
                 </div>
               </div>
             ))}
           </div>
-          
+
           {rooms.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                <h3>No rooms found matching your search.</h3>
+              <h3>No rooms found matching your search.</h3>
             </div>
           )}
-          
-          <Pagination 
-              currentPage={currentPage} 
-              totalPages={Math.ceil(total / 10)} 
-              onPageChange={setCurrentPage}
-              total={total}
-              pageSize={10} 
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(total / 10)}
+            onPageChange={setCurrentPage}
+            total={total}
+            pageSize={10}
           />
         </>
       )}

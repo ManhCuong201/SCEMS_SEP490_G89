@@ -40,13 +40,13 @@ export const UserBookingsPage: React.FC = () => {
     fetchBookings(page)
   }, [page, search])
 
-  const getStatusBadge = (status: BookingStatus) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case BookingStatus.Pending: return <span className="badge badge-warning">Pending</span>
       case BookingStatus.Approved: return <span className="badge badge-success">Approved</span>
       case BookingStatus.Rejected: return <span className="badge badge-danger">Rejected</span>
       case BookingStatus.Cancelled: return <span className="badge badge-secondary">Cancelled</span>
-      default: return <span className="badge badge-secondary">Unknown</span>
+      default: return <span className="badge badge-secondary">{status}</span>
     }
   }
 
@@ -57,9 +57,9 @@ export const UserBookingsPage: React.FC = () => {
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-      
+
       <div style={{ marginBottom: 'var(--spacing-lg)', maxWidth: '400px' }}>
-          <SearchBar onSearch={setSearch} placeholder="Search by room name..." />
+        <SearchBar onSearch={setSearch} placeholder="Search by room name..." />
       </div>
 
       <div className="card">
@@ -88,11 +88,11 @@ export const UserBookingsPage: React.FC = () => {
                     bookings.map((booking) => (
                       <tr key={booking.id}>
                         <td>
-                            {booking.room ? (
-                                <Link to={`/rooms/${booking.room.id}/calendar`} style={{ fontWeight: '500' }}>
-                                    {booking.room.roomName}
-                                </Link>
-                            ) : 'Unknown Room'}
+                          {booking.room ? (
+                            <Link to={`/rooms/${booking.room.id}/calendar`} style={{ fontWeight: '500' }}>
+                              {booking.room.roomName}
+                            </Link>
+                          ) : 'Unknown Room'}
                         </td>
                         <td>{new Date(booking.timeSlot).toLocaleDateString()}</td>
                         <td>{new Date(booking.timeSlot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>

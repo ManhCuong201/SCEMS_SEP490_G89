@@ -13,67 +13,64 @@ export const Header: React.FC = () => {
   }
 
   return (
-    <header style={{
-      backgroundColor: 'var(--color-primary)',
-      color: 'var(--color-white)',
-      padding: 'var(--spacing-md) var(--spacing-lg)',
+    <header className="glass-panel" style={{
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      boxShadow: 'var(--shadow-md)',
+      padding: '0.75rem 1.5rem',
+      margin: '0.5rem 1rem',
+      borderRadius: 'var(--radius-lg)',
       position: 'sticky',
-      top: 0,
+      top: '0.5rem',
       zIndex: 1000
     }}>
-      <h2 style={{ margin: 0 }}>SCEMS Admin</h2>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, background: 'linear-gradient(to right, var(--primary-600), var(--secondary-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>SCEMS Admin</h2>
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => setShowMenu(!showMenu)}
           style={{
-            background: 'var(--bg-primary)',
-            border: 'none',
-            color: 'var(--color-primary)',
-            padding: 'var(--spacing-sm) var(--spacing-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 1rem',
             borderRadius: 'var(--radius-md)',
-            cursor: 'pointer',
-            fontSize: 'var(--font-size-base)',
-            fontWeight: 600
+            background: 'var(--slate-100)',
+            color: 'var(--text-main)',
+            fontWeight: 500,
+            fontSize: '0.875rem'
           }}
         >
-          {user?.fullName || 'User'} ▼
+          {user?.fullName || 'User'}
+          <span style={{ fontSize: '0.75rem' }}>▼</span>
         </button>
         {showMenu && (
-          <div style={{
+          <div className="glass-card" style={{
             position: 'absolute',
-            top: '100%',
+            top: 'calc(100% + 0.5rem)',
             right: 0,
-            marginTop: 'var(--spacing-sm)',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-lg)',
-            minWidth: '200px',
+            width: '200px',
+            padding: '0.5rem',
             zIndex: 101
           }}>
-            <div style={{ padding: 'var(--spacing-md)', borderBottom: '1px solid var(--color-border)' }}>
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
-                {user?.email}
-              </p>
+            <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--slate-200)', marginBottom: '0.5rem' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Signed in as</p>
+              <p style={{ fontSize: '0.875rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</p>
             </div>
             <button
               onClick={handleLogout}
               style={{
                 width: '100%',
                 textAlign: 'left',
-                padding: 'var(--spacing-md)',
-                border: 'none',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
+                padding: '0.5rem 0.75rem',
+                borderRadius: 'var(--radius-sm)',
                 color: 'var(--color-danger)',
-                fontSize: 'var(--font-size-base)'
+                fontSize: '0.875rem',
+                transition: 'background 0.2s'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--slate-50)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              Logout
+              Sign out
             </button>
           </div>
         )}

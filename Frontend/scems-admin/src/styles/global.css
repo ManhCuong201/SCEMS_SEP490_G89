@@ -1,8 +1,7 @@
 @import './variables.css';
-@import './light.css';
-@import './dark.css';
-@import './components.css';
-@import './form.css';
+/* We can keep other imports if they exist or replace them incrementally. For now, let's keep it clean. */
+/* @import './components.css'; */
+/* Re-enable if needed or refactor */
 
 * {
   margin: 0;
@@ -10,79 +9,126 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
-  height: 100%;
-}
-
 body {
-  font-family: var(--font-family-base);
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: background-color var(--transition-base), color var(--transition-base);
+  min-height: 100vh;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-h1 { font-size: var(--font-size-2xl); }
-h2 { font-size: var(--font-size-xl); }
-h3 { font-size: var(--font-size-lg); }
-h4 { font-size: var(--font-size-md); }
-
-p {
-  margin: 0;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
+::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400);
+}
+
+/* Typography Utility */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+/* Clean Links */
 a {
   color: var(--color-primary);
   text-decoration: none;
-  transition: var(--transition-base);
+  font-weight: 500;
+  transition: var(--transition);
 }
 
 a:hover {
-  opacity: 0.8;
+  color: var(--primary-500);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-glass);
+  border-radius: var(--radius-lg);
 }
 
-th, td {
-  text-align: left;
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
-  font-size: var(--font-size-base);
+.glass-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
 }
 
-th {
-  background-color: var(--color-background);
-  font-weight: 600;
-  color: var(--color-text-secondary);
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-200);
 }
 
-tr:hover {
-  background-color: rgba(31, 71, 136, 0.02);
+/* Button Reset & Base */
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
 }
 
-.page-container {
-  padding: var(--spacing-lg);
-  max-width: 1400px;
+/* Layout Utilities */
+.container {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
-.card-header {
+.flex-center {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-md);
+  justify-content: center;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--primary-400) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

@@ -13,4 +13,9 @@ public class AccountRepository : GenericRepository<Account>, IAccountRepository
     {
         return await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
     }
+
+    public async Task<Account?> GetByEmailOrCodeAsync(string identifier)
+    {
+        return await _context.Accounts.FirstOrDefaultAsync(a => a.Email == identifier || a.StudentCode == identifier);
+    }
 }

@@ -28,7 +28,7 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasForeignKey(b => b.RequestedBy);
 
         builder.Property(b => b.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(b => b.IsDeleted)
             .HasDefaultValue(false);

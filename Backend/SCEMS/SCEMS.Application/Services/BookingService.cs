@@ -96,27 +96,38 @@ public class BookingService : IBookingService
         if (room.Status != RoomStatus.Available)
             throw new InvalidOperationException("Room is not available for booking.");
 
-        // 3. Validation: Overlaps
-        // ExistingStart < NewEnd && ExistingEnd > NewStart
+        // 3. Validation: Overlaps with other bookings
         var newStart = dto.TimeSlot;
         var newEnd = dto.TimeSlot.AddHours(dto.Duration);
 
         var conflictingBooking = _unitOfWork.Bookings.GetAll()
             .Where(b => b.RoomId == dto.RoomId && b.Status != BookingStatus.Rejected)
-            .ToList() // Client evaluation for complex date math if needed, but simple comparison works in SQL usually
+            .ToList()
             .Where(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart)
             .Any();
+            
+        // 4. Validation: Overlaps with Teaching Schedule
+        // Check if there is any class in the same room on the same date that overlaps in time.
+        // Booking TimeSlot is DateTime. Teaching_Schedule uses Date + StartTime + EndTime.
+        
+        var date = newStart.Date;
+        var reqStartTime = newStart.TimeOfDay;
+        var reqEndTime = newEnd.TimeOfDay;
+
+        // Note: This query may need client-side evaluation if DB doesn't support time comparison directly on some providers,
+        // but recent EF Core + MySQL providers handle TimeSpan comparisons well.
+        var hasClass = _unitOfWork.TeachingSchedules.GetAll()
+             .Where(ts => ts.RoomId == dto.RoomId && ts.Date == date)
+             .ToList() // Fetch schedules for the day to memory to safely compare times if provider has issues, or optimize by projecting.
+             .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+
+        if (hasClass)
+        {
+             throw new InvalidOperationException("Room is occupied by a class at this time.");
+        }
 
         if (conflictingBooking)
         {
-             // Check if it's pending? Requirement says: "if not booked then show a book button, if this room already have someone send book request before then above the book button should show how many requests currently on this slot"
-             // This implies multiple pending requests are allowed? 
-             // "After confirm the request will be send to the booking management staff, he will decide to accept or reject."
-             // "Every slot from the real time is bookable if not already booked"
-             // Usually "booked" means Accepted. "Pending" means someone asked.
-             // If I allow multiple pending requests, then I shouldn't block creation here if the existing one is Pending.
-             // But if there is an ACCEPTED booking, I must block.
-             
              var acceptedBooking = _unitOfWork.Bookings.GetAll()
                 .Where(b => b.RoomId == dto.RoomId && b.Status == BookingStatus.Approved)
                 .ToList()
@@ -183,6 +194,57 @@ public class BookingService : IBookingService
             .OrderBy(b => b.TimeSlot)
             .ToListAsync();
 
-        return _mapper.Map<List<BookingResponseDto>>(bookings);
+        var bookingDtos = _mapper.Map<List<BookingResponseDto>>(bookings);
+
+        // Fetch Teaching Schedules for the same period
+        // Teaching_Schedule has Date + StartTime/EndTime. 
+        // We need to match Date >= startDate.Date and Date <= endDate.Date
+        
+        var schedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .Where(ts => ts.RoomId == roomId && ts.Date >= startDate.Date && ts.Date <= endDate.Date)
+            .ToListAsync();
+
+        foreach (var schedule in schedules)
+        {
+            var startDateTime = schedule.Date.Add(schedule.StartTime);
+            var endDateTime = schedule.Date.Add(schedule.EndTime);
+            
+            // Map to DTO
+            bookingDtos.Add(new BookingResponseDto
+            {
+                Id = schedule.Id,
+                RoomId = schedule.RoomId,
+                RoomName = schedule.Room?.RoomName ?? "",
+                RequestedBy = Guid.Empty,
+                RequestedByName = schedule.LecturerName,
+                TimeSlot = startDateTime,
+                EndTime = endDateTime,
+                Duration = (int)(endDateTime - startDateTime).TotalHours, 
+                Reason = $"Class: {schedule.Subject} ({schedule.ClassCode})",
+                Status = BookingStatus.Approved.ToString(), 
+                CreatedAt = schedule.Date
+            });
+        }
+
+        return bookingDtos.OrderBy(b => b.TimeSlot).ToList();
+    }
+
+    public async Task<BookingResponseDto> CreateRoomChangeRequestAsync(CreateRoomChangeRequestDto dto, Guid userId)
+    {
+        var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
+        if (account == null || account.Role != AccountRole.Lecturer)
+        {
+            throw new UnauthorizedAccessException("Only Lecturers can request room changes.");
+        }
+
+        var bookingDto = new CreateBookingDto
+        {
+            RoomId = dto.NewRoomId,
+            TimeSlot = dto.TimeSlot,
+            Duration = dto.Duration,
+            Reason = $"[Room Change Request] From {dto.OriginalRoomId} to {dto.NewRoomId}. Reason: {dto.Reason}"
+        };
+
+        return await CreateBookingAsync(bookingDto, userId);
     }
 }

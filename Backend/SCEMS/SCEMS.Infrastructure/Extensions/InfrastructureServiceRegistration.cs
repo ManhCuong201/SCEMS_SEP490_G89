@@ -11,14 +11,14 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<ScemsDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IEquipmentTypeRepository, EquipmentTypeRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-
+        
         return services;
     }
 }

@@ -36,7 +36,7 @@ public class IssueReportConfiguration : IEntityTypeConfiguration<IssueReport>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(ir => ir.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(ir => ir.IsDeleted)
             .HasDefaultValue(false);

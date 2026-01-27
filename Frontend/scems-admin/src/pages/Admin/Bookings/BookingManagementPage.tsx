@@ -42,12 +42,12 @@ export const BookingManagementPage: React.FC = () => {
         }
     }
 
-    const getStatusBadge = (status: BookingStatus) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
             case BookingStatus.Pending: return <span className="badge" style={{ backgroundColor: 'var(--color-warning)', color: '#fff' }}>Pending</span>
             case BookingStatus.Approved: return <span className="badge" style={{ backgroundColor: 'var(--color-success)', color: '#fff' }}>Approved</span>
             case BookingStatus.Rejected: return <span className="badge" style={{ backgroundColor: 'var(--color-danger)', color: '#fff' }}>Rejected</span>
-            default: return null
+            default: return <span className="badge" style={{ backgroundColor: 'var(--color-secondary)', color: '#fff' }}>{status}</span>
         }
     }
 

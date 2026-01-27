@@ -11,4 +11,5 @@ public interface IBookingService
     Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId);
     Task<BookingResponseDto?> UpdateStatusAsync(Guid id, BookingStatus status);
     Task<List<BookingResponseDto>> GetRoomScheduleAsync(Guid roomId, DateTime startDate, DateTime endDate);
+    Task<BookingResponseDto> CreateRoomChangeRequestAsync(CreateRoomChangeRequestDto dto, Guid userId);
 }

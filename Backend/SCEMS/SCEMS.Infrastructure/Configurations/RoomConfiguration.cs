@@ -43,7 +43,7 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(r => r.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(r => r.IsDeleted)
             .HasDefaultValue(false);

@@ -10,6 +10,7 @@ using SCEMS.Infrastructure.Extensions;
 using SCEMS.Api.Middleware;
 using SCEMS.Api.Services;
 using SCEMS.Application.Common;
+using SCEMS.Application.Common.Interfaces;
 
 using System.Text.Json.Serialization;
 
@@ -50,10 +51,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddDbContext<ScemsDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+
 
 builder.Services.AddCors(options =>
 {
@@ -92,6 +90,8 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ScemsDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    
     dbContext.Database.EnsureCreated();
 
     // Seed initial data
@@ -104,7 +104,7 @@ using (var scope = app.Services.CreateScope())
             Email = "admin@scems.com",
             FullName = "System Administrator",
             Role = SCEMS.Domain.Enums.AccountRole.Admin,
-            PasswordHash = HashPassword("Admin123!"),
+            PasswordHash = passwordHasher.HashPassword("Admin123!"),
             Status = SCEMS.Domain.Enums.AccountStatus.Active
         };
         dbContext.Accounts.Add(adminAccount);
@@ -118,12 +118,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-static string HashPassword(string password)
-{
-    using var pbkdf2 = new System.Security.Cryptography.Rfc2898DeriveBytes(password, 16, 10000, System.Security.Cryptography.HashAlgorithmName.SHA256);
-    var salt = pbkdf2.Salt;
-    var hash = pbkdf2.GetBytes(20);
-    return Convert.ToBase64String(salt.Concat(hash).ToArray());
-}
+
 
 app.Run();

@@ -11,8 +11,12 @@ public class UnitOfWork : IUnitOfWork
     private IRoomRepository? _roomRepository;
     private IEquipmentTypeRepository? _equipmentTypeRepository;
     private IEquipmentRepository? _equipmentRepository;
-    private IGenericRepository<Booking>? _bookingRepository;
-    private IGenericRepository<IssueReport>? _issueReportRepository;
+    private IGenericRepository<Booking> _bookingRepository;
+    private IGenericRepository<IssueReport> _issueReportRepository;
+    private IGenericRepository<Teaching_Schedule> _teachingScheduleRepository;
+    private IGenericRepository<Classroom_Status> _classroomStatusRepository;
+    private IGenericRepository<Notification> _notificationRepository;
+    private IGenericRepository<Booking_History> _bookingHistoryRepository;
 
     public UnitOfWork(ScemsDbContext context)
     {
@@ -47,6 +51,26 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<IssueReport> IssueReports
     {
         get { return _issueReportRepository ??= new GenericRepository<IssueReport>(_context); }
+    }
+
+    public IGenericRepository<Teaching_Schedule> TeachingSchedules
+    {
+        get { return _teachingScheduleRepository ??= new GenericRepository<Teaching_Schedule>(_context); }
+    }
+
+    public IGenericRepository<Classroom_Status> ClassroomStatuses
+    {
+        get { return _classroomStatusRepository ??= new GenericRepository<Classroom_Status>(_context); }
+    }
+
+    public IGenericRepository<Notification> Notifications
+    {
+        get { return _notificationRepository ??= new GenericRepository<Notification>(_context); }
+    }
+
+    public IGenericRepository<Booking_History> BookingHistories
+    {
+        get { return _bookingHistoryRepository ??= new GenericRepository<Booking_History>(_context); }
     }
 
     public async Task SaveChangesAsync()

@@ -6,18 +6,24 @@ export const UserSidebar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
-    <aside style={{
+    <aside className="glass-panel" style={{
       width: '260px',
-      backgroundColor: 'var(--bg-primary)',
-      borderRight: '1px solid var(--color-border)',
-      position: 'sticky',
-      top: '64px',
-      height: 'calc(100vh - 64px)',
-      overflowY: 'auto'
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '1rem'
     }}>
-      <nav style={{ padding: 'var(--spacing-md)' }}>
-        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', margin: '0 0 var(--spacing-md) 0' }}>
+      <nav style={{ flex: 1 }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <p style={{
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '1rem',
+            paddingLeft: '0.75rem'
+          }}>
             Menu
           </p>
           <NavLink href="/rooms" label="🏢 Rooms" active={isActive('/rooms')} />

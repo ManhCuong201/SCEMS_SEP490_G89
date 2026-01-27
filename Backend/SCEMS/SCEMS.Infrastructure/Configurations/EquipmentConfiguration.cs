@@ -31,7 +31,7 @@ public class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(e => e.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(e => e.IsDeleted)
             .HasDefaultValue(false);

@@ -14,6 +14,15 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Booking> Bookings { get; set; } = null!;
     public DbSet<IssueReport> IssueReports { get; set; } = null!;
 
+    // New Entities
+    public DbSet<Teaching_Schedule> TeachingSchedules { get; set; } = null!;
+    public DbSet<Classroom_Status> ClassroomStatuses { get; set; } = null!;
+    public DbSet<Booking_History> BookingHistories { get; set; } = null!;
+    public DbSet<Equipment_Report> EquipmentReports { get; set; } = null!;
+    public DbSet<Classroom_Report> ClassroomReports { get; set; } = null!;
+    public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<System_Configuration> SystemConfigurations { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
