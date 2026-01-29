@@ -23,7 +23,10 @@ public class RoomService : IRoomService
 
     public async Task<PaginatedRoomsDto> GetRoomsAsync(PaginationParams @params)
     {
-        IQueryable<Room> query = _unitOfWork.Rooms.GetAll().Include(r => r.Bookings).Include(r => r.Equipment);
+        IQueryable<Room> query = _unitOfWork.Rooms.GetAll()
+        .Include(r => r.Bookings)
+        .Include(r => r.Equipment)
+        .Include(r => r.RoomType);
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
@@ -62,6 +65,8 @@ public class RoomService : IRoomService
             Status = r.Status,
             EquipmentCount = r.Equipment.Count,
             PendingRequestsCount = r.Bookings.Count(b => b.Status == BookingStatus.Pending),
+            RoomTypeId = r.RoomTypeId,
+            RoomTypeName = r.RoomType?.Name ?? "N/A",
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         }).ToList();
@@ -80,6 +85,7 @@ public class RoomService : IRoomService
         var room = await _unitOfWork.Rooms.GetAll()
             .Include(r => r.Bookings)
             .Include(r => r.Equipment)
+            .Include(r => r.RoomType)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (room == null)
@@ -87,17 +93,7 @@ public class RoomService : IRoomService
             return null;
         }
 
-        return new RoomResponseDto
-        {
-            Id = room.Id,
-            RoomCode = room.RoomCode,
-            RoomName = room.RoomName,
-            Capacity = room.Capacity,
-            Status = room.Status,
-            EquipmentCount = room.Equipment.Count,
-            CreatedAt = room.CreatedAt,
-            UpdatedAt = room.UpdatedAt
-        };
+        return _mapper.Map<RoomResponseDto>(room);
     }
 
     public async Task<RoomResponseDto> CreateRoomAsync(CreateRoomDto dto)
@@ -112,23 +108,14 @@ public class RoomService : IRoomService
         {
             RoomCode = dto.RoomCode,
             RoomName = dto.RoomName,
-            Capacity = dto.Capacity
+            Capacity = dto.Capacity,
+            RoomTypeId = dto.RoomTypeId
         };
 
         await _unitOfWork.Rooms.AddAsync(room);
         await _unitOfWork.SaveChangesAsync();
 
-        return new RoomResponseDto
-        {
-            Id = room.Id,
-            RoomCode = room.RoomCode,
-            RoomName = room.RoomName,
-            Capacity = room.Capacity,
-            Status = room.Status,
-            EquipmentCount = 0,
-            CreatedAt = room.CreatedAt,
-            UpdatedAt = room.UpdatedAt
-        };
+        return _mapper.Map<RoomResponseDto>(room);
     }
 
     public async Task<RoomResponseDto?> UpdateRoomAsync(Guid id, UpdateRoomDto dto)
@@ -148,21 +135,12 @@ public class RoomService : IRoomService
         room.RoomCode = dto.RoomCode;
         room.RoomName = dto.RoomName;
         room.Capacity = dto.Capacity;
+        room.RoomTypeId = dto.RoomTypeId;
 
         _unitOfWork.Rooms.Update(room);
         await _unitOfWork.SaveChangesAsync();
 
-        return new RoomResponseDto
-        {
-            Id = room.Id,
-            RoomCode = room.RoomCode,
-            RoomName = room.RoomName,
-            Capacity = room.Capacity,
-            Status = room.Status,
-            EquipmentCount = room.Equipment.Count,
-            CreatedAt = room.CreatedAt,
-            UpdatedAt = room.UpdatedAt
-        };
+        return _mapper.Map<RoomResponseDto>(room);
     }
 
     public async Task<bool> DeleteRoomAsync(Guid id)
@@ -200,6 +178,9 @@ public class RoomService : IRoomService
         var worksheet = workbook.Worksheet(1);
         var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header
 
+        // Fetch all room types to lookup
+        var roomTypes = await _unitOfWork.RoomTypes.GetAllAsync();
+
         var importedCount = 0;
 
         foreach (var row in rows)
@@ -210,6 +191,7 @@ public class RoomService : IRoomService
                 var name = row.Cell(2).GetValue<string>();
                 var capacityStr = row.Cell(3).GetValue<string>();
                 var statusStr = row.Cell(4).GetValue<string>();
+                var roomTypeName = row.Cell(5).GetValue<string>();
 
                 if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
                     continue;
@@ -232,6 +214,16 @@ public class RoomService : IRoomService
                     Capacity = capacity,
                     Status = status
                 };
+
+                // Set Room Type if provided
+                if (!string.IsNullOrWhiteSpace(roomTypeName))
+                {
+                    var type = roomTypes.FirstOrDefault(t => t.Name.Equals(roomTypeName, StringComparison.OrdinalIgnoreCase));
+                    if (type != null)
+                    {
+                        room.RoomTypeId = type.Id;
+                    }
+                }
 
                 await _unitOfWork.Rooms.AddAsync(room);
                 importedCount++;
@@ -256,9 +248,10 @@ public class RoomService : IRoomService
         worksheet.Cell(1, 2).Value = "Room Name";
         worksheet.Cell(1, 3).Value = "Capacity";
         worksheet.Cell(1, 4).Value = "Status";
+        worksheet.Cell(1, 5).Value = "Room Type";
 
         // Style
-        var header = worksheet.Range("A1:D1");
+        var header = worksheet.Range("A1:E1");
         header.Style.Font.Bold = true;
         header.Style.Fill.BackgroundColor = XLColor.LightGray;
 
@@ -267,6 +260,7 @@ public class RoomService : IRoomService
         worksheet.Cell(2, 2).Value = "Lab Room 1";
         worksheet.Cell(2, 3).Value = 40;
         worksheet.Cell(2, 4).Value = "Available";
+        worksheet.Cell(2, 5).Value = "Lab";
 
         worksheet.Columns().AdjustToContents();
 

@@ -51,6 +51,8 @@ export interface Room {
   roomCode: string
   roomName: string
   capacity: number
+  roomTypeId?: string
+  roomTypeName?: string
   equipmentCount: number
   pendingRequestsCount: number
   status: string
@@ -62,12 +64,14 @@ export interface CreateRoomRequest {
   roomCode: string
   roomName: string
   capacity: number
+  roomTypeId?: string
 }
 
 export interface UpdateRoomRequest {
   roomCode: string
   roomName: string
   capacity: number
+  roomTypeId?: string
 }
 
 export interface EquipmentType {
@@ -159,5 +163,23 @@ export interface ScheduleResponse {
 
 export interface ImportScheduleResponse {
   message: string;
+}
+
+
+export interface RoomType {
+  id: string
+  name: string
+  description: string
+  roomCount: number
+}
+
+export interface CreateRoomTypeRequest {
+  name: string
+  description: string
+}
+
+export interface UpdateRoomTypeRequest {
+  name: string
+  description: string
 }
 

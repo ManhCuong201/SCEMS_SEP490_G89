@@ -16,7 +16,8 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<Account, AccountResponseDto>();
-        CreateMap<Room, RoomResponseDto>();
+        CreateMap<Room, RoomResponseDto>()
+            .ForMember(dest => dest.RoomTypeName, opt => opt.MapFrom(src => src.RoomType != null ? src.RoomType.Name : "N/A"));
         CreateMap<EquipmentType, EquipmentTypeResponseDto>();
         CreateMap<Equipment, EquipmentResponseDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
@@ -33,5 +34,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime.ToString(@"hh\:mm")));
 
         CreateMap<Class, ClassResponseDto>();
+        
+        CreateMap<RoomType, SCEMS.Application.DTOs.RoomType.RoomTypeDto>()
+            .ForMember(dest => dest.RoomCount, opt => opt.MapFrom(src => src.Rooms.Count));
+        CreateMap<SCEMS.Application.DTOs.RoomType.CreateRoomTypeDto, RoomType>();
+        CreateMap<SCEMS.Application.DTOs.RoomType.UpdateRoomTypeDto, RoomType>();
     }
 }

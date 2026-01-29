@@ -31,7 +31,7 @@ export const Sidebar: React.FC = () => {
           <p style={{
             fontSize: '0.75rem',
             fontWeight: 700,
-            color: 'var(--slate-400)',
+            color: 'var(--slate-500)',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             marginBottom: '1rem'
@@ -54,6 +54,7 @@ export const Sidebar: React.FC = () => {
           </p>
           <NavLink href="/admin/accounts" label="Accounts" icon={<Users size={20} />} active={isActive('/admin/accounts')} />
           <NavLink href="/admin/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
+          <NavLink href="/admin/room-types" label="Room Categories" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
           <NavLink href="/admin/bookings" label="Bookings" icon={<CalendarDays size={20} />} active={isActive('/admin/bookings')} />
           <NavLink href="/admin/equipment" label="Equipment" icon={<Wrench size={20} />} active={isActive('/admin/equipment')} />
           <NavLink href="/admin/equipment-types" label="Equipment Types" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />

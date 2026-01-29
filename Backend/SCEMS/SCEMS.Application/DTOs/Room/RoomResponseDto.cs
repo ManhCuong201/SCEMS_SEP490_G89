@@ -11,6 +11,8 @@ public class RoomResponseDto
     public RoomStatus Status { get; set; }
     public int PendingRequestsCount { get; set; }
     public int EquipmentCount { get; set; }
+    public Guid? RoomTypeId { get; set; }
+    public string? RoomTypeName { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

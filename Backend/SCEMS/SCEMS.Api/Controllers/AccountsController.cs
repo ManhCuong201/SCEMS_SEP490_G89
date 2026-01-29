@@ -83,4 +83,23 @@ public class AccountsController : ControllerBase
             return NotFound(new { message = "Account not found" });
         return Ok(new { message = "Status updated successfully" });
     }
+
+    [HttpPost("import")]
+    public async Task<IActionResult> ImportAccounts(IFormFile file, [FromServices] IImportService importService)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("File is empty");
+
+        using var stream = file.OpenReadStream();
+        var result = await importService.ImportAccountsAsync(stream);
+        
+        return Ok(result);
+    }
+
+    [HttpGet("import/template")]
+    public async Task<IActionResult> DownloadTemplate([FromServices] IImportService importService)
+    {
+        var stream = await importService.GetAccountTemplateStreamAsync();
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Account_Template.xlsx");
+    }
 }

@@ -15,4 +15,6 @@ public class CreateRoomDto
     [Required(ErrorMessage = "Capacity is required")]
     [Range(1, 10000, ErrorMessage = "Capacity must be between 1 and 10000")]
     public int Capacity { get; set; }
+
+    public Guid? RoomTypeId { get; set; }
 }

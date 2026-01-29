@@ -287,7 +287,9 @@ a:hover {
 .table-wrapper {
   overflow-x: auto;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-glass);
+  border: 1px solid var(--slate-200);
+  background: #ffffff;
+  /* Table body white */
 }
 
 .glass-table {
@@ -297,22 +299,23 @@ a:hover {
 }
 
 .glass-table th {
-  background: rgba(30, 41, 59, 0.4);
-  /* slate-800 with opacity */
+  background: var(--slate-200);
+  /* Darker header for contrast */
   text-align: left;
   padding: 1rem 1.5rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
+  color: var(--text-main);
+  /* Darker text for darker header */
   font-size: 0.75rem;
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid var(--slate-300);
 }
 
 .glass-table td {
   padding: 1rem 1.5rem;
   color: var(--text-main);
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid var(--slate-100);
   vertical-align: middle;
 }
 
@@ -325,7 +328,7 @@ a:hover {
 }
 
 .glass-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 /* Pagination */

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { roomService } from '../../../services/room.service'
+import { roomTypeService } from '../../../services/roomType.service'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
+import { RoomType } from '../../../types/api'
 
 export const EditRoomPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -10,20 +12,27 @@ export const EditRoomPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
   const [form, setForm] = useState({
     roomCode: '',
     roomName: '',
-    capacity: 20
+    capacity: 20,
+    roomTypeId: ''
   })
 
   useEffect(() => {
     const load = async () => {
       try {
-        const room = await roomService.getRoomById(id!)
+        const [room, types] = await Promise.all([
+          roomService.getRoomById(id!),
+          roomTypeService.getAll()
+        ])
+        setRoomTypes(types)
         setForm({
           roomCode: room.roomCode,
           roomName: room.roomName,
-          capacity: room.capacity
+          capacity: room.capacity,
+          roomTypeId: room.roomTypeId || (types.length > 0 ? types[0].id : '')
         })
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load')
@@ -34,7 +43,7 @@ export const EditRoomPage: React.FC = () => {
     load()
   }, [id])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: name === 'capacity' ? parseInt(value) : value }))
   }
@@ -58,10 +67,10 @@ export const EditRoomPage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Edit Room</h1>
+      <h1 style={{ marginBottom: '1.5rem' }}>Edit Room</h1>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      <div className="card" style={{ maxWidth: '500px' }}>
+      <div className="glass-panel" style={{ maxWidth: '600px', padding: '2rem' }}>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Room Code</label>
@@ -78,7 +87,25 @@ export const EditRoomPage: React.FC = () => {
             <input type="number" name="capacity" className="form-input" value={form.capacity} onChange={handleChange} min="1" disabled={saving} />
           </div>
 
-          <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+          <div className="form-group">
+            <label className="form-label">Room Type</label>
+            <select
+              name="roomTypeId"
+              className="form-input"
+              value={form.roomTypeId}
+              onChange={handleChange}
+              disabled={saving}
+            >
+              <option value="">-- Select Type --</option>
+              {roomTypes.map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
             <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
             <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/rooms')} disabled={saving}>Cancel</button>
           </div>

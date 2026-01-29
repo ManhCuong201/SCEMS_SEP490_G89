@@ -80,6 +80,35 @@ dotnet restore
 dotnet run --project SCEMS.Api
 ```
 
+### Database Setup
+
+The project uses Entity Framework Core with MySQL.
+
+1.  **Configure Connection String**:
+    Update `Backend/SCEMS/SCEMS.Api/appsettings.json` (or `appsettings.Development.json`) with your MySQL credentials:
+    ```json
+    "ConnectionStrings": {
+      "DefaultConnection": "Server=localhost;Database=scems;User=root;Password=your_password;"
+    }
+    ```
+
+2.  **Apply Migrations**:
+    Run the following command to create the database and schema:
+    ```bash
+    cd Backend/SCEMS
+    dotnet ef database update --project SCEMS.Infrastructure --startup-project SCEMS.Api
+    ```
+
+    *If you don't have the EF tool installed:*
+    ```bash
+    dotnet tool install --global dotnet-ef
+    ```
+
+3.  **Seeding**:
+    On first run, the application will automatically seed a default admin account:
+    -   **Email**: `admin@scems.com`
+    -   **Password**: `Admin123!`
+
 **API runs on**: `http://localhost:5000`
 **Swagger UI**: `http://localhost:5000/swagger`
 

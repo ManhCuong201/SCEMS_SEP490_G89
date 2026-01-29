@@ -14,6 +14,7 @@ export const UserRoomsListPage: React.FC = () => {
   const [error, setError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [search, setSearch] = useState('')
+  const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
 
   const loadRooms = async () => {
@@ -38,6 +39,22 @@ export const UserRoomsListPage: React.FC = () => {
     loadRooms()
   }, [currentPage, search])
 
+  // Handle click outside to collapse
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (expandedRoomId && !(e.target as HTMLElement).closest('.room-card-user')) {
+        setExpandedRoomId(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [expandedRoomId])
+
+  const toggleRoom = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpandedRoomId(prev => prev === id ? null : id)
+  }
+
   return (
     <div className="page-container">
       <div className="card-header" style={{ marginBottom: 'var(--spacing-lg)' }}>
@@ -55,43 +72,31 @@ export const UserRoomsListPage: React.FC = () => {
 
       {loading ? <Loading fullPage={false} /> : (
         <>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '1.5rem',
-            marginBottom: '2rem'
-          }}>
+          <div className="rooms-flex-container">
             {rooms.map(room => (
-              <div key={room.id} className="glass-panel" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '0',
-                overflow: 'hidden',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                cursor: 'default'
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)'
-                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)'
+              <div
+                key={room.id}
+                className={`glass-panel room-card-user ${expandedRoomId === room.id ? 'active' : ''}`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '0'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none'
-                  e.currentTarget.style.boxShadow = 'var(--shadow-glass)'
-                }}
+                onClick={(e) => toggleRoom(room.id, e)}
               >
                 <div style={{
                   padding: '1.5rem',
-                  borderBottom: '1px solid var(--border-glass)',
+                  borderBottom: expandedRoomId === room.id ? '1px solid var(--border-glass)' : 'none',
                   background: 'rgba(255, 255, 255, 0.02)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{room.roomName}</h3>
+                    <div style={{ width: '100%' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{room.roomName}</h3>
                       <span style={{
-                        fontSize: '0.875rem',
+                        fontSize: '0.75rem',
                         color: 'var(--color-primary)',
                         background: 'rgba(99, 102, 241, 0.1)',
-                        padding: '2px 8px',
+                        padding: '1px 6px',
                         borderRadius: '4px',
                         fontWeight: 500
                       }}>{room.roomCode}</span>
@@ -99,38 +104,49 @@ export const UserRoomsListPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ padding: '1.5rem', flex: 1 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-                      <Users size={18} />
-                      <span>Capacity: <strong style={{ color: 'var(--text-main)' }}>{room.capacity} People</strong></span>
-                    </div>
+                <div className="room-details-expand">
+                  <div style={{ padding: '1.5rem', flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <Package size={18} />
+                        <span>Type: <strong style={{ color: 'var(--text-main)' }}>{room.roomTypeName || 'N/A'}</strong></span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <Users size={18} />
+                        <span>Capacity: <strong style={{ color: 'var(--text-main)' }}>{room.capacity} People</strong></span>
+                      </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-                      <Package size={18} />
-                      <span>Equipment: <strong style={{ color: 'var(--text-main)' }}>{room.equipmentCount} Items</strong></span>
-                    </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <Package size={18} />
+                        <span>Equipment: <strong style={{ color: 'var(--text-main)' }}>{room.equipmentCount} Items</strong></span>
+                      </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-                      <Clock size={18} />
-                      <span>Requests: <strong style={{ color: room.pendingRequestsCount > 0 ? 'var(--color-warning)' : 'var(--text-main)' }}>
-                        {room.pendingRequestsCount} Pending
-                      </strong></span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <Clock size={18} />
+                        <span>Requests: <strong style={{ color: room.pendingRequestsCount > 0 ? 'var(--color-warning)' : 'var(--text-main)' }}>
+                          {room.pendingRequestsCount} Pending
+                        </strong></span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div style={{ padding: '1.5rem', paddingTop: '0' }}>
-                  <Link to={`/rooms/${room.id}/calendar`} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}>
-                    <Calendar size={18} /> View Calendar
-                  </Link>
+                  <div style={{ padding: '1.5rem', paddingTop: '0' }}>
+                    <Link
+                      to={`/rooms/${room.id}/calendar`}
+                      className="btn btn-primary"
+                      style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Calendar size={18} /> View Calendar
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
           {rooms.length === 0 && (
-            <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem' }}>
+            <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem', width: '100%' }}>
               <div style={{ marginBottom: '1rem', color: 'var(--text-muted)' }}>
                 <Package size={48} style={{ opacity: 0.5 }} />
               </div>

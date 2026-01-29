@@ -207,16 +207,16 @@ export const SchedulePage: React.FC = () => {
                                                         borderRadius: '4px',
                                                         marginBottom: '2px'
                                                     }}>
-                                                        <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={s.subject}>
+                                                        <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={s.subject}>
                                                             {s.subject}
                                                         </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.65rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
                                                             <MapPin size={10} /> {s.roomName || 'TBA'}
                                                         </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.65rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
                                                             <Clock size={10} /> {s.startTime} - {s.endTime}
                                                         </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.65rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
                                                             <BookOpen size={10} /> {s.classCode}
                                                         </div>
                                                     </div>

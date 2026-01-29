@@ -30,5 +30,29 @@ export const accountService = {
 
   async updateStatus(id: string, status: number): Promise<void> {
     await api.patch(`/admin/accounts/${id}/status`, { status })
+  },
+
+  async importAccounts(file: File): Promise<{ successCount: number, failureCount: number, errors: string[] }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const { data } = await api.post('/admin/accounts/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return data
+  },
+
+  async downloadTemplate(): Promise<void> {
+    const { data } = await api.get('/admin/accounts/import/template', {
+      responseType: 'blob'
+    })
+    const url = window.URL.createObjectURL(new Blob([data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Account_Template.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
   }
 }

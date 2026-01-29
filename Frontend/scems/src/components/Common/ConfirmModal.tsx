@@ -37,9 +37,17 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             zIndex: 1000,
             backdropFilter: 'blur(4px)'
         }}>
-            <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '1.5rem', margin: '1rem' }}>
-                <h3 style={{ marginBottom: '0.5rem' }}>{title}</h3>
-                <p className="text-muted" style={{ marginBottom: '1.5rem' }}>{message}</p>
+            <div className="glass-panel" style={{
+                width: '100%',
+                maxWidth: '400px',
+                padding: '2rem',
+                margin: '1rem',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-main)',
+                boxShadow: 'var(--shadow-xl)'
+            }}>
+                <h3 style={{ marginBottom: '1rem', color: 'var(--text-main)' }}>{title}</h3>
+                <p style={{ marginBottom: '2rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>{message}</p>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                     <button className="btn btn-secondary" onClick={onCancel}>

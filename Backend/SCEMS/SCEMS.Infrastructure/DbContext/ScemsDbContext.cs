@@ -13,6 +13,7 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Equipment> Equipment { get; set; } = null!;
     public DbSet<Booking> Bookings { get; set; } = null!;
     public DbSet<IssueReport> IssueReports { get; set; } = null!;
+    public DbSet<RoomType> RoomTypes { get; set; } = null!;
 
     // New Entities
     public DbSet<Teaching_Schedule> TeachingSchedules { get; set; } = null!;
@@ -35,6 +36,13 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
             .WithMany()
             .HasForeignKey(c => c.LecturerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure RoomType Cascade
+        modelBuilder.Entity<Room>()
+            .HasOne(r => r.RoomType)
+            .WithMany(rt => rt.Rooms)
+            .HasForeignKey(r => r.RoomTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ClassStudent>()
             .HasOne(cs => cs.Class)

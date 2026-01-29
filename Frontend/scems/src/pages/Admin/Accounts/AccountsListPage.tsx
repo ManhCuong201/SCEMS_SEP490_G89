@@ -4,7 +4,8 @@ import { accountService } from '../../../services/account.service'
 import { Account, AccountStatus } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { DataTable, Column } from '../../../components/Common/DataTable'
-import { Edit, Trash2, Eye } from 'lucide-react'
+import { Pagination } from '../../../components/Common/Pagination'
+import { Edit, Trash2, Eye, FileDown, Upload } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
 export const AccountsListPage: React.FC = () => {
@@ -132,6 +133,30 @@ export const AccountsListPage: React.FC = () => {
     }
   ]
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const result = await accountService.importAccounts(file)
+      setSuccess(`Successfully imported ${result.successCount} accounts. ${result.failureCount} failed.`)
+      if (result.errors.length > 0) {
+        setError(`Import partially failed: ${result.errors.slice(0, 3).join(', ')}${result.errors.length > 3 ? '...' : ''}`)
+      }
+      loadAccounts()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to import accounts')
+    } finally {
+      setLoading(false)
+      // Reset input
+      e.target.value = ''
+    }
+  }
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -139,7 +164,18 @@ export const AccountsListPage: React.FC = () => {
           <h1>Accounts</h1>
           <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage system users and administrators</p>
         </div>
-        <Link to="/admin/accounts/create" className="btn btn-primary">+ New Account</Link>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-secondary" onClick={() => accountService.downloadTemplate()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FileDown size={16} />
+            Template
+          </button>
+          <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Upload size={16} />
+            Import Excel
+            <input type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleImport} disabled={loading} />
+          </label>
+          <Link to="/admin/accounts/create" className="btn btn-primary">+ New Account</Link>
+        </div>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -147,7 +183,7 @@ export const AccountsListPage: React.FC = () => {
 
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)' }}>
-          {/* Search and Filters can go here if needed, SearchBar is part of SearchBar component which wasn't used in previous iteration but can be added */}
+          {/* Search and Filters can go here if needed */}
         </div>
 
         <DataTable
@@ -156,6 +192,16 @@ export const AccountsListPage: React.FC = () => {
           isLoading={loading}
           emptyMessage="No accounts found."
         />
+
+        {!loading && total > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(total / 10)}
+            onPageChange={setCurrentPage}
+            total={total}
+            pageSize={10}
+          />
+        )}
       </div>
 
       <ConfirmModal

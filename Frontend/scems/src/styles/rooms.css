@@ -8,7 +8,8 @@
 .room-card {
     display: flex;
     flex-direction: column;
-    padding: 0; /* Override default card padding */
+    padding: 0;
+    /* Override default card padding */
     overflow: hidden;
     transition: var(--transition-base);
     border: 1px solid var(--border-color);
@@ -106,4 +107,68 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
+}
+
+/* Flex container for compact cards */
+.rooms-flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+/* User Room Card Toggle Extension */
+.room-card-user {
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    max-height: 98px;
+    width: 200px;
+    /* Compact default width */
+    overflow: hidden;
+    will-change: max-height, width;
+    cursor: pointer !important;
+    border: 1px solid var(--slate-200) !important;
+    /* Visible border */
+    background: var(--bg-surface) !important;
+    /* Solid background */
+    box-shadow: var(--shadow-sm);
+}
+
+.room-card-user:hover {
+    border-color: var(--color-primary-light) !important;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.room-card-user.active {
+    max-height: 600px;
+    width: 340px;
+    /* Expanded width */
+    cursor: default !important;
+    box-shadow: var(--shadow-xl);
+    border-color: var(--color-primary) !important;
+    transform: none;
+}
+
+.room-details-expand {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.room-card-user.active .room-details-expand {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.5s ease 0.3s;
+    /* Delay opacity until size is larger */
+}
+
+.room-card-user .btn-primary {
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.5s ease 0.3s, opacity 0.5s ease 0.3s;
+}
+
+.room-card-user.active .btn-primary {
+    transform: translateY(0);
+    opacity: 1;
 }

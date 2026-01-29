@@ -19,6 +19,7 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<Booking_History> _bookingHistoryRepository;
     private IClassRepository? _classRepository;
     private IClassStudentRepository? _classStudentRepository;
+    private IGenericRepository<RoomType>? _roomTypeRepository;
     public UnitOfWork(ScemsDbContext context)
     {
         _context = context;
@@ -82,6 +83,11 @@ public class UnitOfWork : IUnitOfWork
     public IClassStudentRepository ClassStudents
     {
         get { return _classStudentRepository ??= new ClassStudentRepository(_context); }
+    }
+
+    public IGenericRepository<RoomType> RoomTypes
+    {
+        get { return _roomTypeRepository ??= new GenericRepository<RoomType>(_context); }
     }
     public async Task SaveChangesAsync()
     {

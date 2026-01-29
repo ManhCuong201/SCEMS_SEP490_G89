@@ -37,37 +37,72 @@ export const DashboardPage: React.FC = () => {
     loadStats()
   }, [])
 
-  const StatCard: React.FC<{ title: string; value: number; href: string; icon: React.ReactNode; color: string }> = ({ title, value, href, icon, color }) => (
+  const StatCard: React.FC<{ title: string; value: number; href: string; icon: React.ReactNode; color: string; bgColor?: string }> = ({ title, value, href, icon, color, bgColor }) => (
     <Link
       to={href}
-      className="glass-card"
       style={{
-        padding: '1.5rem',
+        padding: '1.75rem',
         textDecoration: 'none',
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        borderRadius: 'var(--radius-lg)', // Restoring rounded corners
+        // Restore distinctive left accent "shadow" (border)
+        borderLeft: `5px solid ${color}`,
+        borderTop: `1px solid ${color}30`,
+        borderRight: `1px solid ${color}30`,
+        borderBottom: `1px solid ${color}30`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        // Make background distinct solid darker gray
+        background: 'var(--slate-100)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)' // Refined shadow
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-5px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-xl)'; // Deeper hover shadow
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
       }}
     >
-      <div style={{
-        position: 'absolute',
-        top: '1rem',
-        right: '1rem',
-        opacity: 0.2,
-        color: color,
-        transform: 'scale(2.5)',
-        transformOrigin: 'top right'
-      }}>
-        {icon}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+        <div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, margin: '0 0 0.25rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {title}
+          </p>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            {value}
+          </h2>
+        </div>
+        <div style={{
+          background: `${color}15`, // 10-15% opacity of the color
+          color: color,
+          padding: '0.75rem',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: `0 4px 6px -2px ${color}20`
+        }}>
+          {React.cloneElement(icon as React.ReactElement, { size: 28 })}
+        </div>
       </div>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500, margin: '0 0 0.5rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        {title}
-      </p>
-      <h2 style={{ fontSize: '2.5rem', fontWeight: 700, margin: 0 }} className="text-gradient">
-        {value}
-      </h2>
-      <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: color, fontWeight: 500 }}>
-        View Details <ArrowRight size={16} />
+
+      <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: color, fontWeight: 600 }}>
+        View Details
+        <div style={{
+          background: `${color}20`,
+          borderRadius: '50%',
+          width: '20px',
+          height: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <ArrowRight size={12} />
+        </div>
       </div>
     </Link>
   )
@@ -84,7 +119,7 @@ export const DashboardPage: React.FC = () => {
       {loading ? (
         <Loading />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-lg)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
           <StatCard
             title="Total Accounts"
             value={stats.totalAccounts}

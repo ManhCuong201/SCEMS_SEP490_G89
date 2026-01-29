@@ -55,8 +55,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div style={{ marginTop: 'var(--spacing-lg)' }}>
-      <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-md)' }}>
+    <div style={{ marginTop: '1.5rem' }}>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
         Showing {startItem} to {endItem} of {total} results
       </p>
       <div className="pagination">

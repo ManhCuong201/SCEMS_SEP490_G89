@@ -71,18 +71,3 @@
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* Dark Mode Variables Override */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-app: var(--slate-950);
-    --bg-surface: var(--slate-900);
-
-    --bg-glass: rgba(15, 23, 42, 0.6);
-    --border-glass: rgba(255, 255, 255, 0.05);
-    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-
-    --text-main: var(--slate-100);
-    --text-muted: var(--slate-400);
-  }
-}

@@ -13,11 +13,13 @@ public class TeachingScheduleService : ITeachingScheduleService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IImportService _importService;
 
-    public TeachingScheduleService(IUnitOfWork unitOfWork, IMapper mapper)
+    public TeachingScheduleService(IUnitOfWork unitOfWork, IMapper mapper, IImportService importService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _importService = importService;
     }
 
     public async Task<List<ScheduleResponseDto>> GetMyScheduleAsync(Guid userId, DateTime start, DateTime end, string? classCode = null)
@@ -53,34 +55,15 @@ public class TeachingScheduleService : ITeachingScheduleService
 
     public async Task<byte[]> GetImportTemplateAsync()
     {
-        using var workbook = new XLWorkbook();
-        var worksheet = workbook.Worksheets.Add("Template");
+        using var stream = await _importService.GetTeachingScheduleTemplateStreamAsync();
+        if (stream is MemoryStream ms)
+        {
+            return ms.ToArray();
+        }
         
-        // Headers
-        worksheet.Cell(1, 1).Value = "Subject Code";
-        worksheet.Cell(1, 2).Value = "Start Date (yyyy-mm-dd)";
-        worksheet.Cell(1, 3).Value = "End Date (yyyy-mm-dd)";
-        worksheet.Cell(1, 4).Value = "Days (Mon,Wed)";
-        worksheet.Cell(1, 5).Value = "Start Times (07:30,10:00)";
-        worksheet.Cell(1, 6).Value = "End Times (09:50,12:10)";
-        worksheet.Cell(1, 7).Value = "Room Codes (P101,P102)";
-        worksheet.Cell(1, 8).Value = "Class Code";
-
-        // Sample Row
-        worksheet.Cell(2, 1).Value = "PRO192";
-        worksheet.Cell(2, 2).Value = "2024-01-01";
-        worksheet.Cell(2, 3).Value = "2024-04-30";
-        worksheet.Cell(2, 4).Value = "Mon,Wed";
-        worksheet.Cell(2, 5).Value = "07:30,10:00";
-        worksheet.Cell(2, 6).Value = "09:50,12:10";
-        worksheet.Cell(2, 7).Value = "P101,P102";
-        worksheet.Cell(2, 8).Value = "SE1701";
-
-        worksheet.Columns().AdjustToContents();
-
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        return memoryStream.ToArray();
     }
 
     public async Task<string> ImportScheduleAsync(Stream excelStream, Guid lecturerId)

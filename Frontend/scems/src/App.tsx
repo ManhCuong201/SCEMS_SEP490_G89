@@ -15,6 +15,9 @@ import { RoomsListPage } from './pages/Admin/Rooms/RoomsListPage'
 import { CreateRoomPage } from './pages/Admin/Rooms/CreateRoomPage'
 import { EditRoomPage } from './pages/Admin/Rooms/EditRoomPage'
 import { RoomDetailPage } from './pages/Admin/Rooms/RoomDetailPage'
+import { RoomTypesListPage } from './pages/Admin/RoomTypes/RoomTypesListPage'
+import { CreateRoomTypePage } from './pages/Admin/RoomTypes/CreateRoomTypePage'
+import { EditRoomTypePage } from './pages/Admin/RoomTypes/EditRoomTypePage'
 import { EquipmentTypesListPage } from './pages/Admin/EquipmentTypes/EquipmentTypesListPage'
 import { CreateEquipmentTypePage } from './pages/Admin/EquipmentTypes/CreateEquipmentTypePage'
 import { EditEquipmentTypePage } from './pages/Admin/EquipmentTypes/EditEquipmentTypePage'
@@ -56,6 +59,9 @@ const AppContent: React.FC = () => {
               <Route path="rooms/create" element={<CreateRoomPage />} />
               <Route path="rooms/:id" element={<RoomDetailPage />} />
               <Route path="rooms/:id/edit" element={<EditRoomPage />} />
+              <Route path="room-types" element={<RoomTypesListPage />} />
+              <Route path="room-types/create" element={<CreateRoomTypePage />} />
+              <Route path="room-types/:id/edit" element={<EditRoomTypePage />} />
               <Route path="bookings" element={<BookingManagementPage />} />
               <Route path="equipment-types" element={<EquipmentTypesListPage />} />
               <Route path="equipment-types/create" element={<CreateEquipmentTypePage />} />
