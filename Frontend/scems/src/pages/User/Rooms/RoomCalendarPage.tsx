@@ -9,9 +9,51 @@ import { Booking, Room, BookingStatus } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Button } from '../../../components/Common/Button'
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, X, MapPin } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, X, MapPin, Users } from 'lucide-react'
 import '../../../styles/calendar.css'
 import '../../../styles/compact-calendar.css'
+import '../../../styles/scheduler.css' // Import scheduler styles for tooltip
+
+/* --- Portal Tooltip Component --- */
+interface PortalTooltipProps {
+    title: string;
+    icon: React.ReactNode;
+    lines: { label: string; value: string | number }[];
+    targetRect: DOMRect | null;
+}
+
+const PortalTooltip: React.FC<PortalTooltipProps> = ({ title, icon, lines, targetRect }) => {
+    if (!targetRect) return null;
+
+    const style: React.CSSProperties = {
+        position: 'fixed',
+        zIndex: 11000,
+        top: `${targetRect.top - 12}px`,
+        left: `${targetRect.left + targetRect.width / 2}px`,
+        transform: 'translateX(-50%) translateY(-100%)'
+    };
+
+    if (targetRect.left + 220 > window.innerWidth) {
+        style.left = 'auto';
+        style.right = `${window.innerWidth - targetRect.right}px`;
+        style.transform = 'translateY(-100%)';
+    }
+
+    return createPortal(
+        <div className="portal-scheduler-tooltip" style={style}>
+            <div className="portal-tooltip-header">
+                {icon} {title}
+            </div>
+            {lines.map((line, idx) => (
+                <div key={idx} className="portal-tooltip-line">
+                    <span>{line.label}</span>
+                    <strong>{line.value}</strong>
+                </div>
+            ))}
+        </div>,
+        document.body
+    );
+};
 
 export const RoomCalendarPage: React.FC = () => {
     const { id } = useParams<{ id: string }>()
@@ -27,6 +69,7 @@ export const RoomCalendarPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
     const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
+    const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
 
     /* State for Room Change */
     const [bookingType, setBookingType] = useState<'new' | 'change'>('new')
@@ -152,6 +195,12 @@ export const RoomCalendarPage: React.FC = () => {
         }
     }
 
+    // Helper for teacher identification
+    const getTeacherId = (name: string, email?: string) => {
+        if (!email) return name.split(' ').pop() || 'N/A';
+        return email.split('@')[0];
+    };
+
     const renderCalendar = () => {
         if (!room || !bookingSettings) return null
         const { start } = getWeekRange(currentDate)
@@ -259,7 +308,29 @@ export const RoomCalendarPage: React.FC = () => {
                                         }
 
                                         cellContent = (
-                                            <div className={className}>
+                                            <div
+                                                className={className}
+                                                onMouseEnter={(e) => {
+                                                    const isClass = isSystemBooking;
+                                                    const lines = isClass ? [
+                                                        { label: 'Subject', value: approved.reason?.split(': ')[1]?.split(' (')[0] || 'N/A' },
+                                                        { label: 'Class', value: approved.reason?.split('(')[1]?.split(')')[0] || 'N/A' },
+                                                        { label: 'Lecturer', value: approved.requestedByName || 'N/A' },
+                                                        { label: 'Time', value: `${formatLocalTime(approved.timeSlot)} - ${formatLocalTime(approved.endTime || new Date())}` }
+                                                    ] : [
+                                                        { label: 'By', value: getTeacherId(approved.requestedByName || '', approved.requestedByAccount?.email) },
+                                                        { label: 'Reason', value: approved.reason || 'No reason provided' }
+                                                    ];
+
+                                                    setHoveredTooltip({
+                                                        title: isClass ? 'Schedule' : 'Booking',
+                                                        icon: isClass ? <CalendarIcon size={12} /> : <Clock size={12} />,
+                                                        lines: lines,
+                                                        targetRect: e.currentTarget.getBoundingClientRect()
+                                                    });
+                                                }}
+                                                onMouseLeave={() => setHoveredTooltip(null)}
+                                            >
                                                 <div style={{ fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase' }}>
                                                     {label}
                                                 </div>
@@ -307,6 +378,11 @@ export const RoomCalendarPage: React.FC = () => {
             </div>
         )
     }
+
+    const formatLocalTime = (date: string | Date) => {
+        const d = new Date(date);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
 
     const isLecturer = currentUser?.role === 'Lecturer'
 
@@ -382,6 +458,8 @@ export const RoomCalendarPage: React.FC = () => {
             </div>
 
 
+
+            {hoveredTooltip && <PortalTooltip {...hoveredTooltip} />}
 
             {modalOpen && selectedSlot && createPortal(
                 <div style={{

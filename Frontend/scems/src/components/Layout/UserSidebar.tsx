@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Building2, CalendarDays, Calendar, Users } from 'lucide-react'
+import { Building2, CalendarDays, Calendar, Users, LayoutGrid } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 export const UserSidebar: React.FC = () => {
@@ -29,12 +29,13 @@ export const UserSidebar: React.FC = () => {
           }}>
             Menu
           </p>
+          <NavLink href="/dashboard" label="Daily Schedule" icon={<LayoutGrid size={20} />} active={isActive('/dashboard')} />
           <NavLink href="/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/rooms')} />
           {user?.role === 'Lecturer' && (
-            <>
-              <NavLink href="/teacher/classes" label="My Classes" icon={<Users size={20} />} active={isActive('/teacher/classes')} />
-              <NavLink href="/schedule" label="Class schedule" icon={<Calendar size={20} />} active={isActive('/schedule')} />
-            </>
+            <NavLink href="/teacher/classes" label="My Classes" icon={<Users size={20} />} active={isActive('/teacher/classes')} />
+          )}
+          {(user?.role === 'Lecturer' || user?.role === 'Student') && (
+            <NavLink href="/schedule" label="Class schedule" icon={<Calendar size={20} />} active={isActive('/schedule')} />
           )}
           <NavLink href="/my-bookings" label="My Bookings" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} />
         </div>

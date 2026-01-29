@@ -34,6 +34,7 @@ public class ScheduleResponseDto
     public string Subject { get; set; } = string.Empty;
     public string ClassCode { get; set; } = string.Empty;
     public string LecturerName { get; set; } = string.Empty;
+    public string LecturerEmail { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public int Slot { get; set; }
     public string StartTime { get; set; } = string.Empty;

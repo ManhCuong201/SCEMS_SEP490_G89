@@ -27,10 +27,10 @@ export const LoginPage: React.FC = () => {
         if (user.role === 'Admin') {
           navigate('/admin/dashboard')
         } else {
-          navigate('/rooms')
+          navigate('/dashboard')
         }
       } else {
-        navigate('/rooms')
+        navigate('/dashboard')
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed')
@@ -106,7 +106,7 @@ export const LoginPage: React.FC = () => {
                       const user = authService.getUser()
                       if (user) {
                         if (user.role === 'Admin') navigate('/admin/dashboard')
-                        else navigate('/rooms')
+                        else navigate('/dashboard')
                       }
                     }
                   }

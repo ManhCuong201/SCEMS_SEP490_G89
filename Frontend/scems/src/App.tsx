@@ -34,11 +34,12 @@ import { SchedulePage } from './pages/Schedule/SchedulePage'
 import TeacherClassesPage from './pages/User/TeacherClassesPage'
 import ClassStudentsPage from './pages/User/ClassStudentsPage'
 import { useAuth } from './context/AuthContext'
+import { DailySchedulerPage } from './pages/User/Dashboard/DailySchedulerPage'
 
 const HomeRedirect = () => {
   const { user } = useAuth()
   if (user?.role === 'Admin') return <Navigate to="/admin/dashboard" replace />
-  return <Navigate to="/rooms" replace />
+  return <Navigate to="/dashboard" replace />
 }
 
 const AppContent: React.FC = () => {
@@ -75,6 +76,14 @@ const AppContent: React.FC = () => {
           </AdminLayout>
         </PrivateRoute>
       } />
+
+      <Route path="/dashboard" element={
+        <PrivateRoute>
+          <UserLayout>
+            <DailySchedulerPage />
+          </UserLayout>
+        </PrivateRoute>
+      } />
       <Route path="/rooms/*" element={
         <PrivateRoute>
           <UserLayout>
@@ -85,7 +94,7 @@ const AppContent: React.FC = () => {
           </UserLayout>
         </PrivateRoute>
       } />
-      {user?.role === 'Lecturer' && (
+      {(user?.role === 'Lecturer' || user?.role === 'Student') && (
         <Route path="/schedule" element={
           <PrivateRoute>
             <UserLayout>

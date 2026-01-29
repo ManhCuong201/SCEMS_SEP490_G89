@@ -34,5 +34,10 @@ export const bookingService = {
     async createRoomChangeRequest(request: CreateRoomChangeRequest): Promise<Booking> {
         const { data } = await api.post<Booking>('/booking/change-room', request)
         return data
+    },
+
+    async getBookingsByDay(date: string): Promise<Booking[]> {
+        const { data } = await api.get<Booking[]>(`/booking/day?date=${date}`)
+        return data
     }
 }

@@ -172,3 +172,8 @@
     transform: translateY(0);
     opacity: 1;
 }
+
+.already-requested {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border-color: var(--color-warning) !important;
+}

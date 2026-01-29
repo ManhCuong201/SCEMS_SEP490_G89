@@ -43,9 +43,22 @@ public class TeachingScheduleService : ITeachingScheduleService
             }
             else
             {
-                // If student doesn't provide classCode, return nothing or maybe default classes?
-                // For now, return nothing if no classCode search.
-                return new List<ScheduleResponseDto>();
+                // Auto-resolve student's enrolled classes
+                var enrolledClassCodes = await _unitOfWork.ClassStudents.GetAll()
+                    .Where(cs => cs.StudentId == userId)
+                    .Include(cs => cs.Class)
+                    .Select(cs => cs.Class != null ? cs.Class.ClassCode : cs.PendingStudentIdentifier)
+                    .Where(c => c != null)
+                    .ToListAsync();
+
+                if (enrolledClassCodes.Any())
+                {
+                    query = query.Where(ts => enrolledClassCodes.Contains(ts.ClassCode));
+                }
+                else
+                {
+                    return new List<ScheduleResponseDto>();
+                }
             }
         }
 
@@ -159,6 +172,7 @@ public class TeachingScheduleService : ITeachingScheduleService
                             ClassCode = classCode,
                             LecturerId = lecturerId.ToString(),
                             LecturerName = lecturer.FullName,
+                            LecturerEmail = lecturer.Email,
                             Date = date,
                             Slot = slot,
                             StartTime = config.start,
@@ -179,6 +193,17 @@ public class TeachingScheduleService : ITeachingScheduleService
 
         await _unitOfWork.SaveChangesAsync();
         return $"Successfully imported {importedCount} sessions. Errors: {errorCount}";
+    }
+
+    public async Task<List<ScheduleResponseDto>> GetSchedulesByDateAsync(DateTime date)
+    {
+        var schedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .Include(ts => ts.Room)
+            .Where(ts => ts.Date == date.Date)
+            .OrderBy(ts => ts.Slot)
+            .ToListAsync();
+
+        return _mapper.Map<List<ScheduleResponseDto>>(schedules);
     }
 
     private int CalculateSlot(TimeSpan startTime)

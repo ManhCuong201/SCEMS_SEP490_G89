@@ -32,5 +32,10 @@ export const scheduleService = {
         document.body.appendChild(link);
         link.click();
         link.remove();
+    },
+
+    async getSchedulesByDay(date: string): Promise<ScheduleResponse[]> {
+        const { data } = await api.get<ScheduleResponse[]>(`/teaching-schedules/day?date=${date}`);
+        return data;
     }
 };

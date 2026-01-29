@@ -33,9 +33,7 @@ export const SchedulePage: React.FC = () => {
     const slots = Array.from({ length: 13 }, (_, i) => i)
 
     useEffect(() => {
-        if (user?.role !== 'Student' || classSearch) {
-            fetchSchedule()
-        }
+        fetchSchedule()
     }, [currentDate, classSearch])
 
     const fetchSchedule = async () => {
@@ -143,10 +141,10 @@ export const SchedulePage: React.FC = () => {
                         <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
                             {format(startDate, 'MMMM yyyy')}
                         </h2>
-                        <div className="btn-group">
-                            <button className="btn btn-secondary btn-sm" onClick={handlePrevWeek} style={{ padding: '2px 8px' }}><ChevronLeft size={14} /></button>
-                            <button className="btn btn-secondary btn-sm" onClick={handleToday} style={{ padding: '2px 8px', fontSize: '0.75rem' }}>Today</button>
-                            <button className="btn btn-secondary btn-sm" onClick={handleNextWeek} style={{ padding: '2px 8px' }}><ChevronRight size={14} /></button>
+                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                            <button className="btn btn-secondary btn-sm" onClick={handlePrevWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '28px', width: '32px', padding: 0 }}><ChevronLeft size={16} /></button>
+                            <button className="btn btn-secondary btn-sm" onClick={handleToday} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center' }}>Today</button>
+                            <button className="btn btn-secondary btn-sm" onClick={handleNextWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '28px', width: '32px', padding: 0 }}><ChevronRight size={16} /></button>
                         </div>
                     </div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>

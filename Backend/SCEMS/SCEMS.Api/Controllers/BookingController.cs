@@ -53,6 +53,13 @@ public class BookingController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("day")]
+    public async Task<IActionResult> GetBookingsByDay([FromQuery] DateTime date)
+    {
+        var result = await _bookingService.GetBookingsByDateAsync(date);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetBookingById(Guid id)
     {

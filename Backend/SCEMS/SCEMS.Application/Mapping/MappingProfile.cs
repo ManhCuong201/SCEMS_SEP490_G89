@@ -26,9 +26,11 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.RoomCode, opt => opt.MapFrom(src => src.Room.RoomCode));
         CreateMap<CreateEquipmentDto, Equipment>();
         CreateMap<UpdateEquipmentDto, Equipment>();
-        CreateMap<Booking, BookingResponseDto>();
+        CreateMap<Booking, BookingResponseDto>()
+            .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.TimeSlot.AddHours(src.Duration)));
         CreateMap<CreateBookingDto, Booking>();
         CreateMap<Teaching_Schedule, ScheduleResponseDto>()
+            .ForMember(dest => dest.LecturerEmail, opt => opt.MapFrom(src => src.LecturerEmail))
             .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room != null ? src.Room.RoomName : ""))
             .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime.ToString(@"hh\:mm")))
             .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime.ToString(@"hh\:mm")));

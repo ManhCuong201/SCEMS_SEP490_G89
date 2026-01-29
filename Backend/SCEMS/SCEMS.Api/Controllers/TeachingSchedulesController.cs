@@ -28,6 +28,14 @@ public class TeachingSchedulesController : ControllerBase
         return Ok(schedule);
     }
 
+    [HttpGet("day")]
+    public async Task<ActionResult<List<ScheduleResponseDto>>> GetSchedulesByDay([FromQuery] DateTime date)
+    {
+        var schedules = await _teachingScheduleService.GetSchedulesByDateAsync(date);
+        return Ok(schedules);
+    }
+
+    [Authorize(Roles = "Lecturer,Admin")]
     [HttpGet("template")]
     public async Task<IActionResult> DownloadTemplate()
     {

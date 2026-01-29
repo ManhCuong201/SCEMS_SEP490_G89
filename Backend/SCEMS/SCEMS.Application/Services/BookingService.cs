@@ -271,6 +271,21 @@ public class BookingService : IBookingService
         return bookingDtos.OrderBy(b => b.TimeSlot).ToList();
     }
 
+    public async Task<List<BookingResponseDto>> GetBookingsByDateAsync(DateTime date)
+    {
+        var startOfDay = date.Date;
+        var endOfDay = startOfDay.AddDays(1);
+
+        var bookings = await _unitOfWork.Bookings.GetAll()
+            .Include(b => b.Room)
+            .Include(b => b.RequestedByAccount)
+            .Where(b => b.TimeSlot >= startOfDay && b.TimeSlot < endOfDay && b.Status != BookingStatus.Rejected)
+            .OrderBy(b => b.TimeSlot)
+            .ToListAsync();
+
+        return _mapper.Map<List<BookingResponseDto>>(bookings);
+    }
+
     public async Task<BookingResponseDto> CreateRoomChangeRequestAsync(CreateRoomChangeRequestDto dto, Guid userId)
     {
         var account = await _unitOfWork.Accounts.GetByIdAsync(userId);

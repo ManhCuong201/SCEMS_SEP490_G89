@@ -59,9 +59,51 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     padding: 2px;
     box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.05);
+    cursor: help;
+    transition: filter 0.2s;
+}
+
+.slot-my-class {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(79, 70, 229, 0.05));
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    color: var(--color-primary);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    padding: 2px;
+    cursor: help;
+    transition: filter 0.2s;
+}
+
+.slot-my-booking {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #059669;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    padding: 2px;
+    cursor: help;
+    transition: filter 0.2s;
+}
+
+.slot-booked:hover,
+.slot-my-class:hover,
+.slot-my-booking:hover {
+    filter: brightness(1.2);
 }
 
 /* Pending Slot - Premium Warning/Amber style */
