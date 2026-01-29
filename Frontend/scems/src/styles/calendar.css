@@ -1,0 +1,136 @@
+.calendar-grid {
+    margin-top: 20px;
+    overflow-x: auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+}
+
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.calendar-table th {
+    padding: 8px;
+    /* Reduced from 12px */
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--color-border);
+    font-weight: 600;
+    text-align: center;
+    color: var(--color-text);
+    font-size: 0.8rem;
+    /* Reduced font size */
+}
+
+.calendar-table td {
+    border: 1px solid var(--border-glass);
+    height: 40px;
+    /* Reduced from 80px */
+    vertical-align: top;
+    padding: 0;
+    transition: background-color 0.2s;
+    background-color: transparent;
+    color: var(--text-main);
+    position: relative;
+}
+
+.calendar-time-col {
+    width: 60px;
+    /* Reduced width */
+    font-weight: 600;
+    background-color: var(--bg-secondary);
+    text-align: center;
+    vertical-align: middle !important;
+    color: var(--color-text);
+    font-size: 0.8rem;
+}
+
+/* Booked Slot - Premium Red style */
+.slot-booked {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: var(--color-danger);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    padding: 2px;
+    box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.05);
+}
+
+/* Pending Slot - Premium Warning/Amber style */
+.slot-pending {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Request Count Badge */
+.slot-pending-text {
+    font-size: 0.65rem;
+    color: #fff;
+    font-weight: 700;
+    background: var(--color-warning);
+    padding: 1px 6px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.slot-available {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.btn-book-slot {
+    width: 90%;
+    height: 80%;
+    margin: auto;
+    background: rgba(99, 102, 241, 0.1);
+    /* Subtle primary color */
+    border: 1px solid transparent;
+    color: var(--color-primary);
+    /* Visible text */
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    /* Smaller font */
+    opacity: 0.8;
+}
+
+.btn-book-slot:hover {
+    background-color: var(--color-primary);
+    color: white;
+    opacity: 1;
+    transform: scale(1.02);
+}
+
+.slot-past {
+    background-color: rgba(0, 0, 0, 0.2);
+    height: 100%;
+    border-radius: var(--radius-sm);
+}

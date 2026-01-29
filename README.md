@@ -15,7 +15,7 @@ RoomManagement/
 │       ├── Data/                # Repositories & data access interfaces
 │       └── Program.cs           # Entry point & configuration
 └── Frontend/
-    └── scems-admin/
+    └── scems/
         ├── src/
         │   ├── components/      # Reusable React components
         │   ├── pages/           # Page components for different routes
@@ -77,7 +77,7 @@ RoomManagement/
 ```bash
 cd Backend/SCEMS
 dotnet restore
-dotnet run
+dotnet run --project SCEMS.Api
 ```
 
 **API runs on**: `http://localhost:5000`
@@ -86,7 +86,7 @@ dotnet run
 ### Frontend Setup
 
 ```bash
-cd Frontend/scems-admin
+cd Frontend/scems
 npm install
 npm run dev
 ```

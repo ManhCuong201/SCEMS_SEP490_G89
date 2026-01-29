@@ -74,7 +74,54 @@ public class AuthController : ControllerBase
             var account = await _unitOfWork.Accounts.GetByEmailOrCodeAsync(emailClaim);
             if (account == null)
             {
-                return Unauthorized(new { message = "Account not found. Please contact Admin to register." });
+                // Auto-Registration Logic
+                var emailParts = emailClaim.Split('@');
+                var username = emailParts[0];
+                var domain = emailParts.Length > 1 ? emailParts[1].ToLower() : "";
+
+                SCEMS.Domain.Enums.AccountRole role;
+                string? studentCode = null;
+
+                if (domain == "fpt.edu.vn")
+                {
+                    // Check for student pattern: ends with 2 letters + digits (e.g. cuongvmhe173561)
+                    var match = System.Text.RegularExpressions.Regex.Match(username, @"([a-zA-Z]{2}\d+)$");
+                    if (match.Success)
+                    {
+                        role = SCEMS.Domain.Enums.AccountRole.Student;
+                        studentCode = match.Groups[1].Value.ToUpper();
+                    }
+                    else
+                    {
+                        // Default to Lecturer for other fpt.edu.vn emails
+                        role = SCEMS.Domain.Enums.AccountRole.Lecturer;
+                    }
+                }
+                else if (domain == "fe.edu.vn")
+                {
+                    // fe.edu.vn is typically Lecturers/Staff
+                    role = SCEMS.Domain.Enums.AccountRole.Lecturer;
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Only @fpt.edu.vn and @fe.edu.vn emails are allowed." });
+                }
+
+                var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value 
+                                ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "given_name")?.Value
+                                ?? username;
+
+                account = new SCEMS.Domain.Entities.Account
+                {
+                    Email = emailClaim,
+                    FullName = nameClaim,
+                    Role = role,
+                    Status = SCEMS.Domain.Enums.AccountStatus.Active,
+                    StudentCode = studentCode
+                };
+
+                await _unitOfWork.Accounts.AddAsync(account);
+                await _unitOfWork.SaveChangesAsync();
             }
 
             if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)

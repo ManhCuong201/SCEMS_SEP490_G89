@@ -20,7 +20,7 @@ public class EquipmentTypeService : IEquipmentTypeService
 
     public async Task<PaginatedEquipmentTypesDto> GetEquipmentTypesAsync(PaginationParams @params)
     {
-        var query = _unitOfWork.EquipmentTypes.GetAll();
+        var query = _unitOfWork.EquipmentTypes.GetAllWithDetails();
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
@@ -70,7 +70,8 @@ public class EquipmentTypeService : IEquipmentTypeService
 
     public async Task<EquipmentTypeResponseDto?> GetEquipmentTypeByIdAsync(Guid id)
     {
-        var equipmentType = await _unitOfWork.EquipmentTypes.GetByIdAsync(id);
+        var equipmentType = await _unitOfWork.EquipmentTypes.GetByIdWithDetailsAsync(id);
+
         if (equipmentType == null)
         {
             return null;

@@ -84,6 +84,7 @@ public class AccountService : IAccountService
             Phone = dto.Phone,
             Role = dto.Role,
             Status = AccountStatus.Active,
+            StudentCode = dto.StudentCode,
             PasswordHash = HashPassword(dto.Password)
         };
 
@@ -116,6 +117,7 @@ public class AccountService : IAccountService
         account.Email = dto.Email;
         account.Phone = dto.Phone;
         account.Role = dto.Role;
+        account.StudentCode = dto.StudentCode;
 
         _unitOfWork.Accounts.Update(account);
         await _unitOfWork.SaveChangesAsync();

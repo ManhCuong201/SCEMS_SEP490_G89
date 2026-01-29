@@ -19,6 +19,9 @@ public class CreateAccountDto
     [Required(ErrorMessage = "Role is required")]
     public AccountRole Role { get; set; }
 
+    [RegularExpression(@"^[a-zA-Z]{2}\d+$", ErrorMessage = "Student Code must start with 2 letters followed by digits (e.g. HE173561)")]
+    public string? StudentCode { get; set; }
+
     [Required(ErrorMessage = "Password is required")]
     [StringLength(255, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
     public string Password { get; set; } = string.Empty;

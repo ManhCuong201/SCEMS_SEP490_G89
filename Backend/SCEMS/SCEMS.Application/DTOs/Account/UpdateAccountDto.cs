@@ -18,4 +18,7 @@ public class UpdateAccountDto
 
     [Required(ErrorMessage = "Role is required")]
     public AccountRole Role { get; set; }
+
+    [RegularExpression(@"^[a-zA-Z]{2}\d+$", ErrorMessage = "Student Code must start with 2 letters followed by digits (e.g. HE173561)")]
+    public string? StudentCode { get; set; }
 }
