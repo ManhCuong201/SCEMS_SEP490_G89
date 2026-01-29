@@ -143,3 +143,21 @@ export interface ApiError {
   message: string
   errors?: Record<string, string[]>
 }
+
+export interface ScheduleResponse {
+  id: string;
+  subject: string;
+  classCode: string;
+  lecturerName: string;
+  date: string;
+  slot: number;
+  startTime: string;
+  endTime: string;
+  roomId: string;
+  roomName: string;
+}
+
+export interface ImportScheduleResponse {
+  message: string;
+}
+

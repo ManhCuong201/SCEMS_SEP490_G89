@@ -11,6 +11,7 @@ import { Loading } from '../../../components/Common/Loading'
 import { Button } from '../../../components/Common/Button'
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, X, MapPin } from 'lucide-react'
 import '../../../styles/calendar.css'
+import '../../../styles/compact-calendar.css'
 
 export const RoomCalendarPage: React.FC = () => {
     const { id } = useParams<{ id: string }>()
@@ -98,7 +99,10 @@ export const RoomCalendarPage: React.FC = () => {
         const slotDate = new Date(date)
         slotDate.setHours(hour, 0, 0, 0)
 
-        if (new Date() > slotDate) {
+        const slotEnd = new Date(slotDate)
+        slotEnd.setHours(hour + 1, 0, 0, 0)
+
+        if (new Date() > slotEnd) {
             return
         }
 
@@ -165,14 +169,14 @@ export const RoomCalendarPage: React.FC = () => {
 
         return (
             <div className="table-wrapper">
-                <table className="glass-table calendar-table">
+                <table className="glass-table calendar-table compact-grid">
                     <thead>
                         <tr>
                             <th className="calendar-time-col">Time</th>
                             {days.map(d => (
                                 <th key={d.toISOString()} style={{ textAlign: 'center', minWidth: '120px' }}>
                                     <div style={{ fontWeight: 600 }}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                                    <div style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>{d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}</div>
+                                    <div style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>{d.getDate()}/{d.getMonth() + 1}</div>
                                 </th>
                             ))}
                         </tr>
@@ -180,22 +184,18 @@ export const RoomCalendarPage: React.FC = () => {
                     <tbody>
                         {hours.map(h => (
                             <tr key={h}>
-                                <td className="calendar-time-col" style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
-                                    {h}:00
+                                <td className="calendar-time-col" style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                                    {h}:00 - {h + 1}:00
                                 </td>
                                 {days.map(d => {
                                     const slotBookings = bookings.filter(b => {
                                         const bDate = new Date(b.timeSlot)
-
-                                        // Check 1: Exact Hour Match (Robust for alignment)
                                         const sameDay = bDate.getDate() === d.getDate() &&
                                             bDate.getMonth() === d.getMonth() &&
                                             bDate.getFullYear() === d.getFullYear()
                                         const sameHour = bDate.getHours() === h
-
                                         if (sameDay && sameHour) return true
 
-                                        // Check 2: Range Overlap (for multi-hour bookings)
                                         const bStart = bDate.getTime()
                                         const durationMs = b.duration * 60 * 60 * 1000
                                         const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + durationMs
@@ -208,114 +208,97 @@ export const RoomCalendarPage: React.FC = () => {
                                         cellEnd.setHours(h + 1, 0, 0, 0)
                                         const cellEndMs = cellEnd.getTime()
 
-                                        // Overlap: Start before end AND End after start
                                         return bStart < cellEndMs && bEnd > cellStartMs
                                     })
 
-                                    const isApproved = slotBookings.some(b => {
+                                    const approved = slotBookings.find(b => {
                                         const s = String(b.status || '').toLowerCase()
                                         return s === 'approved' || s === 'active'
                                     })
+                                    const isApproved = !!approved
+                                    const isSystemBooking = !approved?.requestedBy || approved?.requestedBy === '00000000-0000-0000-0000-000000000000'
+
+                                    const userName = currentUser?.fullName?.trim().toLowerCase()
+                                    const requestedName = approved?.requestedByName?.trim().toLowerCase()
+
+                                    const isMyClass = isApproved && isSystemBooking && requestedName === userName && !!userName
+                                    const isMyBooking = isApproved && !isSystemBooking && approved?.requestedBy === currentUser?.id
+
+                                    const slotStart = new Date(d);
+                                    slotStart.setHours(h, 0, 0, 0);
+                                    const slotEnd = new Date(slotStart);
+                                    slotEnd.setHours(h + 1, 0, 0, 0);
+
+                                    const now = new Date();
+                                    const isEnded = now > slotEnd;
+                                    const isStarted = now > slotStart;
+
                                     const pendingBookings = slotBookings.filter(b => {
                                         const s = String(b.status || '').toLowerCase()
                                         return s === 'pending'
                                     })
-                                    const pendingCount = pendingBookings.length
 
-                                    // Improved check for user request
-                                    const hasUserRequested = pendingBookings.some(b => {
-                                        // Use loose equality for safety if string/int mismatch
-                                        return (b.requestedBy == currentUser?.id)
-                                    })
-
-                                    const cellDate = new Date(d);
-                                    cellDate.setHours(h, 0, 0, 0);
-                                    const isPast = new Date() > cellDate;
+                                    // Logic: We show all pending requests during the hour. 
+                                    // The backend now handles the hard rejection once the hour ends.
+                                    const visiblePending = pendingBookings;
+                                    const pendingCount = visiblePending.length;
+                                    const hasUserRequested = visiblePending.some(b => b.requestedBy == currentUser?.id)
 
                                     let cellContent
 
                                     if (isApproved) {
-                                        const approved = slotBookings.find(b => {
-                                            const s = String(b.status || '').toLowerCase()
-                                            return s === 'approved' || s === 'active'
-                                        })
-                                        // Fallback reasoning
-                                        const reasonFull = approved?.reason || 'Booked'
-                                        const requestorName = approved?.requestedByName || ''
+                                        let label = "BOOKED"
+                                        let className = "slot-booked"
+
+                                        if (isMyClass) {
+                                            label = "MY CLASS"
+                                            className = "slot-my-class"
+                                        } else if (isMyBooking) {
+                                            label = "MY BOOKING"
+                                            className = "slot-my-booking"
+                                        }
 
                                         cellContent = (
-                                            <div className="slot-booked">
-                                                <div style={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '2px' }}>
-                                                    BOOKED
+                                            <div className={className}>
+                                                <div style={{ fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase' }}>
+                                                    {label}
                                                 </div>
-                                                {requestorName && (
-                                                    <div style={{ fontSize: '0.65rem', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '100%', textOverflow: 'ellipsis' }}>
-                                                        {requestorName.split(' ')[0]}
-                                                    </div>
-                                                )}
                                             </div>
                                         )
-                                    } else {
-                                        if (pendingCount > 0) {
-                                            cellContent = (
-                                                <div className="slot-pending">
-                                                    <span className="slot-pending-text">
-                                                        {pendingCount} Request{pendingCount > 1 ? 's' : ''}
-                                                    </span>
-                                                    {!isPast && (
-                                                        hasUserRequested ? (
-                                                            <div style={{
-                                                                marginTop: '4px',
-                                                                fontSize: '0.65rem',
-                                                                fontWeight: 600,
-                                                                color: 'var(--color-warning)',
-                                                                background: 'rgba(255,255,255,0.9)',
-                                                                padding: '2px 6px',
-                                                                borderRadius: '4px',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '2px'
-                                                            }}>
-                                                                <span>✓ Sent</span>
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                className="btn btn-sm btn-primary"
-                                                                style={{
-                                                                    marginTop: '4px',
-                                                                    width: '90%',
-                                                                    padding: '2px 0',
-                                                                    fontSize: '0.65rem',
-                                                                    background: 'var(--color-primary)',
-                                                                    minHeight: '20px'
-                                                                }}
-                                                                onClick={() => handleBookClick(d, h)}
-                                                            >
-                                                                Book
-                                                            </button>
-                                                        )
+                                    } else if (!isEnded && !hasUserRequested) {
+                                        // Still time to book & no active request by user
+                                        // If someone else has a request, we show a badge on our book button
+                                        cellContent = (
+                                            <div className="slot-available">
+                                                <button
+                                                    className="btn-book-slot"
+                                                    onClick={() => handleBookClick(d, h)}
+                                                    style={{ position: 'relative' }}
+                                                >
+                                                    Book
+                                                    {pendingCount > 0 && (
+                                                        <span className="req-badge">
+                                                            {pendingCount}
+                                                        </span>
                                                     )}
-                                                </div>
-                                            )
-                                        } else {
-                                            if (!isPast) {
-                                                cellContent = (
-                                                    <div className="slot-available">
-                                                        <button
-                                                            className="btn-book-slot"
-                                                            onClick={() => handleBookClick(d, h)}
-                                                        >
-                                                            Book
-                                                        </button>
-                                                    </div>
-                                                )
-                                            } else {
-                                                cellContent = <div className="slot-past" />
-                                            }
-                                        }
+                                                </button>
+                                            </div>
+                                        )
+                                    } else if (pendingCount > 0) {
+                                        // User has an active pending request (not yet started)
+                                        cellContent = (
+                                            <div className="slot-pending">
+                                                <span className="slot-pending-text">
+                                                    {pendingCount} Request{pendingCount > 1 ? 's' : ''}
+                                                </span>
+                                                <div style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 700, marginTop: '2px' }}>✓ SENT</div>
+                                            </div>
+                                        )
+                                    } else if (isEnded) {
+                                        cellContent = <div className="slot-past" />
                                     }
 
-                                    return <td key={d.toISOString() + h} style={{ padding: '0', height: '40px', verticalAlign: 'middle' }}>{cellContent}</td>
+                                    return <td key={d.toISOString() + h} style={{ padding: '0', height: '32px', verticalAlign: 'middle' }}>{cellContent}</td>
                                 })}
                             </tr>
                         ))}

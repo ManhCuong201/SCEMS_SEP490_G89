@@ -1,0 +1,181 @@
+/* Compact Calendar and Schedule Styles */
+
+.compact-grid {
+    border-spacing: 2px !important;
+}
+
+.compact-grid th {
+    padding: 0.5rem !important;
+    font-size: 0.85rem !important;
+}
+
+.slot-available {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.btn-book-slot {
+    position: relative;
+    background: rgba(99, 102, 241, 0.1);
+    /* Subtle indigo glass */
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #818cf8;
+    /* Soft indigo */
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 24px;
+    width: 85%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-book-slot:hover {
+    background: rgba(99, 102, 241, 0.25);
+    color: white;
+    border-color: #818cf8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.req-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    /* Amber gradient */
+    color: white;
+    font-size: 0.55rem;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    border-radius: 10px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(217, 119, 6, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 2;
+}
+
+.slot-past {
+    height: 100%;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    /* No border needed for past */
+}
+
+.compact-grid td {
+    height: 32px !important;
+    /* Reduced from 40px/100px */
+    padding: 2px !important;
+}
+
+/* Slot Styles */
+.slot-booked,
+.slot-my-class,
+.slot-my-booking,
+.slot-pending {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: center;
+    overflow: hidden;
+}
+
+.slot-booked {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.slot-my-class {
+    background: rgba(16, 185, 129, 0.15);
+    /* Emerald/Green for academic classes */
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.slot-my-booking {
+    background: rgba(59, 130, 246, 0.15);
+    /* Blue for personal manual bookings */
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.slot-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.slot-pending-text {
+    font-size: 0.6rem;
+    white-space: nowrap;
+}
+
+/* Schedule Card Refinements (SchedulePage) */
+.compact-schedule-card {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-left: 3px solid #10b981 !important;
+    padding: 0.4rem !important;
+    margin-bottom: 2px !important;
+    font-size: 0.75rem !important;
+    border-radius: 4px !important;
+}
+
+.compact-schedule-card .title {
+    font-weight: 700;
+    margin-bottom: 1px;
+    color: white;
+}
+
+.compact-schedule-card .detail {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.65rem;
+}
+
+/* Header & Control Tightening */
+.compact-page-header {
+    margin-bottom: 1rem !important;
+}
+
+.compact-page-header h1 {
+    font-size: 1.5rem !important;
+}
+
+.compact-glass-panel {
+    padding: 1rem !important;
+}
+
+/* Scrollbar styling for grids */
+.schedule-grid-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.schedule-grid-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}

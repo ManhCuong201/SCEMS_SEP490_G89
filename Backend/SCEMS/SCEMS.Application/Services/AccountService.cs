@@ -7,6 +7,9 @@ using SCEMS.Domain.Enums;
 using SCEMS.Infrastructure.Repositories;
 using System.Security.Cryptography;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SCEMS.Application.Services;
 
@@ -14,11 +17,13 @@ public class AccountService : IAccountService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IClassService _classService;
 
-    public AccountService(IUnitOfWork unitOfWork, IMapper mapper)
+    public AccountService(IUnitOfWork unitOfWork, IMapper mapper, IClassService classService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _classService = classService;
     }
 
     public async Task<PaginatedAccountsDto> GetAccountsAsync(PaginationParams @params)
@@ -91,6 +96,12 @@ public class AccountService : IAccountService
         await _unitOfWork.Accounts.AddAsync(account);
         await _unitOfWork.SaveChangesAsync();
 
+        // Link pending enrollments
+        if (account.Role == AccountRole.Student)
+        {
+            await _classService.LinkPendingEnrollmentsAsync(account.Id, account.Email, account.StudentCode);
+        }
+
         return _mapper.Map<AccountResponseDto>(account);
     }
 
@@ -121,6 +132,12 @@ public class AccountService : IAccountService
 
         _unitOfWork.Accounts.Update(account);
         await _unitOfWork.SaveChangesAsync();
+
+        // Re-link just in case student code or email changed
+        if (account.Role == AccountRole.Student)
+        {
+            await _classService.LinkPendingEnrollmentsAsync(account.Id, account.Email, account.StudentCode);
+        }
 
         return _mapper.Map<AccountResponseDto>(account);
     }

@@ -15,6 +15,8 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<SCEMS.Domain.Entities.Classroom_Status> ClassroomStatuses { get; }
     IGenericRepository<SCEMS.Domain.Entities.Notification> Notifications { get; }
     IGenericRepository<SCEMS.Domain.Entities.Booking_History> BookingHistories { get; }
+    IClassRepository Classes { get; }
+    IClassStudentRepository ClassStudents { get; }
 
     Task SaveChangesAsync();
 }

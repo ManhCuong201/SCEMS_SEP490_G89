@@ -45,6 +45,24 @@ public class BookingService : IBookingService
         // Default sort by TimeSlot descending
         query = query.OrderByDescending(b => b.TimeSlot);
 
+        // Auto-reject expired pending bookings (ONLY after their end time has passed)
+        var now = DateTime.Now;
+        var expiredPendingGeneral = await _unitOfWork.Bookings.GetAll()
+            .Where(b => b.Status == BookingStatus.Pending)
+            .ToListAsync();
+        
+        var toReject = expiredPendingGeneral.Where(b => b.TimeSlot.AddHours(b.Duration) < now).ToList();
+
+        if (toReject.Any())
+        {
+            foreach(var b in toReject)
+            {
+                b.Status = BookingStatus.Rejected;
+                _unitOfWork.Bookings.Update(b);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         var total = query.Count();
         var items = query
             .Skip((@params.PageIndex - 1) * @params.PageSize)
@@ -68,6 +86,13 @@ public class BookingService : IBookingService
             .Include(b => b.Room)
             .Include(b => b.RequestedByAccount)
             .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (booking != null && booking.Status == BookingStatus.Pending && booking.TimeSlot.AddHours(booking.Duration) < DateTime.Now)
+        {
+            booking.Status = BookingStatus.Rejected;
+            _unitOfWork.Bookings.Update(booking);
+            await _unitOfWork.SaveChangesAsync();
+        }
 
         return booking != null ? _mapper.Map<BookingResponseDto>(booking) : null;
     }
@@ -188,6 +213,23 @@ public class BookingService : IBookingService
 
     public async Task<List<BookingResponseDto>> GetRoomScheduleAsync(Guid roomId, DateTime startDate, DateTime endDate)
     {
+        var now = DateTime.Now;
+        var pendingRoom = await _unitOfWork.Bookings.GetAll()
+            .Where(b => b.RoomId == roomId && b.Status == BookingStatus.Pending)
+            .ToListAsync();
+
+        var toReject = pendingRoom.Where(b => b.TimeSlot.AddHours(b.Duration) < now).ToList();
+
+        if (toReject.Any())
+        {
+            foreach(var b in toReject)
+            {
+                b.Status = BookingStatus.Rejected;
+                _unitOfWork.Bookings.Update(b);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         var bookings = await _unitOfWork.Bookings.GetAll()
             .Where(b => b.RoomId == roomId && b.TimeSlot >= startDate && b.TimeSlot <= endDate && b.Status != BookingStatus.Rejected)
             .Include(b => b.RequestedByAccount)

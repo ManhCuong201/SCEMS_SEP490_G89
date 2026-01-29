@@ -22,10 +22,29 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Classroom_Report> ClassroomReports { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
     public DbSet<System_Configuration> SystemConfigurations { get; set; } = null!;
+    public DbSet<Class> Classes { get; set; } = null!;
+    public DbSet<ClassStudent> ClassStudents { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Configure Relationships
+        modelBuilder.Entity<Class>()
+            .HasOne(c => c.Lecturer)
+            .WithMany()
+            .HasForeignKey(c => c.LecturerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ClassStudent>()
+            .HasOne(cs => cs.Class)
+            .WithMany(c => c.EnrolledStudents)
+            .HasForeignKey(cs => cs.ClassId);
+
+        modelBuilder.Entity<ClassStudent>()
+            .HasOne(cs => cs.Student)
+            .WithMany()
+            .HasForeignKey(cs => cs.StudentId);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ScemsDbContext).Assembly);
 

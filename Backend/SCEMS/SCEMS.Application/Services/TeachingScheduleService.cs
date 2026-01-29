@@ -1,0 +1,217 @@
+using AutoMapper;
+using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using SCEMS.Application.DTOs.Schedule;
+using SCEMS.Application.Services.Interfaces;
+using SCEMS.Domain.Entities;
+using SCEMS.Domain.Enums;
+using SCEMS.Infrastructure.Repositories;
+
+namespace SCEMS.Application.Services;
+
+public class TeachingScheduleService : ITeachingScheduleService
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public TeachingScheduleService(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<List<ScheduleResponseDto>> GetMyScheduleAsync(Guid userId, DateTime start, DateTime end, string? classCode = null)
+    {
+        var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
+        if (account == null) return new List<ScheduleResponseDto>();
+
+        IQueryable<Teaching_Schedule> query = _unitOfWork.TeachingSchedules.GetAll()
+            .Include(ts => ts.Room)
+            .Where(ts => ts.Date >= start.Date && ts.Date <= end.Date);
+
+        if (account.Role == AccountRole.Lecturer)
+        {
+            query = query.Where(ts => ts.LecturerId == userId.ToString() || ts.LecturerName == account.FullName);
+        }
+        else if (account.Role == AccountRole.Student)
+        {
+            if (!string.IsNullOrEmpty(classCode))
+            {
+                query = query.Where(ts => ts.ClassCode == classCode);
+            }
+            else
+            {
+                // If student doesn't provide classCode, return nothing or maybe default classes?
+                // For now, return nothing if no classCode search.
+                return new List<ScheduleResponseDto>();
+            }
+        }
+
+        var schedules = await query.OrderBy(ts => ts.Date).ThenBy(ts => ts.Slot).ToListAsync();
+        return _mapper.Map<List<ScheduleResponseDto>>(schedules);
+    }
+
+    public async Task<byte[]> GetImportTemplateAsync()
+    {
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Template");
+        
+        // Headers
+        worksheet.Cell(1, 1).Value = "Subject Code";
+        worksheet.Cell(1, 2).Value = "Start Date (yyyy-mm-dd)";
+        worksheet.Cell(1, 3).Value = "End Date (yyyy-mm-dd)";
+        worksheet.Cell(1, 4).Value = "Days (Mon,Wed)";
+        worksheet.Cell(1, 5).Value = "Start Times (07:30,10:00)";
+        worksheet.Cell(1, 6).Value = "End Times (09:50,12:10)";
+        worksheet.Cell(1, 7).Value = "Room Codes (P101,P102)";
+        worksheet.Cell(1, 8).Value = "Class Code";
+
+        // Sample Row
+        worksheet.Cell(2, 1).Value = "PRO192";
+        worksheet.Cell(2, 2).Value = "2024-01-01";
+        worksheet.Cell(2, 3).Value = "2024-04-30";
+        worksheet.Cell(2, 4).Value = "Mon,Wed";
+        worksheet.Cell(2, 5).Value = "07:30,10:00";
+        worksheet.Cell(2, 6).Value = "09:50,12:10";
+        worksheet.Cell(2, 7).Value = "P101,P102";
+        worksheet.Cell(2, 8).Value = "SE1701";
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<string> ImportScheduleAsync(Stream excelStream, Guid lecturerId)
+    {
+        var lecturer = await _unitOfWork.Accounts.GetByIdAsync(lecturerId);
+        if (lecturer == null) throw new Exception("Lecturer not found");
+
+        using var workbook = new XLWorkbook(excelStream);
+        var worksheet = workbook.Worksheet(1);
+        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header
+
+        var existingClassCodes = await _unitOfWork.Classes.GetAll()
+            .Select(c => c.ClassCode)
+            .ToListAsync();
+        var processedClassCodes = new HashSet<string>(existingClassCodes);
+
+        int importedCount = 0;
+        int errorCount = 0;
+
+        foreach (var row in rows)
+        {
+            try
+            {
+                var subjectCode = row.Cell(1).GetValue<string>();
+                var startDateStr = row.Cell(2).GetValue<string>();
+                var endDateStr = row.Cell(3).GetValue<string>();
+                var daysOfWeekStr = row.Cell(4).GetValue<string>(); // "Mon,Wed" or "Monday"
+                var startTimeStr = row.Cell(5).GetValue<string>(); // "07:30"
+                var endTimeStr = row.Cell(6).GetValue<string>(); // "09:50"
+                var roomName = row.Cell(7).GetValue<string>();
+                var classCode = row.Cell(8).GetValue<string>();
+
+                if (string.IsNullOrEmpty(classCode)) continue;
+
+                // Auto-create class if not exists
+                if (!processedClassCodes.Contains(classCode))
+                {
+                    await _unitOfWork.Classes.AddAsync(new Class
+                    {
+                        Id = Guid.NewGuid(),
+                        ClassCode = classCode,
+                        SubjectName = subjectCode,
+                        LecturerId = lecturerId
+                    });
+                    processedClassCodes.Add(classCode);
+                }
+
+                DateTime startDate = DateTime.Parse(startDateStr);
+                DateTime endDate = DateTime.Parse(endDateStr);
+                
+                var days = daysOfWeekStr.Split(',').Select(d => d.Trim()).ToList();
+                var startTimes = startTimeStr.Split(',').Select(t => t.Trim()).ToList();
+                var endTimes = endTimeStr.Split(',').Select(t => t.Trim()).ToList();
+                var roomCodes = roomName.Split(',').Select(r => r.Trim()).ToList(); // 'roomName' variable now holds room codes
+
+                // Build a map of Day -> (StartTime, EndTime, RoomCode)
+                var dayConfigMap = new Dictionary<string, (TimeSpan start, TimeSpan end, string roomCode)>();
+                for (int i = 0; i < days.Count; i++)
+                {
+                    string dayKey = days[i].ToLower();
+                    TimeSpan sTime = TimeSpan.Parse(i < startTimes.Count ? startTimes[i] : startTimes[0]);
+                    TimeSpan eTime = TimeSpan.Parse(i < endTimes.Count ? endTimes[i] : endTimes[0]);
+                    string rCode = i < roomCodes.Count ? roomCodes[i] : roomCodes[0];
+                    dayConfigMap[dayKey] = (sTime, eTime, rCode);
+                }
+
+                // Pre-fetch all rooms to avoid multiple DB calls in the date loop
+                var distinctRoomCodes = dayConfigMap.Values.Select(v => v.roomCode).Distinct().ToList();
+                var foundRooms = await _unitOfWork.Rooms.GetAll()
+                    .Where(r => distinctRoomCodes.Contains(r.RoomCode)) 
+                    .ToDictionaryAsync(r => r.RoomCode, r => r.Id); 
+                
+                // Expand date range
+                for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+                {
+                    var dotw = date.DayOfWeek.ToString().ToLower();
+                    var dotwShort = dotw.Substring(0, 3);
+                    
+                    string? matchedDay = null;
+                    if (dayConfigMap.ContainsKey(dotw)) matchedDay = dotw;
+                    else if (dayConfigMap.ContainsKey(dotwShort)) matchedDay = dotwShort;
+
+                    if (matchedDay != null)
+                    {
+                        var config = dayConfigMap[matchedDay];
+                        int slot = CalculateSlot(config.start);
+
+                        Guid roomId = foundRooms.ContainsKey(config.roomCode) ? foundRooms[config.roomCode] : Guid.Empty;
+
+                        var schedule = new Teaching_Schedule
+                        {
+                            Subject = subjectCode,
+                            ClassCode = classCode,
+                            LecturerId = lecturerId.ToString(),
+                            LecturerName = lecturer.FullName,
+                            Date = date,
+                            Slot = slot,
+                            StartTime = config.start,
+                            EndTime = config.end,
+                            RoomId = roomId
+                        };
+
+                        await _unitOfWork.TeachingSchedules.AddAsync(schedule);
+                        importedCount++;
+                    }
+                }
+            }
+            catch
+            {
+                errorCount++;
+            }
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        return $"Successfully imported {importedCount} sessions. Errors: {errorCount}";
+    }
+
+    private int CalculateSlot(TimeSpan startTime)
+    {
+        // Slot 0: < 07:30
+        // Slot 1 starts at 07:30
+        // Slot 2 starts around 09:40-10:00, etc. (Approx 2h 10m intervals)
+        
+        var baseStart = new TimeSpan(7, 30, 0);
+        if (startTime < baseStart) return 0;
+
+        // Roughly calculate slot based on 2h 10m blocks (130 minutes)
+        double minutesSinceBase = (startTime - baseStart).TotalMinutes;
+        int slot = (int)Math.Floor(minutesSinceBase / 130.0) + 1;
+
+        return Math.Min(slot, 12);
+    }
+
+}

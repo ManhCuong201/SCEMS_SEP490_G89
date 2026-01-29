@@ -1,9 +1,11 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Building2, CalendarDays } from 'lucide-react'
+import { Building2, CalendarDays, Calendar, Users } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 export const UserSidebar: React.FC = () => {
   const location = useLocation()
+  const { user } = useAuth()
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
@@ -28,6 +30,12 @@ export const UserSidebar: React.FC = () => {
             Menu
           </p>
           <NavLink href="/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/rooms')} />
+          {user?.role === 'Lecturer' && (
+            <>
+              <NavLink href="/teacher/classes" label="My Classes" icon={<Users size={20} />} active={isActive('/teacher/classes')} />
+              <NavLink href="/schedule" label="Class schedule" icon={<Calendar size={20} />} active={isActive('/schedule')} />
+            </>
+          )}
           <NavLink href="/my-bookings" label="My Bookings" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} />
         </div>
       </nav>

@@ -5,6 +5,7 @@ import {
   Users,
   Building2,
   CalendarDays,
+  Calendar,
   Wrench,
   Settings
 } from 'lucide-react'

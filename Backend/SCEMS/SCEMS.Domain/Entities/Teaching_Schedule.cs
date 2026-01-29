@@ -11,6 +11,7 @@ public class Teaching_Schedule : BaseEntity
     
     // Time info
     public DateTime Date { get; set; }
+    public int Slot { get; set; } // 0-12
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
     

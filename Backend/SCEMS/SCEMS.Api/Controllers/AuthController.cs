@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SCEMS.Application.Common.Interfaces;
 using SCEMS.Api.Services;
 using SCEMS.Infrastructure.Repositories;
+using SCEMS.Application.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,12 +16,14 @@ public class AuthController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IClassService _classService;
 
-    public AuthController(IUnitOfWork unitOfWork, IJwtService jwtService, IPasswordHasher passwordHasher)
+    public AuthController(IUnitOfWork unitOfWork, IJwtService jwtService, IPasswordHasher passwordHasher, IClassService classService)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _passwordHasher = passwordHasher;
+        _classService = classService;
     }
 
     [HttpPost("login")]
@@ -54,7 +57,6 @@ public class AuthController : ControllerBase
             fullName = account.FullName
         });
     }
-
 
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
@@ -122,6 +124,12 @@ public class AuthController : ControllerBase
 
                 await _unitOfWork.Accounts.AddAsync(account);
                 await _unitOfWork.SaveChangesAsync();
+
+                // Link pending enrollments for new students
+                if (role == SCEMS.Domain.Enums.AccountRole.Student)
+                {
+                    await _classService.LinkPendingEnrollmentsAsync(account.Id, account.Email, account.StudentCode);
+                }
             }
 
             if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)
@@ -146,7 +154,6 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Failed to process Google Token: " + ex.Message });
         }
     }
-
 }
 
 public class GoogleLoginRequest

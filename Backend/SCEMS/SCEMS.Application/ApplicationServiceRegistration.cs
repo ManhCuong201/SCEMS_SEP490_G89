@@ -22,6 +22,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IEquipmentService, EquipmentService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IImportService, ImportService>();
+        services.AddScoped<ITeachingScheduleService, TeachingScheduleService>();
+        services.AddScoped<IClassService, ClassService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
