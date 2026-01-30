@@ -36,7 +36,7 @@ public class IssueReportConfiguration : IEntityTypeConfiguration<IssueReport>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(ir => ir.CreatedAt)
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
         builder.Property(ir => ir.IsDeleted)
             .HasDefaultValue(false);

@@ -29,7 +29,7 @@ public class EquipmentTypeConfiguration : IEntityTypeConfiguration<EquipmentType
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(et => et.CreatedAt)
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
         builder.Property(et => et.IsDeleted)
             .HasDefaultValue(false);

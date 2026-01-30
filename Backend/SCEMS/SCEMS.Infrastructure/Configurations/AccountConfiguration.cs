@@ -33,7 +33,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.HasIndex(a => a.Email).IsUnique();
 
         builder.Property(a => a.CreatedAt)
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
         builder.Property(a => a.IsDeleted)
             .HasDefaultValue(false);
