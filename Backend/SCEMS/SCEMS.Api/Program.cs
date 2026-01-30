@@ -92,7 +92,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<ScemsDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
     
-    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
 
     // Seed initial data
     var existingAdmin = dbContext.Accounts.IgnoreQueryFilters().FirstOrDefault(a => a.Email == "admin@scems.com");
