@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import classService, { ClassResponse, EnrolledStudent } from '../../services/class.service';
 import { DataTable, Column } from '../../components/Common/DataTable';
 import { Loading } from '../../components/Common/Loading';
@@ -16,19 +16,21 @@ const ClassStudentsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
+
     useEffect(() => {
         if (id) loadData(id);
     }, [id]);
 
     const loadData = async (classId: string) => {
         try {
-            const [classes, studentsData] = await Promise.all([
-                classService.getTeacherClasses(),
+            const [classDetails, studentsData] = await Promise.all([
+                classService.getClassById(classId),
                 classService.getClassStudents(classId)
             ]);
 
-            const currentClass = classes.find(c => c.id === classId);
-            if (currentClass) setClassInfo(currentClass);
+            setClassInfo(classDetails);
             setStudents(studentsData);
         } catch (err: any) {
             setError('Failed to load class information');
@@ -81,11 +83,19 @@ const ClassStudentsPage: React.FC = () => {
 
     if (loading) return <Loading />;
 
+    const handleBack = () => {
+        if (isAdminRoute) {
+            navigate('/admin/classes');
+        } else {
+            navigate('/teacher/classes');
+        }
+    };
+
     return (
         <div className="page-container">
             <div className="page-header compact-page-header" style={{ alignItems: 'center', justifyContent: 'space-between', display: 'flex' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button className="btn btn-outline btn-sm" onClick={() => navigate('/teacher/classes')}>
+                    <button className="btn btn-outline btn-sm" onClick={handleBack}>
                         <ArrowLeft size={16} />
                     </button>
                     <div>

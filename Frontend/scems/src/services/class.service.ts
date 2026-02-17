@@ -21,6 +21,17 @@ const classService = {
         return response.data;
     },
 
+    getAllClasses: async (): Promise<ClassResponse[]> => {
+        const response = await api.get('/classes/all');
+        return response.data;
+        return response.data;
+    },
+
+    getClassById: async (id: string): Promise<ClassResponse> => {
+        const response = await api.get(`/classes/${id}`);
+        return response.data;
+    },
+
     getClassStudents: async (classId: string): Promise<EnrolledStudent[]> => {
         const response = await api.get(`/classes/${classId}/students`);
         return response.data;

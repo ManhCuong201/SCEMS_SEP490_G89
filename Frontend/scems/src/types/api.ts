@@ -50,6 +50,7 @@ export interface Room {
   id: string
   roomCode: string
   roomName: string
+  building: string
   capacity: number
   roomTypeId?: string
   roomTypeName?: string
@@ -77,6 +78,7 @@ export interface UpdateRoomRequest {
 export interface EquipmentType {
   id: string
   name: string
+  code: string
   description: string
   equipmentCount: number
   status: string
@@ -86,11 +88,13 @@ export interface EquipmentType {
 
 export interface CreateEquipmentTypeRequest {
   name: string
+  code?: string
   description: string
 }
 
 export interface UpdateEquipmentTypeRequest {
   name: string
+  code?: string
   description: string
 }
 
@@ -118,6 +122,7 @@ export interface Booking {
   reason?: string
   status: string // Changed from BookingStatus enum to string to support "Approved" etc.
   createdAt: string
+  updatedAt?: string // Added optional updatedAt
   room?: Room
   requestedByAccount?: Account
   roomName?: string
@@ -169,17 +174,20 @@ export interface ImportScheduleResponse {
 export interface RoomType {
   id: string
   name: string
+  code: string
   description: string
   roomCount: number
 }
 
 export interface CreateRoomTypeRequest {
   name: string
+  code?: string
   description: string
 }
 
 export interface UpdateRoomTypeRequest {
   name: string
+  code?: string
   description: string
 }
 

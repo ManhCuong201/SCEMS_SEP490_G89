@@ -8,6 +8,7 @@ export const CreateRoomTypePage: React.FC = () => {
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
         name: '',
+        code: '',
         description: ''
     })
     const [loading, setLoading] = useState(false)
@@ -46,9 +47,27 @@ export const CreateRoomTypePage: React.FC = () => {
                             type="text"
                             className="form-input"
                             value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            onChange={(e) => {
+                                const newName = e.target.value;
+                                setFormData(prev => ({
+                                    ...prev,
+                                    name: newName,
+                                    code: !prev.code ? newName.toUpperCase().replace(/\s+/g, '-').replace(/[^A-Z0-9-]/g, '') : prev.code
+                                }))
+                            }}
                             required
                             placeholder="e.g. Laboratory, Lecture Hall"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Code (Optional)</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={formData.code}
+                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                            placeholder="Auto-generated if left empty"
                         />
                     </div>
 

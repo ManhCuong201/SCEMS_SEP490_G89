@@ -9,12 +9,19 @@ export const CreateEquipmentTypePage: React.FC = () => {
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     name: '',
+    code: '',
     description: ''
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    setForm(prev => {
+      const newData = { ...prev, [name]: value }
+      if (name === 'name' && !prev.code) {
+        newData.code = value.toUpperCase().replace(/\s+/g, '-').replace(/[^A-Z0-9-]/g, '')
+      }
+      return newData
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,6 +49,11 @@ export const CreateEquipmentTypePage: React.FC = () => {
           <div className="form-group">
             <label className="form-label">Name *</label>
             <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} required disabled={loading} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Code (Optional)</label>
+            <input type="text" name="code" className="form-input" value={form.code} onChange={handleChange} disabled={loading} placeholder="Auto-generated if left empty" />
           </div>
 
           <div className="form-group">

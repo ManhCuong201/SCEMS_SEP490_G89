@@ -104,6 +104,15 @@ export const EquipmentTypeDetailPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+              Code
+            </label>
+            <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
+              {type.code}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
               Equipment Count
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>

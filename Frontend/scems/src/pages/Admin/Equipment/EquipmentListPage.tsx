@@ -6,8 +6,9 @@ import { Alert } from '../../../components/Common/Alert';
 import { Pagination } from '../../../components/Common/Pagination';
 import { SearchBar } from '../../../components/Common/SearchBar';
 import { DataTable, Column } from '../../../components/Common/DataTable';
-import { Edit, Trash2, Upload, FileDown } from 'lucide-react';
+import { Edit, Trash2, Upload, FileDown, History } from 'lucide-react';
 import { ConfirmModal } from '../../../components/Common/ConfirmModal';
+import { EquipmentHistory } from '../../../types/equipment';
 
 export const EquipmentListPage: React.FC = () => {
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -18,6 +19,11 @@ export const EquipmentListPage: React.FC = () => {
     const [search, setSearch] = useState('');
     const [total, setTotal] = useState(0);
     const [statusFilter, setStatusFilter] = useState('');
+
+    // History states
+    const [historyItemId, setHistoryItemId] = useState<string | null>(null);
+    const [historyData, setHistoryData] = useState<EquipmentHistory[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     const loadEquipment = async () => {
         setLoading(true);
@@ -104,6 +110,26 @@ export const EquipmentListPage: React.FC = () => {
                     >
                         <Edit size={16} />
                     </Link>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={async (e) => {
+                            e.stopPropagation();
+                            setHistoryItemId(item.id);
+                            setHistoryLoading(true);
+                            try {
+                                const data = await equipmentService.getHistory(item.id);
+                                setHistoryData(data);
+                            } catch (err: any) {
+                                setError('Failed to load history');
+                            } finally {
+                                setHistoryLoading(false);
+                            }
+                        }}
+                        style={{ padding: '0.4rem', height: 'auto' }}
+                        title="View History"
+                    >
+                        <History size={16} />
+                    </button>
                     <button
                         className="btn btn-danger"
                         onClick={(e) => handleDeleteClick(item.id, e)}
@@ -201,6 +227,51 @@ export const EquipmentListPage: React.FC = () => {
                 isDanger
                 confirmText="Delete"
             />
+
+            {/* History Modal */}
+            {historyItemId && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    padding: '2rem'
+                }} onClick={() => setHistoryItemId(null)}>
+                    <div className="glass-panel" style={{
+                        width: '100%',
+                        maxWidth: '800px',
+                        padding: '2rem',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
+                    }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2>Movement History</h2>
+                            <button className="btn btn-secondary" onClick={() => setHistoryItemId(null)}>Close</button>
+                        </div>
+
+                        {historyLoading ? (
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>Loading history...</div>
+                        ) : (
+                            <DataTable
+                                columns={[
+                                    { header: 'Room', accessor: (h) => `${h.roomName} (${h.roomCode})` },
+                                    { header: 'Assigned', accessor: (h) => new Date(h.assignedAt).toLocaleString() },
+                                    { header: 'Unassigned', accessor: (h) => h.unassignedAt ? new Date(h.unassignedAt).toLocaleString() : 'Current' },
+                                    { header: 'Notes', accessor: 'notes' }
+                                ]}
+                                data={historyData}
+                                emptyMessage="No history records found."
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

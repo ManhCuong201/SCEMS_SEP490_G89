@@ -37,3 +37,15 @@ export interface PaginatedEquipment {
   pageIndex: number;
   pageSize: number;
 }
+
+export interface EquipmentHistory {
+  id: string;
+  equipmentId: string;
+  roomId: string;
+  roomName: string;
+  roomCode: string;
+  assignedAt: string;
+  unassignedAt?: string;
+  notes?: string;
+}
+

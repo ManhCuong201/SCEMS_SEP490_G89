@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { accountService } from '../../../services/account.service'
 import { Account, AccountStatus } from '../../../types/api'
+import { useAuth } from '../../../context/AuthContext'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 
 export const AccountDetailPage: React.FC = () => {
+  const { user: currentUser } = useAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [account, setAccount] = useState<Account | null>(null)
@@ -58,12 +60,16 @@ export const AccountDetailPage: React.FC = () => {
           <p className="text-muted">Account Details</p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-          <Link to={`/admin/accounts/${id}/edit`} className="btn btn-primary" style={{ gap: '0.5rem' }}>
-            <Edit size={16} /> Edit
-          </Link>
-          <button className="btn btn-danger" onClick={() => setShowDeleteModal(true)} style={{ gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-            <Trash2 size={16} /> Delete
-          </button>
+          {account.id !== currentUser?.id && (
+            <>
+              <Link to={`/admin/accounts/${id}/edit`} className="btn btn-primary" style={{ gap: '0.5rem' }}>
+                <Edit size={16} /> Edit
+              </Link>
+              <button className="btn btn-danger" onClick={() => setShowDeleteModal(true)} style={{ gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                <Trash2 size={16} /> Delete
+              </button>
+            </>
+          )}
           <button className="btn btn-secondary" onClick={() => navigate('/admin/accounts')} style={{ gap: '0.5rem' }}>
             <ArrowLeft size={16} /> Back
           </button>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { accountService } from '../../../services/account.service'
 import { Account, AccountStatus } from '../../../types/api'
+import { useAuth } from '../../../context/AuthContext'
 import { Alert } from '../../../components/Common/Alert'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Pagination } from '../../../components/Common/Pagination'
@@ -9,6 +10,7 @@ import { Edit, Trash2, Eye, FileDown, Upload } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
 export const AccountsListPage: React.FC = () => {
+  const { user: currentUser } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -92,7 +94,7 @@ export const AccountsListPage: React.FC = () => {
             color: account.status === AccountStatus.Active ? 'var(--color-success)' : 'var(--color-danger)',
             borderColor: 'transparent'
           }}
-          disabled={account.email === 'admin@scems.com'}
+          disabled={account.id === currentUser?.id}
         >
           <option value={AccountStatus.Active}>Active</option>
           <option value={AccountStatus.Blocked}>Blocked</option>
@@ -111,23 +113,26 @@ export const AccountsListPage: React.FC = () => {
           >
             <Eye size={16} />
           </Link>
-          <Link
-            to={`/admin/accounts/${account.id}/edit`}
-            className="btn btn-secondary"
-            style={{ padding: '0.4rem', height: 'auto' }}
-            title="Edit Account"
-          >
-            <Edit size={16} />
-          </Link>
-          <button
-            className="btn btn-danger"
-            onClick={(e) => handleDeleteClick(account.id, e)}
-            style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
-            title="Delete Account"
-            disabled={account.email === 'admin@scems.com'}
-          >
-            <Trash2 size={16} />
-          </button>
+          {account.id !== currentUser?.id && (
+            <>
+              <Link
+                to={`/admin/accounts/${account.id}/edit`}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem', height: 'auto' }}
+                title="Edit Account"
+              >
+                <Edit size={16} />
+              </Link>
+              <button
+                className="btn btn-danger"
+                onClick={(e) => handleDeleteClick(account.id, e)}
+                style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
+                title="Delete Account"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
         </div>
       )
     }

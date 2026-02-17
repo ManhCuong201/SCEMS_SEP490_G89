@@ -97,6 +97,15 @@ export const RoomDetailPage: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+              Building
+            </label>
+            <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
+              {room.building}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
               Capacity
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>

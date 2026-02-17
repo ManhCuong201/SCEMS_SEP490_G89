@@ -60,6 +60,7 @@ export const RoomTypesListPage: React.FC = () => {
 
     const columns: Column<RoomType>[] = [
         { header: 'Name', accessor: 'name' },
+        { header: 'Code', accessor: 'code' },
         { header: 'Description', accessor: 'description' },
         {
             header: 'Rooms',

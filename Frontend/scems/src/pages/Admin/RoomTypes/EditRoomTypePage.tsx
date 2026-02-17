@@ -9,6 +9,7 @@ export const EditRoomTypePage: React.FC = () => {
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
         name: '',
+        code: '',
         description: ''
     })
     const [loading, setLoading] = useState(true)
@@ -22,6 +23,7 @@ export const EditRoomTypePage: React.FC = () => {
                 const data = await roomTypeService.getById(id)
                 setFormData({
                     name: data.name,
+                    code: data.code,
                     description: data.description || ''
                 })
             } catch (err: any) {
@@ -71,6 +73,17 @@ export const EditRoomTypePage: React.FC = () => {
                             className="form-input"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Code</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={formData.code}
+                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                             required
                         />
                     </div>

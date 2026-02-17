@@ -9,6 +9,13 @@ export const scheduleService = {
         return data;
     },
 
+    async getAllSchedules(start: string, end: string): Promise<ScheduleResponse[]> {
+        const { data } = await api.get<ScheduleResponse[]>('/teaching-schedules/all', {
+            params: { start, end }
+        });
+        return data;
+    },
+
     async importSchedule(file: File): Promise<ImportScheduleResponse> {
         const formData = new FormData();
         formData.append('file', file);

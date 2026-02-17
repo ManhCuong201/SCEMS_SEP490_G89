@@ -78,10 +78,11 @@ export const RoomsListPage: React.FC = () => {
   }
 
   const columns: Column<Room>[] = [
-    { header: 'Code', accessor: 'roomCode', width: '120px' },
+    { header: 'Code', accessor: 'roomCode', width: '100px' },
     { header: 'Name', accessor: 'roomName' },
+    { header: 'Building', accessor: 'building' },
     { header: 'Type', accessor: (item) => <span className="badge badge-secondary">{item.roomTypeName || 'N/A'}</span> },
-    { header: 'Capacity', accessor: 'capacity', width: '100px' },
+    { header: 'Capacity', accessor: 'capacity', width: '90px' },
     { header: 'Equipment', accessor: 'equipmentCount', width: '100px' },
     {
       header: 'Status',

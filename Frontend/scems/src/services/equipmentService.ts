@@ -1,5 +1,5 @@
 import api from './api';
-import { CreateEquipmentDto, UpdateEquipmentDto, PaginatedEquipment, Equipment, EquipmentStatus } from '../types/equipment';
+import { CreateEquipmentDto, UpdateEquipmentDto, PaginatedEquipment, Equipment, EquipmentStatus, EquipmentHistory } from '../types/equipment';
 
 export const equipmentService = {
     getAll: async (pageIndex = 1, pageSize = 10, search?: string, sortBy?: string, status?: string): Promise<PaginatedEquipment> => {
@@ -56,5 +56,10 @@ export const equipmentService = {
         document.body.appendChild(link);
         link.click();
         link.remove();
+    },
+
+    getHistory: async (id: string): Promise<EquipmentHistory[]> => {
+        const response = await api.get<EquipmentHistory[]>(`/admin/equipment/${id}/history`);
+        return response.data;
     }
 };

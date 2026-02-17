@@ -14,6 +14,7 @@ export const CreateRoomPage: React.FC = () => {
   const [form, setForm] = useState({
     roomCode: '',
     roomName: '',
+    building: '',
     capacity: 20,
     roomTypeId: ''
   })
@@ -68,6 +69,11 @@ export const CreateRoomPage: React.FC = () => {
           <div className="form-group">
             <label className="form-label">Room Name *</label>
             <input type="text" name="roomName" className="form-input" value={form.roomName} onChange={handleChange} required disabled={loading} placeholder="e.g. Computer Lab 01" />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Building</label>
+            <input type="text" name="building" className="form-input" value={form.building} onChange={handleChange} disabled={loading} placeholder="e.g. Building A" />
           </div>
 
           <div className="form-group">

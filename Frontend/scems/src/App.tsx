@@ -25,7 +25,10 @@ import { EquipmentTypeDetailPage } from './pages/Admin/EquipmentTypes/EquipmentT
 import { EquipmentListPage } from './pages/Admin/Equipment/EquipmentListPage'
 import { CreateEquipmentPage } from './pages/Admin/Equipment/CreateEquipmentPage'
 import { EditEquipmentPage } from './pages/Admin/Equipment/EditEquipmentPage'
+import { StaffBookingBoardPage } from './pages/Admin/Bookings/StaffBookingBoardPage'
 import { BookingManagementPage } from './pages/Admin/Bookings/BookingManagementPage'
+import { AdminClassesPage } from './pages/Admin/Classes/AdminClassesPage'
+import { AdminSchedulesPage } from './pages/Admin/Schedules/AdminSchedulesPage'
 import { UserLayout } from './components/Layout/UserLayout'
 import { UserRoomsListPage } from './pages/User/Rooms/UserRoomsListPage'
 import { RoomCalendarPage } from './pages/User/Rooms/RoomCalendarPage'
@@ -38,7 +41,9 @@ import { DailySchedulerPage } from './pages/User/Dashboard/DailySchedulerPage'
 
 const HomeRedirect = () => {
   const { user } = useAuth()
-  if (user?.role === 'Admin') return <Navigate to="/admin/dashboard" replace />
+  if (user?.role === 'Admin' || user?.role === 'AssetStaff' || user?.role === 'BookingStaff') {
+    return <Navigate to="/admin/dashboard" replace />
+  }
   return <Navigate to="/dashboard" replace />
 }
 
@@ -63,7 +68,11 @@ const AppContent: React.FC = () => {
               <Route path="room-types" element={<RoomTypesListPage />} />
               <Route path="room-types/create" element={<CreateRoomTypePage />} />
               <Route path="room-types/:id/edit" element={<EditRoomTypePage />} />
+              <Route path="booking-board" element={<StaffBookingBoardPage />} />
               <Route path="bookings" element={<BookingManagementPage />} />
+              <Route path="classes" element={<AdminClassesPage />} />
+              <Route path="classes/:id/students" element={<ClassStudentsPage />} />
+              <Route path="schedules" element={<AdminSchedulesPage />} />
               <Route path="equipment-types" element={<EquipmentTypesListPage />} />
               <Route path="equipment-types/create" element={<CreateEquipmentTypePage />} />
               <Route path="equipment-types/:id" element={<EquipmentTypeDetailPage />} />
@@ -94,7 +103,7 @@ const AppContent: React.FC = () => {
           </UserLayout>
         </PrivateRoute>
       } />
-      {(user?.role === 'Lecturer' || user?.role === 'Student') && (
+      {(user?.role === 'Lecturer' || user?.role === 'Student' || user?.role === 'BookingStaff') && (
         <Route path="/schedule" element={
           <PrivateRoute>
             <UserLayout>

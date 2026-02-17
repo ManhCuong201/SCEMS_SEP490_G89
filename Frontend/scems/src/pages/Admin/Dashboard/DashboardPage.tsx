@@ -3,32 +3,49 @@ import { Link } from 'react-router-dom'
 import { accountService } from '../../../services/account.service'
 import { roomService } from '../../../services/room.service'
 import { equipmentTypeService } from '../../../services/equipment-type.service'
+import { bookingService } from '../../../services/booking.service'
 import { Loading } from '../../../components/Common/Loading'
+import { useAuth } from '../../../context/AuthContext'
 
-import { ArrowRight, Box, Home, Users, Layers } from 'lucide-react'
+import { ArrowRight, Box, Home, Users, Layers, Calendar, Clock, CheckCircle, BookOpen } from 'lucide-react'
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth()
   const [stats, setStats] = useState({
     totalAccounts: 0,
     totalRooms: 0,
-    totalEquipmentTypes: 0
+    totalEquipmentTypes: 0,
+    pendingBookings: 0,
+    approvedToday: 0
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [accounts, rooms, types] = await Promise.all([
+        setLoading(true)
+        const [accounts, rooms, types, bookingsResponse] = await Promise.all([
           accountService.getAccounts(1, 1),
           roomService.getRooms(1, 1),
-          equipmentTypeService.getEquipmentTypes(1, 1)
+          equipmentTypeService.getEquipmentTypes(1, 1),
+          bookingService.getBookings(1, 1000) // Fetch enough to count for MVP
         ])
+
+        const pending = bookingsResponse.items.filter(b => b.status === 'Pending').length
+        const todayStr = new Date().toISOString().split('T')[0]
+        const approvedToday = bookingsResponse.items.filter(b =>
+          b.status === 'Approved' && b.updatedAt && b.updatedAt.startsWith(todayStr)
+        ).length // Simplistic check, ideally backend provides this
 
         setStats({
           totalAccounts: accounts.total,
           totalRooms: rooms.total,
-          totalEquipmentTypes: types.total
+          totalEquipmentTypes: types.total,
+          pendingBookings: pending,
+          approvedToday: approvedToday
         })
+      } catch (err) {
+        console.error("Failed to load dashboard stats", err)
       } finally {
         setLoading(false)
       }
@@ -120,27 +137,65 @@ export const DashboardPage: React.FC = () => {
         <Loading />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-          <StatCard
-            title="Total Accounts"
-            value={stats.totalAccounts}
-            href="/admin/accounts"
-            icon={<Users size={48} />}
-            color="var(--primary-400)"
-          />
-          <StatCard
-            title="Total Rooms"
-            value={stats.totalRooms}
-            href="/admin/rooms"
-            icon={<Home size={48} />}
-            color="var(--color-success)"
-          />
-          <StatCard
-            title="Equipment Types"
-            value={stats.totalEquipmentTypes}
-            href="/admin/equipment-types"
-            icon={<Layers size={48} />}
-            color="var(--color-warning)"
-          />
+          {(user?.role === 'Admin') && (
+            <StatCard
+              title="Total Accounts"
+              value={stats.totalAccounts}
+              href="/admin/accounts"
+              icon={<Users size={48} />}
+              color="var(--primary-400)"
+            />
+          )}
+          {(user?.role === 'Admin' || user?.role === 'AssetStaff') && (
+            <>
+              <StatCard
+                title="Total Rooms"
+                value={stats.totalRooms}
+                href="/admin/rooms"
+                icon={<Home size={48} />}
+                color="var(--color-success)"
+              />
+              <StatCard
+                title="Equipment Types"
+                value={stats.totalEquipmentTypes}
+                href="/admin/equipment-types"
+                icon={<Layers size={48} />}
+                color="var(--color-warning)"
+              />
+            </>
+          )}
+          {(user?.role === 'BookingStaff') && (
+            <>
+              <StatCard
+                title="Pending Requests"
+                value={stats.pendingBookings}
+                href="/admin/booking-board"
+                icon={<Clock size={48} />}
+                color="var(--color-warning)"
+              />
+              <StatCard
+                title="Approved Today"
+                value={stats.approvedToday}
+                href="/admin/bookings"
+                icon={<CheckCircle size={48} />}
+                color="var(--color-success)"
+              />
+              <StatCard
+                title="Manage Classes"
+                value={0} // Just a link
+                href="/teacher/classes"
+                icon={<Users size={48} />}
+                color="var(--primary-400)"
+              />
+              <StatCard
+                title="Manage Schedules"
+                value={0}
+                href="/schedule"
+                icon={<BookOpen size={48} />}
+                color="var(--color-info)"
+              />
+            </>
+          )}
         </div>
       )}
     </div>

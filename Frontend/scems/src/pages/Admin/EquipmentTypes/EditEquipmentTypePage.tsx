@@ -12,6 +12,7 @@ export const EditEquipmentTypePage: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     name: '',
+    code: '',
     description: ''
   })
 
@@ -21,6 +22,7 @@ export const EditEquipmentTypePage: React.FC = () => {
         const type = await equipmentTypeService.getEquipmentTypeById(id!)
         setForm({
           name: type.name,
+          code: type.code,
           description: type.description
         })
       } catch (err: any) {
@@ -64,6 +66,11 @@ export const EditEquipmentTypePage: React.FC = () => {
           <div className="form-group">
             <label className="form-label">Name</label>
             <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} disabled={saving} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Code</label>
+            <input type="text" name="code" className="form-input" value={form.code} onChange={handleChange} disabled={saving} />
           </div>
 
           <div className="form-group">

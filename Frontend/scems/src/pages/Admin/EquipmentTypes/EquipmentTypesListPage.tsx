@@ -79,6 +79,7 @@ export const EquipmentTypesListPage: React.FC = () => {
 
   const columns: Column<EquipmentType>[] = [
     { header: 'Name', accessor: 'name' },
+    { header: 'Code', accessor: 'code', width: '120px' },
     { header: 'Description', accessor: 'description' },
     { header: 'Count', accessor: 'equipmentCount', width: '100px' },
     {

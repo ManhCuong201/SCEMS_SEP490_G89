@@ -79,6 +79,7 @@ export const DailySchedulerPage: React.FC = () => {
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
     const [selectedSlot, setSelectedSlot] = useState<{ date: string, hour: number } | null>(null)
     const [reason, setReason] = useState('')
+    const [duration, setDuration] = useState(1)
     const [submitting, setSubmitting] = useState(false)
 
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
@@ -118,6 +119,11 @@ export const DailySchedulerPage: React.FC = () => {
         if (alreadyRequested) return
         setSelectedRoom(room)
         setSelectedSlot({ date: selectedDate, hour })
+
+        // Ensure initial duration is valid for the new slot
+        const maxForSlot = 23 - hour;
+        setDuration(Math.min(1, maxForSlot)); // Default to 1 or max if 1 is too much
+
         setModalOpen(true)
         setReason('')
     }
@@ -133,12 +139,13 @@ export const DailySchedulerPage: React.FC = () => {
             await bookingService.createBooking({
                 roomId: selectedRoom.id,
                 timeSlot: isoLocal,
-                duration: bookingSettings.slotDurationMinutes / 60,
+                duration: duration,
                 reason: reason
             })
 
             setSuccessMsg('Booking request sent!')
             setModalOpen(false)
+            setDuration(1) // Reset
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
@@ -265,11 +272,6 @@ export const DailySchedulerPage: React.FC = () => {
                     <span className={`slot-status-pill ${alreadyRequested ? 'pill-requested' : 'pill-available'}`}>
                         {alreadyRequested ? 'REQUESTED' : 'AVAILABLE'}
                     </span>
-                    {pendingForSlot.length > 0 && !alreadyRequested && (
-                        <div className="slot-main-text" style={{ fontSize: '0.45rem', color: '#ea580c', fontWeight: 900 }}>
-                            {pendingForSlot.length} REQ
-                        </div>
-                    )}
                 </div>
             </div>
         )
@@ -278,8 +280,7 @@ export const DailySchedulerPage: React.FC = () => {
     const timeSlotsArray = Array.from({ length: 16 }, (_, i) => {
         const h = i + 7
         const start = `${h.toString().padStart(2, '0')}:00`
-        const end = `${(h + 1).toString().padStart(2, '0')}:00`
-        return { hour: h, label: `${start}\n–\n${end}` }
+        return { hour: h, label: start }
     })
 
     // Filter rooms logic: A room is "available" if at least one slot is NOT a class and NOT a booked session.
@@ -411,39 +412,63 @@ export const DailySchedulerPage: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className="modal-room-card">
-                            <div className="modal-info-row">
-                                <MapPin size={14} style={{ color: '#0f172a' }} />
-                                <span>Room: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
-                            </div>
-                            <div className="modal-info-row">
-                                <Clock size={14} style={{ color: '#0f172a' }} />
-                                <span>Time: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + 1}:00</strong></span>
-                            </div>
-                            <div className="modal-info-row">
-                                <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                <span>Date: <strong>{new Date(selectedSlot.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</strong></span>
-                            </div>
-                        </div>
+                        {(() => {
+                            const maxPossibleDuration = 23 - selectedSlot.hour
+                            const durationOptions = [1, 2, 3, 4, 5, 6, 7, 8].filter(h => h <= maxPossibleDuration)
 
-                        <div className="modal-body-premium">
-                            <div className="modal-input-group">
-                                <label className="modal-label-premium">
-                                    <MessageSquare size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                    Purpose of Booking
-                                </label>
-                                <textarea
-                                    className="modal-textarea-premium"
-                                    value={reason}
-                                    onChange={(e) => setReason(e.target.value)}
-                                    placeholder="Briefly explain why you need this room... (Optional)"
-                                    rows={3}
-                                />
-                                <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Info size={10} /> Your request will be reviewed by the room management staff.
-                                </div>
-                            </div>
-                        </div>
+                            return (
+                                <>
+                                    <div className="modal-room-card">
+                                        <div className="modal-info-row">
+                                            <MapPin size={14} style={{ color: '#0f172a' }} />
+                                            <span>Room: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
+                                        </div>
+                                        <div className="modal-info-row">
+                                            <Clock size={14} style={{ color: '#0f172a' }} />
+                                            <span>Time: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + duration}:00</strong></span>
+                                        </div>
+                                        <div className="modal-info-row">
+                                            <CalendarIcon size={14} style={{ color: '#0f172a' }} />
+                                            <span>Date: <strong>{new Date(selectedSlot.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</strong></span>
+                                        </div>
+                                    </div>
+
+                                    <div className="modal-body-premium">
+                                        <div className="modal-input-group">
+                                            <label className="modal-label-premium">
+                                                <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                                Duration (Hours)
+                                            </label>
+                                            <select
+                                                className="form-input"
+                                                style={{ width: '100%', marginBottom: '1rem' }}
+                                                value={duration}
+                                                onChange={(e) => setDuration(Number(e.target.value))}
+                                            >
+                                                {durationOptions.map(h => (
+                                                    <option key={h} value={h}>{h} {h === 1 ? 'Hour' : 'Hours'}</option>
+                                                ))}
+                                            </select>
+
+                                            <label className="modal-label-premium">
+                                                <MessageSquare size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                                Purpose of Booking
+                                            </label>
+                                            <textarea
+                                                className="modal-textarea-premium"
+                                                value={reason}
+                                                onChange={(e) => setReason(e.target.value)}
+                                                placeholder="Briefly explain why you need this room... (Optional)"
+                                                rows={3}
+                                            />
+                                            <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Info size={10} /> Your request will be reviewed by the room management staff.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )
+                        })()}
 
                         <div className="modal-footer-premium">
                             <button className="btn-modal btn-modal-cancel" onClick={() => setModalOpen(false)}>
@@ -464,7 +489,8 @@ export const DailySchedulerPage: React.FC = () => {
                     </div>
                 </div>,
                 document.body
-            )}
-        </div>
+            )
+            }
+        </div >
     )
 }
