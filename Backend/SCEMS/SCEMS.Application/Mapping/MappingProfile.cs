@@ -41,5 +41,9 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.RoomCount, opt => opt.MapFrom(src => src.Rooms.Count));
         CreateMap<SCEMS.Application.DTOs.RoomType.CreateRoomTypeDto, RoomType>();
         CreateMap<SCEMS.Application.DTOs.RoomType.UpdateRoomTypeDto, RoomType>();
+        
+        CreateMap<RoomEquipmentHistory, EquipmentHistoryResponseDto>()
+            .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room.RoomName))
+            .ForMember(dest => dest.RoomCode, opt => opt.MapFrom(src => src.Room.RoomCode));
     }
 }

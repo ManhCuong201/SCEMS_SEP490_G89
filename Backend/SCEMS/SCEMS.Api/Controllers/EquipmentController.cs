@@ -9,7 +9,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,AssetStaff")]
 public class EquipmentController : ControllerBase
 {
     private readonly IEquipmentService _equipmentService;
@@ -112,5 +112,12 @@ public class EquipmentController : ControllerBase
         {
             return BadRequest(new { message = "Failed to generate template: " + ex.Message });
         }
+    }
+
+    [HttpGet("{id}/history")]
+    public async Task<IActionResult> GetEquipmentHistory(Guid id)
+    {
+        var history = await _equipmentService.GetEquipmentHistoryAsync(id);
+        return Ok(history);
     }
 }

@@ -88,15 +88,31 @@ public class EquipmentService : IEquipmentService
             .FirstOrDefaultAsync(e => e.Id == id);
         return equipment != null ? _mapper.Map<EquipmentResponseDto>(equipment) : null;
     }
+    
+    // Helper to track history
+    private async Task TrackEquipmentHistoryAsync(Guid equipmentId, Guid roomId, string? notes = null)
+    {
+        var history = new RoomEquipmentHistory
+        {
+            EquipmentId = equipmentId,
+            RoomId = roomId,
+            AssignedAt = DateTime.UtcNow,
+            Notes = notes
+        };
+        await _unitOfWork.RoomEquipmentHistories.AddAsync(history);
+    }
 
     public async Task<EquipmentResponseDto> CreateEquipmentAsync(CreateEquipmentDto dto)
     {
         var equipment = _mapper.Map<Equipment>(dto);
         
         await _unitOfWork.Equipment.AddAsync(equipment);
+        
+        // Track history
+        await TrackEquipmentHistoryAsync(equipment.Id, equipment.RoomId, "Initial assignment");
+        
         await _unitOfWork.SaveChangesAsync();
 
-        // Reload to get nav props if needed, or just return basic
         return _mapper.Map<EquipmentResponseDto>(equipment);
     }
 
@@ -106,12 +122,37 @@ public class EquipmentService : IEquipmentService
         if (equipment == null) return null;
 
         if (!string.IsNullOrEmpty(dto.Name)) equipment.Name = dto.Name;
-        if (dto.RoomId.HasValue) equipment.RoomId = dto.RoomId.Value;
+        if (dto.RoomId.HasValue && dto.RoomId.Value != equipment.RoomId)
+        {
+             // Close previous history
+             var lastHistory = await _unitOfWork.RoomEquipmentHistories.GetAll()
+                .Where(h => h.EquipmentId == equipment.Id && h.UnassignedAt == null)
+                .OrderByDescending(h => h.AssignedAt)
+                .FirstOrDefaultAsync();
+                
+             if (lastHistory != null)
+             {
+                 lastHistory.UnassignedAt = DateTime.UtcNow;
+                 _unitOfWork.RoomEquipmentHistories.Update(lastHistory);
+             }
+
+             // Create new history
+             await TrackEquipmentHistoryAsync(equipment.Id, dto.RoomId.Value, "Moved via update");
+             
+             equipment.RoomId = dto.RoomId.Value;
+        }
+        
         if (dto.Status.HasValue) equipment.Status = dto.Status.Value;
 
         _unitOfWork.Equipment.Update(equipment);
         await _unitOfWork.SaveChangesAsync();
 
+        // Refresh 
+        equipment = await _unitOfWork.Equipment.GetAll()
+            .Include(e => e.Room)
+            .Include(e => e.EquipmentType)
+            .FirstOrDefaultAsync(e => e.Id == id);
+            
         return _mapper.Map<EquipmentResponseDto>(equipment);
     }
 
@@ -151,14 +192,14 @@ public class EquipmentService : IEquipmentService
             {
                 var name = row.Cell(1).GetValue<string>();
                 var description = row.Cell(2).GetValue<string>();
-                var typeName = row.Cell(3).GetValue<string>();
+                var typeCode = row.Cell(3).GetValue<string>();
                 var roomCode = row.Cell(4).GetValue<string>();
                 var statusStr = row.Cell(5).GetValue<string>();
 
-                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(roomCode))
+                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(typeCode) || string.IsNullOrWhiteSpace(roomCode))
                     continue;
 
-                var type = types.FirstOrDefault(t => t.Name.Equals(typeName, StringComparison.OrdinalIgnoreCase));
+                var type = types.FirstOrDefault(t => t.Code.Equals(typeCode, StringComparison.OrdinalIgnoreCase));
                 var room = rooms.FirstOrDefault(r => r.RoomCode.Equals(roomCode, StringComparison.OrdinalIgnoreCase));
 
                 if (type == null || room == null)
@@ -201,7 +242,7 @@ public class EquipmentService : IEquipmentService
         // Headers
         worksheet.Cell(1, 1).Value = "Name";
         worksheet.Cell(1, 2).Value = "Description";
-        worksheet.Cell(1, 3).Value = "Type Name";
+        worksheet.Cell(1, 3).Value = "Type Code";
         worksheet.Cell(1, 4).Value = "Room Code";
         worksheet.Cell(1, 5).Value = "Status";
 
@@ -213,12 +254,12 @@ public class EquipmentService : IEquipmentService
         // Sample Data / Comments
         worksheet.Cell(2, 1).Value = "Dell Monitor";
         worksheet.Cell(2, 2).Value = "24 inch monitor";
-        worksheet.Cell(2, 3).Value = "Monitor";
+        worksheet.Cell(2, 3).Value = "MON-01";
         worksheet.Cell(2, 4).Value = "A101";
         worksheet.Cell(2, 5).Value = "Working";
         
         // Add comments to help user
-        worksheet.Cell(1, 3).GetComment().AddText("Must match an existing Equipment Type Name");
+        worksheet.Cell(1, 3).GetComment().AddText("Must match an existing Equipment Type Code");
         worksheet.Cell(1, 4).GetComment().AddText("Must match an existing Room Code");
         worksheet.Cell(1, 5).GetComment().AddText("Working, Maintenance, Broken, or Retired");
 
@@ -228,5 +269,15 @@ public class EquipmentService : IEquipmentService
         workbook.SaveAs(stream);
         stream.Position = 0;
         return stream;
+    }
+    public async Task<List<EquipmentHistoryResponseDto>> GetEquipmentHistoryAsync(Guid equipmentId)
+    {
+        var history = await _unitOfWork.RoomEquipmentHistories.GetAll()
+            .Where(h => h.EquipmentId == equipmentId)
+            .Include(h => h.Room)
+            .OrderByDescending(h => h.AssignedAt)
+            .ToListAsync();
+
+        return _mapper.Map<List<EquipmentHistoryResponseDto>>(history);
     }
 }

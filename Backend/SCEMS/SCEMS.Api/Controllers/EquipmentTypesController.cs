@@ -9,7 +9,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/equipment-types")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class EquipmentTypesController : ControllerBase
 {
     private readonly IEquipmentTypeService _equipmentTypeService;
@@ -37,6 +37,7 @@ public class EquipmentTypesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateEquipmentType([FromBody] CreateEquipmentTypeDto dto)
     {
         try
@@ -51,6 +52,7 @@ public class EquipmentTypesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateEquipmentType(Guid id, [FromBody] UpdateEquipmentTypeDto dto)
     {
         try
@@ -67,6 +69,7 @@ public class EquipmentTypesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteEquipmentType(Guid id)
     {
         var result = await _equipmentTypeService.DeleteEquipmentTypeAsync(id);
@@ -76,6 +79,7 @@ public class EquipmentTypesController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request)
     {
         var result = await _equipmentTypeService.UpdateStatusAsync(id, request.Status);

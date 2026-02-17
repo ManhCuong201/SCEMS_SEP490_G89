@@ -17,11 +17,16 @@ public class EquipmentTypeConfiguration : IEntityTypeConfiguration<EquipmentType
         builder.Property(et => et.Description)
             .HasMaxLength(500);
 
+        builder.Property(et => et.Code)
+            .IsRequired()
+            .HasMaxLength(50);
+
         builder.Property(et => et.Status)
             .HasConversion<string>()
             .HasMaxLength(50);
 
         builder.HasIndex(et => et.Name).IsUnique();
+        builder.HasIndex(et => et.Code).IsUnique();
 
         builder.HasMany(et => et.Equipment)
             .WithOne(e => e.EquipmentType)

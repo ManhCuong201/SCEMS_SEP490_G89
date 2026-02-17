@@ -191,7 +191,7 @@ public class RoomService : IRoomService
                 var name = row.Cell(2).GetValue<string>();
                 var capacityStr = row.Cell(3).GetValue<string>();
                 var statusStr = row.Cell(4).GetValue<string>();
-                var roomTypeName = row.Cell(5).GetValue<string>();
+                var roomTypeCode = row.Cell(5).GetValue<string>();
 
                 if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
                     continue;
@@ -216,9 +216,9 @@ public class RoomService : IRoomService
                 };
 
                 // Set Room Type if provided
-                if (!string.IsNullOrWhiteSpace(roomTypeName))
+                if (!string.IsNullOrWhiteSpace(roomTypeCode))
                 {
-                    var type = roomTypes.FirstOrDefault(t => t.Name.Equals(roomTypeName, StringComparison.OrdinalIgnoreCase));
+                    var type = roomTypes.FirstOrDefault(t => t.Code.Equals(roomTypeCode, StringComparison.OrdinalIgnoreCase));
                     if (type != null)
                     {
                         room.RoomTypeId = type.Id;
@@ -248,7 +248,7 @@ public class RoomService : IRoomService
         worksheet.Cell(1, 2).Value = "Room Name";
         worksheet.Cell(1, 3).Value = "Capacity";
         worksheet.Cell(1, 4).Value = "Status";
-        worksheet.Cell(1, 5).Value = "Room Type";
+        worksheet.Cell(1, 5).Value = "Room Type Code";
 
         // Style
         var header = worksheet.Range("A1:E1");

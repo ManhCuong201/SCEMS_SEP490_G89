@@ -14,5 +14,6 @@ public interface IClassService
     Task<List<EnrolledStudentDto>> GetClassStudentsAsync(Guid classId);
     Task<bool> ImportStudentsFromExcelAsync(Guid classId, Stream fileStream);
     Task<Stream> GetStudentImportTemplateAsync();
+    Task<List<ClassResponseDto>> GetAllClassesAsync();
     Task LinkPendingEnrollmentsAsync(Guid studentId, string email, string? studentCode);
 }

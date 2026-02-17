@@ -7,7 +7,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/room-types")]
-[Authorize] // Assuming admin only, but check granular permissions if needed
+[Authorize]
 public class RoomTypeController : ControllerBase
 {
     private readonly IRoomTypeService _roomTypeService;

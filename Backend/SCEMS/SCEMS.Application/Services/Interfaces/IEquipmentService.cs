@@ -13,4 +13,5 @@ public interface IEquipmentService
     Task<bool> UpdateStatusAsync(Guid id, int status);
     Task<int> ImportEquipmentAsync(Stream fileStream);
     Task<Stream> GetTemplateStreamAsync();
+    Task<List<EquipmentHistoryResponseDto>> GetEquipmentHistoryAsync(Guid equipmentId);
 }

@@ -31,7 +31,7 @@ public class BookingController : ControllerBase
         // Simplified: Admin sees all. Non-admin sees theirs.
         
         Guid? filterUserId = null;
-        if (!User.IsInRole("Admin") && !User.IsInRole("RoomBookingStaff"))
+        if (!User.IsInRole("Admin") && !User.IsInRole("BookingStaff"))
         {
             filterUserId = userId;
         }
@@ -68,7 +68,7 @@ public class BookingController : ControllerBase
         
         // Authorization check: Admin or Owner
         var userId = GetCurrentUserId();
-        if (!User.IsInRole("Admin") && !User.IsInRole("RoomBookingStaff") && booking.RequestedBy != userId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("BookingStaff") && booking.RequestedBy != userId)
         {
             return Forbid();
         }
@@ -112,7 +112,7 @@ public class BookingController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
-    [Authorize(Roles = "Admin,RoomBookingStaff")]
+    [Authorize(Roles = "Admin,BookingStaff")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateBookingStatusDto dto)
     {
         var booking = await _bookingService.UpdateStatusAsync(id, dto.Status);

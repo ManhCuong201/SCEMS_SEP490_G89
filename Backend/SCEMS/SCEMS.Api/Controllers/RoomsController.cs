@@ -37,7 +37,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto dto)
     {
         try
@@ -52,7 +52,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> UpdateRoom(Guid id, [FromBody] UpdateRoomDto dto)
     {
         try
@@ -69,7 +69,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> DeleteRoom(Guid id)
     {
         var result = await _roomService.DeleteRoomAsync(id);
@@ -79,7 +79,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request)
     {
         var result = await _roomService.UpdateStatusAsync(id, request.Status);
@@ -89,7 +89,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPost("import")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> ImportRooms([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -108,7 +108,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpGet("template")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> GetTemplate()
     {
         try

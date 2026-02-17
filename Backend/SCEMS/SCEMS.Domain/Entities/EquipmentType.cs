@@ -5,6 +5,7 @@ namespace SCEMS.Domain.Entities;
 public class EquipmentType : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
     public EquipmentTypeStatus Status { get; set; } = EquipmentTypeStatus.Active;
 

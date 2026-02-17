@@ -36,6 +36,11 @@ public class RoomTypeService : IRoomTypeService
 
     public async Task<RoomTypeDto> CreateAsync(CreateRoomTypeDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Code))
+        {
+            dto.Code = SCEMS.Application.Common.Utils.GenerateCode(dto.Name);
+        }
+
         var type = _mapper.Map<RoomType>(dto);
         await _unitOfWork.RoomTypes.AddAsync(type);
         await _unitOfWork.SaveChangesAsync();

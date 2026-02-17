@@ -52,6 +52,7 @@ public class EquipmentTypeService : IEquipmentTypeService
         {
             Id = et.Id,
             Name = et.Name,
+            Code = et.Code,
             Description = et.Description,
             Status = et.Status,
             EquipmentCount = et.Equipment.Count,
@@ -81,6 +82,7 @@ public class EquipmentTypeService : IEquipmentTypeService
         {
             Id = equipmentType.Id,
             Name = equipmentType.Name,
+            Code = equipmentType.Code,
             Description = equipmentType.Description,
             Status = equipmentType.Status,
             EquipmentCount = equipmentType.Equipment.Count,
@@ -100,7 +102,10 @@ public class EquipmentTypeService : IEquipmentTypeService
         var equipmentType = new EquipmentType
         {
             Name = dto.Name,
-            Description = dto.Description
+            Description = dto.Description,
+            Code = !string.IsNullOrWhiteSpace(dto.Code) 
+                ? dto.Code 
+                : SCEMS.Application.Common.Utils.GenerateCode(dto.Name)
         };
 
         await _unitOfWork.EquipmentTypes.AddAsync(equipmentType);
@@ -110,6 +115,7 @@ public class EquipmentTypeService : IEquipmentTypeService
         {
             Id = equipmentType.Id,
             Name = equipmentType.Name,
+            Code = equipmentType.Code,
             Description = equipmentType.Description,
             Status = equipmentType.Status,
             EquipmentCount = 0,
@@ -133,6 +139,7 @@ public class EquipmentTypeService : IEquipmentTypeService
         }
 
         equipmentType.Name = dto.Name;
+        equipmentType.Code = dto.Code;
         equipmentType.Description = dto.Description;
 
         _unitOfWork.EquipmentTypes.Update(equipmentType);
@@ -142,6 +149,7 @@ public class EquipmentTypeService : IEquipmentTypeService
         {
             Id = equipmentType.Id,
             Name = equipmentType.Name,
+            Code = equipmentType.Code,
             Description = equipmentType.Description,
             Status = equipmentType.Status,
             EquipmentCount = equipmentType.Equipment.Count,

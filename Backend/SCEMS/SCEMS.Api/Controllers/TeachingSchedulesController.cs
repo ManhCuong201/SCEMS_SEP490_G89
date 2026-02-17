@@ -33,9 +33,18 @@ public class TeachingSchedulesController : ControllerBase
     {
         var schedules = await _teachingScheduleService.GetSchedulesByDateAsync(date);
         return Ok(schedules);
+        return Ok(schedules);
     }
 
-    [Authorize(Roles = "Lecturer,Admin")]
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin,BookingStaff")]
+    public async Task<ActionResult<List<ScheduleResponseDto>>> GetAllSchedules([FromQuery] DateTime start, [FromQuery] DateTime end)
+    {
+        var schedules = await _teachingScheduleService.GetAllSchedulesAsync(start, end);
+        return Ok(schedules);
+    }
+
+    [Authorize(Roles = "Lecturer,Admin,BookingStaff")]
     [HttpGet("template")]
     public async Task<IActionResult> DownloadTemplate()
     {
@@ -43,7 +52,7 @@ public class TeachingSchedulesController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TeachingSchedule_Template.xlsx");
     }
 
-    [Authorize(Roles = "Lecturer,Admin")]
+    [Authorize(Roles = "Lecturer,Admin,BookingStaff")]
     [HttpPost("import")]
     public async Task<IActionResult> ImportSchedule(IFormFile file)
     {

@@ -89,6 +89,11 @@ public class UnitOfWork : IUnitOfWork
     {
         get { return _roomTypeRepository ??= new GenericRepository<RoomType>(_context); }
     }
+
+    public IGenericRepository<RoomEquipmentHistory> RoomEquipmentHistories
+    {
+        get { return new GenericRepository<RoomEquipmentHistory>(_context); }
+    }
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();

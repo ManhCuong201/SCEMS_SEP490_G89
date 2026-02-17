@@ -9,7 +9,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class AccountsController : ControllerBase
 {
     private readonly IAccountService _accountService;
@@ -28,6 +28,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAccountById(Guid id)
     {
         var account = await _accountService.GetAccountByIdAsync(id);
@@ -37,6 +38,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountDto dto)
     {
         try
@@ -51,6 +53,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateAccount(Guid id, [FromBody] UpdateAccountDto dto)
     {
         try
@@ -67,6 +70,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteAccount(Guid id)
     {
         var result = await _accountService.DeleteAccountAsync(id);
@@ -76,6 +80,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request)
     {
         var result = await _accountService.UpdateStatusAsync(id, request.Status);
@@ -85,6 +90,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost("import")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ImportAccounts(IFormFile file, [FromServices] IImportService importService)
     {
         if (file == null || file.Length == 0)

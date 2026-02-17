@@ -25,6 +25,7 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<System_Configuration> SystemConfigurations { get; set; } = null!;
     public DbSet<Class> Classes { get; set; } = null!;
     public DbSet<ClassStudent> ClassStudents { get; set; } = null!;
+    public DbSet<RoomEquipmentHistory> RoomEquipmentHistories { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,6 +54,18 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasOne(cs => cs.Student)
             .WithMany()
             .HasForeignKey(cs => cs.StudentId);
+
+        modelBuilder.Entity<RoomEquipmentHistory>()
+            .HasOne(reh => reh.Equipment)
+            .WithMany()
+            .HasForeignKey(reh => reh.EquipmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RoomEquipmentHistory>()
+            .HasOne(reh => reh.Room)
+            .WithMany()
+            .HasForeignKey(reh => reh.RoomId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ScemsDbContext).Assembly);
 

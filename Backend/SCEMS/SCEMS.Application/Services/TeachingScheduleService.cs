@@ -66,6 +66,17 @@ public class TeachingScheduleService : ITeachingScheduleService
         return _mapper.Map<List<ScheduleResponseDto>>(schedules);
     }
 
+    public async Task<List<ScheduleResponseDto>> GetAllSchedulesAsync(DateTime start, DateTime end)
+    {
+        var schedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .Include(ts => ts.Room)
+            .Where(ts => ts.Date >= start.Date && ts.Date <= end.Date)
+            .OrderBy(ts => ts.Date).ThenBy(ts => ts.Slot)
+            .ToListAsync();
+
+        return _mapper.Map<List<ScheduleResponseDto>>(schedules);
+    }
+
     public async Task<byte[]> GetImportTemplateAsync()
     {
         using var stream = await _importService.GetTeachingScheduleTemplateStreamAsync();

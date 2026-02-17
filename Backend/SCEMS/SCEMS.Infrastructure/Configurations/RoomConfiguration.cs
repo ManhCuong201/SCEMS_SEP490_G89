@@ -18,6 +18,9 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
             .IsRequired()
             .HasMaxLength(255);
 
+        builder.Property(r => r.Building)
+            .HasMaxLength(100);
+
         builder.Property(r => r.Capacity)
             .IsRequired();
 

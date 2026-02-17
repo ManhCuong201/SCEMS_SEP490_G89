@@ -34,6 +34,14 @@ public class ClassService : IClassService
         return _mapper.Map<List<ClassResponseDto>>(classes);
     }
 
+    public async Task<List<ClassResponseDto>> GetAllClassesAsync()
+    {
+        var classes = await _unitOfWork.Classes.GetAll()
+            .ToListAsync();
+            
+        return _mapper.Map<List<ClassResponseDto>>(classes);
+    }
+
     public async Task<ClassResponseDto?> GetClassByIdAsync(Guid id)
     {
         var @class = await _unitOfWork.Classes.GetByIdAsync(id);
