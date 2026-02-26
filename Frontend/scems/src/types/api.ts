@@ -191,3 +191,55 @@ export interface UpdateRoomTypeRequest {
   description: string
 }
 
+export enum IssueReportStatus {
+  Open = "Open",
+  InProgress = "InProgress",
+  Resolved = "Resolved",
+  Closed = "Closed"
+}
+
+export interface IssueReportResponse {
+  id: string;
+  createdBy: string;
+  createdByName: string;
+  roomId?: string;
+  roomName?: string;
+  equipmentId?: string;
+  equipmentName?: string;
+  description: string;
+  status: IssueReportStatus;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreateIssueReportRequest {
+  roomId?: string;
+  equipmentId?: string;
+  description: string;
+}
+
+export interface UpdateIssueReportStatusRequest {
+  status: IssueReportStatus;
+}
+
+export interface PendingRoomCheck {
+  roomId: string;
+  roomName: string;
+  roomCode: string;
+  lastActivityEndTime: string;
+}
+
+export interface CompleteRoomCheckRequest {
+  roomId: string;
+  note?: string;
+}
+
+export interface CreateScheduleChangeRequest {
+  scheduleId: string;
+  newRoomId: string;
+  newDate: string;
+  slotType: string;
+  newSlot: number;
+  reason: string;
+}
+

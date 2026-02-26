@@ -262,7 +262,9 @@ export const StaffBookingBoardPage: React.FC = () => {
                                             position: 'relative'
                                         }}>
                                             {booking.status === 'Pending' && (
-                                                <div style={{ position: 'absolute', top: '-8px', right: '10px', background: '#fb923c', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>PENDING REVIEW</div>
+                                                <div style={{ position: 'absolute', top: '-8px', right: '10px', background: '#fb923c', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                    {booking.reason?.includes('Reschedule original class') ? 'CLASS RESCHEDULE REQUEST' : 'PENDING REVIEW'}
+                                                </div>
                                             )}
                                             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.9rem' }}>
                                                 <div style={{ color: '#64748b', fontWeight: 600 }}>Requester:</div>
@@ -274,6 +276,12 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                 <div style={{ color: '#64748b', fontWeight: 600 }}>Reason:</div>
                                                 <div style={{ fontStyle: 'italic', color: '#334155' }}>"{booking.reason || 'No reason provided'}"</div>
                                             </div>
+
+                                            {booking.reason?.includes('Reschedule original class') && (
+                                                <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '4px', fontSize: '0.8rem', color: '#b91c1c' }}>
+                                                    <strong>⚠️ Warning:</strong> Approving this will permanently move the class schedule to this new time and room.
+                                                </div>
+                                            )}
 
                                             {booking.status === 'Pending' && (
                                                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>

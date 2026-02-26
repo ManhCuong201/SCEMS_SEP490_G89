@@ -16,8 +16,10 @@ export const EditEquipmentPage: React.FC = () => {
     const [form, setForm] = useState({
         name: '',
         roomId: '',
-        status: EquipmentStatus.Working
+        status: EquipmentStatus.Working,
+        note: ''
     });
+    const [originalRoomId, setOriginalRoomId] = useState('');
     const [currentType, setCurrentType] = useState('');
 
     // Equipment Type cannot be changed after creation typically, or API doesn't support it in UpdateDto
@@ -37,8 +39,10 @@ export const EditEquipmentPage: React.FC = () => {
                 setForm({
                     name: equipment.name,
                     roomId: equipment.roomId,
-                    status: equipment.status
+                    status: equipment.status,
+                    note: '',
                 });
+                setOriginalRoomId(equipment.roomId);
                 setCurrentType(equipment.equipmentTypeName);
                 setRooms(roomsRes.items);
             } catch (err: any) {
@@ -97,6 +101,14 @@ export const EditEquipmentPage: React.FC = () => {
                             {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>)}
                         </select>
                     </div>
+
+                    {form.roomId !== originalRoomId && (
+                        <div className="form-group">
+                            <label className="form-label">Move Note (Optional)</label>
+                            <input type="text" name="note" className="form-input" placeholder="Reason for moving..." value={form.note} onChange={handleChange} disabled={submitting} />
+                            <small style={{ color: 'var(--color-text-secondary)' }}>e.g. Broken in old room, requested by teacher, etc.</small>
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label className="form-label">Status</label>

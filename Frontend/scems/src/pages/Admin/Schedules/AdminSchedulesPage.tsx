@@ -3,7 +3,7 @@ import { scheduleService } from '../../../services/teachingSchedule.service';
 import { ScheduleResponse } from '../../../types/api';
 import { Loading } from '../../../components/Common/Loading';
 import { Alert } from '../../../components/Common/Alert';
-import { Calendar as CalendarIcon, ArrowLeft, ArrowRight, Download, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowLeft, ArrowRight, Download, Users, Clock, MapPin } from 'lucide-react';
 import '../../../styles/scheduler.css';
 
 export const AdminSchedulesPage: React.FC = () => {
@@ -80,9 +80,9 @@ export const AdminSchedulesPage: React.FC = () => {
         if (e.target.files && e.target.files[0]) {
             try {
                 setLoading(true);
-                await scheduleService.importSchedule(e.target.files[0]);
+                const res = await scheduleService.importSchedule(e.target.files[0]);
                 await loadSchedules(); // Reload data
-                alert('Schedule imported successfully');
+                alert(res.message || 'Schedule import completed');
             } catch (err: any) {
                 setError(err.response?.data?.message || 'Failed to import schedule');
             } finally {
@@ -134,12 +134,20 @@ export const AdminSchedulesPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="week-navigation" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                        <button className="btn-icon" onClick={handlePreviousWeek}><ArrowLeft size={18} /></button>
-                        <span style={{ fontWeight: 600, minWidth: '200px', textAlign: 'center' }}>
-                            {weekStart.toLocaleDateString()} - {weekEnd.toLocaleDateString()}
-                        </span>
-                        <button className="btn-icon" onClick={handleNextWeek}><ArrowRight size={18} /></button>
-                        <button className="btn btn-sm btn-outline" onClick={handleToday} style={{ marginLeft: '0.5rem' }}>Today</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                            <button className="btn btn-secondary btn-sm" onClick={handlePreviousWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '32px', width: '36px', padding: 0 }}>
+                                <ArrowLeft size={18} />
+                            </button>
+                            <span style={{ fontWeight: 600, minWidth: '180px', textAlign: 'center', fontSize: '0.9rem' }}>
+                                {weekStart.toLocaleDateString()} - {weekEnd.toLocaleDateString()}
+                            </span>
+                            <button className="btn btn-secondary btn-sm" onClick={handleNextWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '32px', width: '36px', padding: 0 }}>
+                                <ArrowRight size={18} />
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={handleToday} style={{ marginLeft: '0.5rem', height: '32px', padding: '0 16px', fontWeight: 600 }}>
+                                Today
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -210,7 +218,13 @@ export const AdminSchedulesPage: React.FC = () => {
                                                         <div style={{ fontWeight: 700, color: '#0369a1' }}>{schedule.subject}</div>
                                                         <div style={{ fontSize: '0.75rem', color: '#0c4a6e' }}>{schedule.classCode}</div>
                                                         <div style={{ fontSize: '0.75rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b' }}>
-                                                            <Users size={12} /> {schedule.roomName}
+                                                            <Clock size={12} /> {schedule.startTime} - {schedule.endTime}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.75rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b' }}>
+                                                            <Users size={12} /> {schedule.lecturerName}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.75rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b' }}>
+                                                            <MapPin size={12} /> {schedule.roomName}
                                                         </div>
                                                     </div>
                                                 )}

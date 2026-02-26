@@ -45,5 +45,13 @@ public class MappingProfile : Profile
         CreateMap<RoomEquipmentHistory, EquipmentHistoryResponseDto>()
             .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room.RoomName))
             .ForMember(dest => dest.RoomCode, opt => opt.MapFrom(src => src.Room.RoomCode));
+
+        CreateMap<IssueReport, SCEMS.Application.DTOs.IssueReport.IssueReportResponseDto>()
+            .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByAccount != null ? src.CreatedByAccount.FullName : "Unknown"))
+            .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room != null ? src.Room.RoomName : null))
+            .ForMember(dest => dest.EquipmentName, opt => opt.MapFrom(src => src.Equipment != null ? src.Equipment.Name : null))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+        CreateMap<SCEMS.Application.DTOs.IssueReport.CreateIssueReportDto, IssueReport>();
     }
 }

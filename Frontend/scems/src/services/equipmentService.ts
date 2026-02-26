@@ -2,7 +2,7 @@ import api from './api';
 import { CreateEquipmentDto, UpdateEquipmentDto, PaginatedEquipment, Equipment, EquipmentStatus, EquipmentHistory } from '../types/equipment';
 
 export const equipmentService = {
-    getAll: async (pageIndex = 1, pageSize = 10, search?: string, sortBy?: string, status?: string): Promise<PaginatedEquipment> => {
+    getAll: async (pageIndex = 1, pageSize = 10, search?: string, sortBy?: string, status?: string, roomId?: string): Promise<PaginatedEquipment> => {
         const params = new URLSearchParams({
             pageIndex: pageIndex.toString(),
             pageSize: pageSize.toString(),
@@ -10,6 +10,7 @@ export const equipmentService = {
         if (search) params.append('search', search);
         if (sortBy) params.append('sortBy', sortBy);
         if (status) params.append('status', status);
+        if (roomId) params.append('roomId', roomId);
 
         const response = await api.get<PaginatedEquipment>(`/admin/equipment?${params.toString()}`);
         return response.data;

@@ -1,7 +1,9 @@
 using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
 using SCEMS.Application.Common.Interfaces;
 using SCEMS.Application.DTOs.Import;
 using SCEMS.Application.Services.Interfaces;
+using SCEMS.Application.Common;
 using SCEMS.Domain.Entities;
 using SCEMS.Domain.Enums;
 using SCEMS.Infrastructure.Repositories;
@@ -86,72 +88,124 @@ public class ImportService : IImportService
 
         var rooms = await _unitOfWork.Rooms.GetAllAsync(); 
 
+        var existingClassCodes = await _unitOfWork.Classes.GetAll()
+            .Select(c => c.ClassCode)
+            .ToListAsync();
+        var processedClassCodes = new HashSet<string>(existingClassCodes);
+
         foreach (var row in rows)
         {
             try
             {
-                var subject = row.Cell(1).GetValue<string>();
-                var classCode = row.Cell(2).GetValue<string>();
-                var roomName = row.Cell(3).GetValue<string>();
-                var dateStr = row.Cell(4).GetValue<string>(); // Read as string for multi-date support
-                var lecturer = row.Cell(9).GetValue<string>();
+                var subject = row.Cell(1).GetValue<string>()?.Trim();
+                var classCode = row.Cell(2).GetValue<string>()?.Trim();
+                var roomName = row.Cell(3).GetValue<string>()?.Trim();
+                var daysOfWeekStr = row.Cell(6).GetValue<string>()?.Trim();
+                var slotType = row.Cell(7).GetValue<string>()?.Trim();
+                var slotEntry = row.Cell(8).GetValue<string>()?.Trim();
+                var lecturerCode = row.Cell(9).GetValue<string>()?.Trim();
 
-                var room = rooms.FirstOrDefault(r => r.RoomName.Equals(roomName, StringComparison.OrdinalIgnoreCase));
+                if (string.IsNullOrWhiteSpace(classCode)) continue;
+
+                var room = rooms.FirstOrDefault(r => r.RoomName.Equals(roomName, StringComparison.OrdinalIgnoreCase) || r.RoomCode.Equals(roomName, StringComparison.OrdinalIgnoreCase));
                 if (room == null)
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Room {roomName} not found.");
+                    result.Errors.Add($"Row {row.RowNumber()}: Room {roomName} not found.");
                     continue;
                 }
 
-                // Parse Multiple Dates (CSV)
-                var dateStrings = dateStr.Split(new[] { ',', ';', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(d => d.Trim())
-                                        .ToList();
-
-                foreach (var singleDateStr in dateStrings)
+                var searchCode = lecturerCode.Trim().ToLower();
+                var lecturerAccount = await _unitOfWork.Accounts.GetAll().FirstOrDefaultAsync(a => 
+                    (a.StudentCode != null && a.StudentCode.ToLower() == searchCode) || 
+                    (a.Email != null && a.Email.ToLower() == searchCode) || 
+                    (a.Email != null && a.Email.ToLower().StartsWith(searchCode + "@")) ||
+                    (a.FullName != null && a.FullName.ToLower() == searchCode)
+                );
+                if (lecturerAccount == null)
                 {
-                    if (!DateTime.TryParse(singleDateStr, out var date)) continue;
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Lecturer with code {lecturerCode} not found.");
+                    continue;
+                }
 
-                    // Handle Specific Time vs Slot Logic
-                    var startTimeCell = row.Cell(5);
-                    var endTimeCell = row.Cell(6);
-                    var isNewSlotCell = row.Cell(7);
-                    var slotCell = row.Cell(8);
-
-                    if (!startTimeCell.IsEmpty() && !endTimeCell.IsEmpty())
+                if (!processedClassCodes.Contains(classCode))
+                {
+                    await _unitOfWork.Classes.AddAsync(new Class
                     {
-                        var startTimes = startTimeCell.GetValue<string>().Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                        var endTimes = endTimeCell.GetValue<string>().Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                        Id = Guid.NewGuid(),
+                        ClassCode = classCode,
+                        SubjectName = subject,
+                        LecturerId = lecturerAccount.Id
+                    });
+                    processedClassCodes.Add(classCode);
+                }
 
-                        for (int i = 0; i < Math.Min(startTimes.Count, endTimes.Count); i++)
+                var fromCell = row.Cell(4);
+                if (!TryParseExcelDate(fromCell, out var fromDate))
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Invalid From Date: {fromCell.GetString()}");
+                    continue;
+                }
+
+                var toCell = row.Cell(5);
+                if (!TryParseExcelDate(toCell, out var toDate))
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Invalid To Date: {toCell.GetString()}");
+                    continue;
+                }
+
+                var targetDays = ParseDaysOfWeek(daysOfWeekStr);
+                if (!targetDays.Any())
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Invalid or missing days of week: {daysOfWeekStr}");
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(slotEntry))
+                {
+                    var slotGroups = ParseSlots(slotEntry);
+                    // Determine if we should map group-to-day (1-to-1)
+                    bool use1to1Mapping = targetDays.Count > 1 && targetDays.Count == slotGroups.Count;
+
+                    for (var current = fromDate.Date; current <= toDate.Date; current = current.AddDays(1))
+                    {
+                        int dayIndex = targetDays.IndexOf(current.DayOfWeek);
+                        if (dayIndex >= 0)
                         {
-                            if (TimeSpan.TryParse(startTimes[i].Trim(), out var startTime) && 
-                                TimeSpan.TryParse(endTimes[i].Trim(), out var endTime))
+                            IEnumerable<int> slotsToApply;
+                            if (use1to1Mapping)
                             {
-                                await AddScheduleAsync(subject, classCode, room.Id, date, startTime, endTime, lecturer);
-                                result.SuccessCount++;
+                                slotsToApply = slotGroups[dayIndex];
                             }
-                        }
-                    }
-                    else if (!slotCell.IsEmpty())
-                    {
-                        var slotEntry = slotCell.GetValue<string>();
-                        var isNewSlotStr = isNewSlotCell.GetValue<string>();
-                        bool isNewSlot = isNewSlotStr.Equals("Yes", StringComparison.OrdinalIgnoreCase) || 
-                                         isNewSlotStr.Equals("True", StringComparison.OrdinalIgnoreCase) ||
-                                         isNewSlotStr.Equals("1");
-
-                        var slotNumbers = ParseSlots(slotEntry);
-
-                        foreach (var slot in slotNumbers)
-                        {
-                            var startTime = GetStartTimeForSlot(slot, isNewSlot);
-                            var endTime = GetEndTimeForSlot(slot, isNewSlot);
-
-                            if (startTime != TimeSpan.Zero && endTime != TimeSpan.Zero)
+                            else
                             {
-                                await AddScheduleAsync(subject, classCode, room.Id, date, startTime, endTime, lecturer);
+                                // Flatten all groups to apply to all target days
+                                slotsToApply = slotGroups.SelectMany(g => g).Distinct().OrderBy(s => s);
+                            }
+
+                            foreach (var slot in slotsToApply)
+                            {
+                                var times = SlotHelper.GetSlotTimes(slotType, slot);
+
+                                var schedule = new Teaching_Schedule
+                                {
+                                    Subject = subject,
+                                    ClassCode = classCode,
+                                    RoomId = room.Id,
+                                    Date = current,
+                                    Slot = slot,
+                                    StartTime = times.StartTime,
+                                    EndTime = times.EndTime,
+                                    LecturerId = lecturerAccount.Id.ToString(),
+                                    LecturerName = lecturerAccount.FullName,
+                                    LecturerEmail = lecturerAccount.Email
+                                };
+                                await _unitOfWork.TeachingSchedules.AddAsync(schedule);
+
                                 result.SuccessCount++;
                             }
                         }
@@ -169,112 +223,94 @@ public class ImportService : IImportService
         return result;
     }
 
-    private async Task AddScheduleAsync(string subject, string classCode, Guid roomId, DateTime date, TimeSpan start, TimeSpan end, string lecturer)
+    // (Removed AddScheduleAsync as we do it inline to pass slot and full lecturer info)
+
+    private bool TryParseExcelDate(IXLCell cell, out DateTime result)
     {
-        var schedule = new Teaching_Schedule
-        {
-            Subject = subject,
-            ClassCode = classCode,
-            RoomId = roomId,
-            Date = date,
-            StartTime = start,
-            EndTime = end,
-            LecturerName = lecturer
+        if (cell.TryGetValue<DateTime>(out result))
+            return true;
+
+        var strValue = cell.GetValue<string>()?.Trim();
+        if (string.IsNullOrWhiteSpace(strValue))
+            return false;
+
+        string[] formats = { 
+            "yyyy-MM-dd", "yyyy/MM/dd", "yyyy.MM.dd",
+            "dd-MM-yyyy", "dd/MM/yyyy", "dd.MM.yyyy",
+            "MM-dd-yyyy", "MM/dd/yyyy", "MM.dd.yyyy",
+            "yyyy-d-M", "yyyy/d/M",
+            "d-M-yyyy", "d/M/yyyy",
+            "yyyy-dd-MM", "yyyy/dd/MM" // The specific case the user encountered ("2026-23-02")
         };
-        await _unitOfWork.TeachingSchedules.AddAsync(schedule);
+
+        return DateTime.TryParseExact(strValue, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out result) || DateTime.TryParse(strValue, out result);
     }
 
-    private List<int> ParseSlots(string slotEntry)
+    private List<List<int>> ParseSlots(string slotEntry)
     {
-        var slots = new List<int>();
-        if (string.IsNullOrWhiteSpace(slotEntry)) return slots;
+        var groups = new List<List<int>>();
+        if (string.IsNullOrWhiteSpace(slotEntry)) return groups;
 
-        // Handle Range "1-4"
-        if (slotEntry.Contains("-"))
+        var items = slotEntry.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+        
+        foreach (var item in items)
         {
-            var parts = slotEntry.Split('-');
-            if (parts.Length == 2 && int.TryParse(parts[0], out int start) && int.TryParse(parts[1], out int end))
+            var cleanItem = item.Trim();
+            var groupSlots = new List<int>();
+
+            if (cleanItem.Contains("-"))
             {
-                for (int i = Math.Min(start, end); i <= Math.Max(start, end); i++)
+                var parts = cleanItem.Split('-');
+                if (parts.Length == 2 && int.TryParse(parts[0], out int start) && int.TryParse(parts[1], out int end))
                 {
-                    slots.Add(i);
+                    for (int i = Math.Min(start, end); i <= Math.Max(start, end); i++)
+                    {
+                        groupSlots.Add(i);
+                    }
                 }
-                return slots;
+            }
+            else if (int.TryParse(cleanItem, out int s))
+            {
+                groupSlots.Add(s);
+            }
+
+            if (groupSlots.Any())
+            {
+                groups.Add(groupSlots.Distinct().OrderBy(s => s).ToList());
             }
         }
 
-        // Handle CSV "1, 2, 3"
-        var items = slotEntry.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var item in items)
-        {
-            if (int.TryParse(item, out int s)) slots.Add(s);
-        }
-
-        return slots.Distinct().OrderBy(s => s).ToList();
+        return groups;
     }
 
-    private TimeSpan GetStartTimeForSlot(int slot, bool isNewSlot)
+    private List<DayOfWeek> ParseDaysOfWeek(string input)
     {
-        if (isNewSlot)
-        {
-            return slot switch
-            {
-                1 => new TimeSpan(7, 30, 0),
-                2 => new TimeSpan(10, 0, 0),
-                3 => new TimeSpan(12, 50, 0),
-                4 => new TimeSpan(15, 20, 0),
-                5 => new TimeSpan(18, 0, 0),
-                6 => new TimeSpan(20, 0, 0),
-                _ => TimeSpan.Zero
-            };
-        }
-        else // Old Slot
-        {
-            return slot switch
-            {
-                1 => new TimeSpan(7, 30, 0),
-                2 => new TimeSpan(9, 10, 0),
-                3 => new TimeSpan(10, 50, 0),
-                4 => new TimeSpan(12, 50, 0),
-                5 => new TimeSpan(14, 30, 0),
-                6 => new TimeSpan(16, 10, 0),
-                7 => new TimeSpan(18, 0, 0),
-                8 => new TimeSpan(19, 45, 0),
-                _ => TimeSpan.Zero
-            };
-        }
-    }
+        var result = new List<DayOfWeek>();
+        if(string.IsNullOrWhiteSpace(input)) return result;
 
-    private TimeSpan GetEndTimeForSlot(int slot, bool isNewSlot)
-    {
-        if (isNewSlot)
+        var parts = input.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in parts)
         {
-            return slot switch
+            var cleanPart = part.Trim().ToLower();
+            
+            // Vietnamese/Asian standard commonly used: 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat, 8=Sun
+            if (int.TryParse(cleanPart, out int number))
             {
-                1 => new TimeSpan(9, 50, 0),
-                2 => new TimeSpan(12, 20, 0),
-                3 => new TimeSpan(15, 10, 0),
-                4 => new TimeSpan(17, 40, 0),
-                5 => new TimeSpan(20, 20, 0),
-                6 => new TimeSpan(22, 20, 0),
-                _ => TimeSpan.Zero
-            };
-        }
-        else // Old Slot
-        {
-            return slot switch
+                if (number >= 2 && number <= 7) result.Add((DayOfWeek)(number - 1));
+                else if (number == 8) result.Add(DayOfWeek.Sunday);
+            }
+            else
             {
-                1 => new TimeSpan(9, 0, 0),
-                2 => new TimeSpan(10, 40, 0),
-                3 => new TimeSpan(12, 20, 0),
-                4 => new TimeSpan(14, 20, 0),
-                5 => new TimeSpan(16, 0, 0),
-                6 => new TimeSpan(17, 40, 0),
-                7 => new TimeSpan(19, 30, 0),
-                8 => new TimeSpan(21, 15, 0),
-                _ => TimeSpan.Zero
-            };
+                if (cleanPart.StartsWith("mon")) result.Add(DayOfWeek.Monday);
+                else if (cleanPart.StartsWith("tue")) result.Add(DayOfWeek.Tuesday);
+                else if (cleanPart.StartsWith("wed")) result.Add(DayOfWeek.Wednesday);
+                else if (cleanPart.StartsWith("thu")) result.Add(DayOfWeek.Thursday);
+                else if (cleanPart.StartsWith("fri")) result.Add(DayOfWeek.Friday);
+                else if (cleanPart.StartsWith("sat")) result.Add(DayOfWeek.Saturday);
+                else if (cleanPart.StartsWith("sun")) result.Add(DayOfWeek.Sunday);
+            }
         }
+        return result.Distinct().ToList();
     }
 
     public async Task<Stream> GetAccountTemplateStreamAsync()
@@ -318,35 +354,142 @@ public class ImportService : IImportService
         worksheet.Cell(1, 1).Value = "Subject";
         worksheet.Cell(1, 2).Value = "Class Code";
         worksheet.Cell(1, 3).Value = "Room Name";
-        worksheet.Cell(1, 4).Value = "Date (CSV support)";
-        worksheet.Cell(1, 5).Value = "Start Time (CSV)";
-        worksheet.Cell(1, 6).Value = "End Time (CSV)";
-        worksheet.Cell(1, 7).Value = "Is New Slot (Yes/No)";
+        worksheet.Cell(1, 4).Value = "From Date";
+        worksheet.Cell(1, 5).Value = "To Date";
+        worksheet.Cell(1, 6).Value = "Days of Week (Mon,Wed OR 2,4)";
+        worksheet.Cell(1, 7).Value = "Slot Type (Old/New)";
         worksheet.Cell(1, 8).Value = "Slot Number (CSV/Range)";
-        worksheet.Cell(1, 9).Value = "Lecturer";
+        worksheet.Cell(1, 9).Value = "Lecturer Code";
 
         // Style
         var header = worksheet.Range("A1:I1");
         header.Style.Font.Bold = true;
         header.Style.Fill.BackgroundColor = XLColor.LightGray;
 
-        // Sample data 1: Specific times + multiple dates
+        // Sample data 1: Slot logic + range + days of week
         worksheet.Cell(2, 1).Value = "PRN231";
         worksheet.Cell(2, 2).Value = "SE1701";
         worksheet.Cell(2, 3).Value = "A101";
-        worksheet.Cell(2, 4).Value = "2026-02-01, 2026-02-03";
-        worksheet.Cell(2, 5).Value = "07:30, 10:00";
-        worksheet.Cell(2, 6).Value = "09:50, 12:20";
-        worksheet.Cell(2, 9).Value = "Lecturer A";
+        worksheet.Cell(2, 4).Value = "2026-02-02";
+        worksheet.Cell(2, 5).Value = "2026-04-10";
+        worksheet.Cell(2, 6).Value = "Mon, Wed, Fri";
+        worksheet.Cell(2, 7).Value = "New";
+        worksheet.Cell(2, 8).Value = "1-3";
+        worksheet.Cell(2, 9).Value = "LecturerA";
 
-        // Sample data 2: Slot logic + range
+        // Sample data 2: Old slot logic, using numbers for days (2=Mon, 4=Wed)
         worksheet.Cell(3, 1).Value = "SWP391";
         worksheet.Cell(3, 2).Value = "SE1702";
         worksheet.Cell(3, 3).Value = "B202";
         worksheet.Cell(3, 4).Value = "2026-02-02";
-        worksheet.Cell(3, 7).Value = "Yes";
-        worksheet.Cell(3, 8).Value = "1-3";
-        worksheet.Cell(3, 9).Value = "Lecturer B";
+        worksheet.Cell(3, 5).Value = "2026-04-10";
+        worksheet.Cell(3, 6).Value = "2, 4";
+        worksheet.Cell(3, 7).Value = "Old";
+        worksheet.Cell(3, 8).Value = "4, 5";
+        worksheet.Cell(3, 9).Value = "john_doe";
+
+        worksheet.Columns().AdjustToContents();
+
+        var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+        return stream;
+    }
+
+    public async Task<ImportResultDto> ImportStudentsToClassesAsync(Stream fileStream)
+    {
+        var result = new ImportResultDto();
+        using var workbook = new XLWorkbook(fileStream);
+        var worksheet = workbook.Worksheet(1);
+        var rows = worksheet.RowsUsed().Skip(1);
+
+        var existingClasses = await _unitOfWork.Classes.GetAll().ToListAsync();
+        var existingStudents = await _unitOfWork.Accounts.GetAll().Where(a => a.Role == AccountRole.Student).ToListAsync();
+        var existingClassStudents = await _unitOfWork.ClassStudents.GetAll().ToListAsync();
+
+        foreach (var row in rows)
+        {
+            try
+            {
+                var classCode = row.Cell(1).GetValue<string>()?.Trim();
+                var studentSearch = row.Cell(2).GetValue<string>()?.Trim(); // Code or Email
+
+                if (string.IsNullOrWhiteSpace(classCode) || string.IsNullOrWhiteSpace(studentSearch)) continue;
+
+                var targetClass = existingClasses.FirstOrDefault(c => c.ClassCode.Equals(classCode, StringComparison.OrdinalIgnoreCase));
+                if (targetClass == null)
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Class {classCode} not found.");
+                    continue;
+                }
+
+                var searchStr = studentSearch.ToLower();
+                var targetStudent = existingStudents.FirstOrDefault(s => 
+                    (s.StudentCode != null && s.StudentCode.ToLower() == searchStr) || 
+                    (s.Email != null && s.Email.ToLower() == searchStr) ||
+                    (s.Email != null && s.Email.ToLower().StartsWith(searchStr + "@"))
+                );
+
+                if (targetStudent == null)
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Student {studentSearch} not found.");
+                    continue;
+                }
+
+                var exists = existingClassStudents.Any(cs => cs.ClassId == targetClass.Id && cs.StudentId == targetStudent.Id);
+                if (exists)
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Row {row.RowNumber()}: Student {studentSearch} is already in class {classCode}.");
+                    continue;
+                }
+
+                var newClassStudent = new ClassStudent
+                {
+                    ClassId = targetClass.Id,
+                    StudentId = targetStudent.Id
+                };
+
+                await _unitOfWork.ClassStudents.AddAsync(newClassStudent);
+                
+                // Add to tracked list to prevent duplicates in the same file
+                existingClassStudents.Add(newClassStudent);
+
+                result.SuccessCount++;
+            }
+            catch (Exception ex)
+            {
+                result.FailureCount++;
+                result.Errors.Add($"Row {row.RowNumber()}: {ex.Message}");
+            }
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        return result;
+    }
+
+    public async Task<Stream> GetStudentClassTemplateStreamAsync()
+    {
+        var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Student Class Template");
+
+        // Headers
+        worksheet.Cell(1, 1).Value = "Class Code";
+        worksheet.Cell(1, 2).Value = "Student Code (or Email/Prefix)";
+
+        // Style
+        var header = worksheet.Range("A1:B1");
+        header.Style.Font.Bold = true;
+        header.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+        // Sample data
+        worksheet.Cell(2, 1).Value = "SE1701";
+        worksheet.Cell(2, 2).Value = "HE130456";
+        
+        worksheet.Cell(3, 1).Value = "SE1701";
+        worksheet.Cell(3, 2).Value = "john.doe@example.com";
 
         worksheet.Columns().AdjustToContents();
 

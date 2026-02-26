@@ -7,6 +7,6 @@ public class UpdateEquipmentDto
 {
     public string? Name { get; set; }
     public Guid? RoomId { get; set; }
-
     public EquipmentStatus? Status { get; set; }
+    public string? Note { get; set; }
 }

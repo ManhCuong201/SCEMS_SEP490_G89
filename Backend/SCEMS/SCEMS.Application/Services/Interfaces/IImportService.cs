@@ -8,4 +8,6 @@ public interface IImportService
     Task<ImportResultDto> ImportTeachingScheduleAsync(Stream fileStream);
     Task<Stream> GetAccountTemplateStreamAsync();
     Task<Stream> GetTeachingScheduleTemplateStreamAsync();
+    Task<ImportResultDto> ImportStudentsToClassesAsync(Stream fileStream);
+    Task<Stream> GetStudentClassTemplateStreamAsync();
 }

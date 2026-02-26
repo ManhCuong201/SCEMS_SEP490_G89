@@ -1,5 +1,5 @@
 import api from './api'
-import { Booking, CreateBookingRequest, CreateRoomChangeRequest, PaginatedResponse, BookingStatus } from '../types/api'
+import { Booking, CreateBookingRequest, CreateRoomChangeRequest, CreateScheduleChangeRequest, PaginatedResponse, BookingStatus } from '../types/api'
 
 export const bookingService = {
     async getBookings(pageIndex: number = 1, pageSize: number = 10, search?: string): Promise<PaginatedResponse<Booking>> {
@@ -33,6 +33,11 @@ export const bookingService = {
 
     async createRoomChangeRequest(request: CreateRoomChangeRequest): Promise<Booking> {
         const { data } = await api.post<Booking>('/booking/change-room', request)
+        return data
+    },
+
+    async createScheduleChangeRequest(request: CreateScheduleChangeRequest): Promise<Booking> {
+        const { data } = await api.post<Booking>('/booking/schedule-change', request)
         return data
     },
 

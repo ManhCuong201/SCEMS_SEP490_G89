@@ -9,7 +9,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/[controller]")]
-[Authorize(Roles = "Admin,AssetStaff")]
+[Authorize] // Require authentication by default for all methods
 public class EquipmentController : ControllerBase
 {
     private readonly IEquipmentService _equipmentService;
@@ -20,9 +20,9 @@ public class EquipmentController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetEquipment([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? sortBy = null, [FromQuery] string? status = null)
+    public async Task<IActionResult> GetEquipment([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? sortBy = null, [FromQuery] string? status = null, [FromQuery] Guid? roomId = null)
     {
-        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, SortBy = sortBy, Status = status };
+        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, SortBy = sortBy, Status = status, RoomId = roomId };
         var result = await _equipmentService.GetEquipmentAsync(@params);
         return Ok(result);
     }
@@ -37,6 +37,7 @@ public class EquipmentController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentDto dto)
     {
         try
@@ -51,6 +52,7 @@ public class EquipmentController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> UpdateEquipment(Guid id, [FromBody] UpdateEquipmentDto dto)
     {
         try
@@ -67,6 +69,7 @@ public class EquipmentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> DeleteEquipment(Guid id)
     {
         var result = await _equipmentService.DeleteEquipmentAsync(id);
@@ -76,6 +79,7 @@ public class EquipmentController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin,AssetStaff,Guard")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request)
     {
         var result = await _equipmentService.UpdateStatusAsync(id, request.Status);
@@ -84,6 +88,7 @@ public class EquipmentController : ControllerBase
         return Ok(new { message = "Status updated successfully" });
     }
     [HttpPost("import")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> Import(IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -101,6 +106,7 @@ public class EquipmentController : ControllerBase
         }
     }
     [HttpGet("template")]
+    [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> GetTemplate()
     {
         try

@@ -203,6 +203,29 @@ public class BookingService : IBookingService
                  conflict.Status = BookingStatus.Rejected;
                  _unitOfWork.Bookings.Update(conflict);
              }
+
+             // Handle Schedule Change Request
+             if (!string.IsNullOrEmpty(booking.Reason) && booking.Reason.StartsWith("[Schedule Change Request] ScheduleId: "))
+             {
+                 var prefixLen = "[Schedule Change Request] ScheduleId: ".Length;
+                 var dotIndex = booking.Reason.IndexOf('.', prefixLen);
+                 if (dotIndex > prefixLen)
+                 {
+                     var scheduleIdStr = booking.Reason.Substring(prefixLen, dotIndex - prefixLen).Trim();
+                     if (Guid.TryParse(scheduleIdStr, out var scheduleId))
+                     {
+                         var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(scheduleId);
+                         if (schedule != null)
+                         {
+                             schedule.RoomId = booking.RoomId;
+                             schedule.Date = booking.TimeSlot.Date;
+                             schedule.StartTime = booking.TimeSlot.TimeOfDay;
+                             schedule.EndTime = booking.TimeSlot.AddHours(booking.Duration).TimeOfDay;
+                             _unitOfWork.TeachingSchedules.Update(schedule);
+                         }
+                     }
+                 }
+             }
         }
 
         _unitOfWork.Bookings.Update(booking);
@@ -302,6 +325,34 @@ public class BookingService : IBookingService
             Reason = $"[Room Change Request] From {dto.OriginalRoomId} to {dto.NewRoomId}. Reason: {dto.Reason}"
         };
 
+        return await CreateBookingAsync(bookingDto, userId);
+    }
+
+    public async Task<BookingResponseDto> CreateScheduleChangeRequestAsync(CreateScheduleChangeRequestDto dto, Guid userId)
+    {
+        var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
+        if (account == null || account.Role != AccountRole.Lecturer)
+        {
+            throw new UnauthorizedAccessException("Only Lecturers can request schedule changes.");
+        }
+
+        var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(dto.ScheduleId);
+        if (schedule == null)
+            throw new InvalidOperationException("Original schedule not found.");
+
+        var newTimes = SlotHelper.GetSlotTimes(dto.SlotType, dto.NewSlot);
+        var newStart = dto.NewDate.Date + newTimes.StartTime;
+        var durationHrs = (int)(newTimes.EndTime - newTimes.StartTime).TotalHours;
+
+        var bookingDto = new CreateBookingDto
+        {
+            RoomId = dto.NewRoomId,
+            TimeSlot = newStart,
+            Duration = durationHrs,
+            Reason = $"[Schedule Change Request] ScheduleId: {dto.ScheduleId}. Reason: {dto.Reason}"
+        };
+
+        // Create the booking request using existing overlapping logic
         return await CreateBookingAsync(bookingDto, userId);
     }
 }

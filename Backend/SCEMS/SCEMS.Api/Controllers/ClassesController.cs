@@ -13,10 +13,12 @@ namespace SCEMS.Api.Controllers;
 public class ClassesController : ControllerBase
 {
     private readonly IClassService _classService;
+    private readonly IImportService _importService;
 
-    public ClassesController(IClassService classService)
+    public ClassesController(IClassService classService, IImportService importService)
     {
         _classService = classService;
+        _importService = importService;
     }
 
     [HttpGet("teacher")]
@@ -64,7 +66,6 @@ public class ClassesController : ControllerBase
  
         var classes = await _classService.GetClassesByLecturerAsync(userId);
         return Ok(classes);
-        return Ok(classes);
     }
 
     [HttpGet("all")]
@@ -72,7 +73,6 @@ public class ClassesController : ControllerBase
     public async Task<IActionResult> GetAllClasses()
     {
         var classes = await _classService.GetAllClassesAsync();
-        return Ok(classes);
         return Ok(classes);
     }
 
@@ -109,5 +109,33 @@ public class ClassesController : ControllerBase
 
         var result = await _classService.ImportStudentsFromExcelAsync(id, file.OpenReadStream());
         return Ok(new { message = "Students imported successfully" });
+    }
+
+    [HttpGet("bulk-download-template")]
+    [Authorize(Roles = "Admin,BookingStaff")]
+    public async Task<IActionResult> DownloadBulkTemplate()
+    {
+        var stream = await _importService.GetStudentClassTemplateStreamAsync();
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Bulk_Student_Class_Import_Template.xlsx");
+    }
+
+    [HttpPost("bulk-import-students")]
+    [Authorize(Roles = "Admin,BookingStaff")]
+    public async Task<IActionResult> BulkImportStudents(IFormFile file)
+    {
+        if (file == null || file.Length == 0) return BadRequest(new { message = "Please upload a valid Excel file." });
+
+        var result = await _importService.ImportStudentsToClassesAsync(file.OpenReadStream());
+
+        if (result.FailureCount > 0)
+        {
+            return BadRequest(new
+            {
+                message = $"Import completed with errors. Success: {result.SuccessCount}, Failed: {result.FailureCount}",
+                errors = result.Errors
+            });
+        }
+
+        return Ok(new { message = $"Successfully imported {result.SuccessCount} student class mappings." });
     }
 }

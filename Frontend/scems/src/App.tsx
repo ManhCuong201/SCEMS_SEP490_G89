@@ -38,10 +38,13 @@ import TeacherClassesPage from './pages/User/TeacherClassesPage'
 import ClassStudentsPage from './pages/User/ClassStudentsPage'
 import { useAuth } from './context/AuthContext'
 import { DailySchedulerPage } from './pages/User/Dashboard/DailySchedulerPage'
+import { AdminIssueReportsPage } from './pages/Admin/IssueReports/AdminIssueReportsPage'
+import { UserIssueReportsPage } from './pages/User/IssueReports/UserIssueReportsPage'
+import { SecurityDashboardPage } from './pages/Admin/Dashboard/SecurityDashboardPage'
 
 const HomeRedirect = () => {
   const { user } = useAuth()
-  if (user?.role === 'Admin' || user?.role === 'AssetStaff' || user?.role === 'BookingStaff') {
+  if (user?.role === 'Admin' || user?.role === 'AssetStaff' || user?.role === 'BookingStaff' || user?.role === 'Guard') {
     return <Navigate to="/admin/dashboard" replace />
   }
   return <Navigate to="/dashboard" replace />
@@ -80,6 +83,8 @@ const AppContent: React.FC = () => {
               <Route path="equipment" element={<EquipmentListPage />} />
               <Route path="equipment/create" element={<CreateEquipmentPage />} />
               <Route path="equipment/:id/edit" element={<EditEquipmentPage />} />
+              <Route path="issue-reports" element={<AdminIssueReportsPage />} />
+              <Route path="security-checks" element={<SecurityDashboardPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </AdminLayout>
@@ -127,6 +132,13 @@ const AppContent: React.FC = () => {
               <Route path="classes/:id/students" element={<ClassStudentsPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
+          </UserLayout>
+        </PrivateRoute>
+      } />
+      <Route path="/issue-reports" element={
+        <PrivateRoute>
+          <UserLayout>
+            <UserIssueReportsPage />
           </UserLayout>
         </PrivateRoute>
       } />

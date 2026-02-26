@@ -111,6 +111,26 @@ public class BookingController : ControllerBase
         }
     }
 
+    [HttpPost("schedule-change")]
+    [Authorize(Roles = "Lecturer")]
+    public async Task<IActionResult> CreateScheduleChangeRequest([FromBody] CreateScheduleChangeRequestDto dto)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var booking = await _bookingService.CreateScheduleChangeRequestAsync(dto, userId);
+            return CreatedAtAction(nameof(GetBookingById), new { id = booking.Id }, booking);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPatch("{id}/status")]
     [Authorize(Roles = "Admin,BookingStaff")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateBookingStatusDto dto)

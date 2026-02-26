@@ -5,7 +5,7 @@ import { roomTypeService } from '../../../services/roomType.service'
 import { scheduleService } from '../../../services/teachingSchedule.service'
 import { bookingService } from '../../../services/booking.service'
 import { configService, BookingSettings } from '../../../services/config.service'
-import { Room, RoomType, ScheduleResponse, Booking, BookingStatus } from '../../../types/api'
+import { Room, RoomType, ScheduleResponse, Booking, BookingStatus, CreateScheduleChangeRequest } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { X, Calendar as CalendarIcon, Clock, Filter, MapPin, Search, Users, Info, ArrowRight, MessageSquare } from 'lucide-react'
@@ -491,6 +491,8 @@ export const DailySchedulerPage: React.FC = () => {
                 document.body
             )
             }
+
+            {/* Removed Schedule Change Modal */}
         </div >
     )
 }

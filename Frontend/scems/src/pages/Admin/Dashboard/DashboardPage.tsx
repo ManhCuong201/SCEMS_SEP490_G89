@@ -7,7 +7,7 @@ import { bookingService } from '../../../services/booking.service'
 import { Loading } from '../../../components/Common/Loading'
 import { useAuth } from '../../../context/AuthContext'
 
-import { ArrowRight, Box, Home, Users, Layers, Calendar, Clock, CheckCircle, BookOpen } from 'lucide-react'
+import { ArrowRight, Box, Home, Users, Layers, Calendar, Clock, CheckCircle, BookOpen, ShieldCheck, AlertTriangle } from 'lucide-react'
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth()
@@ -193,6 +193,24 @@ export const DashboardPage: React.FC = () => {
                 href="/schedule"
                 icon={<BookOpen size={48} />}
                 color="var(--color-info)"
+              />
+            </>
+          )}
+          {(user?.role === 'Guard') && (
+            <>
+              <StatCard
+                title="Security Checks"
+                value={0}
+                href="/admin/security-checks"
+                icon={<ShieldCheck size={48} />}
+                color="var(--color-success)"
+              />
+              <StatCard
+                title="Issue Reports"
+                value={0}
+                href="/admin/issue-reports"
+                icon={<AlertTriangle size={48} />}
+                color="var(--color-warning)"
               />
             </>
           )}

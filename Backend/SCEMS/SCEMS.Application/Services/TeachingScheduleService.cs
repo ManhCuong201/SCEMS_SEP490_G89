@@ -90,120 +90,14 @@ public class TeachingScheduleService : ITeachingScheduleService
         return memoryStream.ToArray();
     }
 
-    public async Task<string> ImportScheduleAsync(Stream excelStream, Guid lecturerId)
+    public async Task<string> ImportScheduleAsync(Stream excelStream, Guid currentUserId)
     {
-        var lecturer = await _unitOfWork.Accounts.GetByIdAsync(lecturerId);
-        if (lecturer == null) throw new Exception("Lecturer not found");
-
-        using var workbook = new XLWorkbook(excelStream);
-        var worksheet = workbook.Worksheet(1);
-        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header
-
-        var existingClassCodes = await _unitOfWork.Classes.GetAll()
-            .Select(c => c.ClassCode)
-            .ToListAsync();
-        var processedClassCodes = new HashSet<string>(existingClassCodes);
-
-        int importedCount = 0;
-        int errorCount = 0;
-
-        foreach (var row in rows)
+        var result = await _importService.ImportTeachingScheduleAsync(excelStream);
+        if (result.Errors.Any())
         {
-            try
-            {
-                var subjectCode = row.Cell(1).GetValue<string>();
-                var startDateStr = row.Cell(2).GetValue<string>();
-                var endDateStr = row.Cell(3).GetValue<string>();
-                var daysOfWeekStr = row.Cell(4).GetValue<string>(); // "Mon,Wed" or "Monday"
-                var startTimeStr = row.Cell(5).GetValue<string>(); // "07:30"
-                var endTimeStr = row.Cell(6).GetValue<string>(); // "09:50"
-                var roomName = row.Cell(7).GetValue<string>();
-                var classCode = row.Cell(8).GetValue<string>();
-
-                if (string.IsNullOrEmpty(classCode)) continue;
-
-                // Auto-create class if not exists
-                if (!processedClassCodes.Contains(classCode))
-                {
-                    await _unitOfWork.Classes.AddAsync(new Class
-                    {
-                        Id = Guid.NewGuid(),
-                        ClassCode = classCode,
-                        SubjectName = subjectCode,
-                        LecturerId = lecturerId
-                    });
-                    processedClassCodes.Add(classCode);
-                }
-
-                DateTime startDate = DateTime.Parse(startDateStr);
-                DateTime endDate = DateTime.Parse(endDateStr);
-                
-                var days = daysOfWeekStr.Split(',').Select(d => d.Trim()).ToList();
-                var startTimes = startTimeStr.Split(',').Select(t => t.Trim()).ToList();
-                var endTimes = endTimeStr.Split(',').Select(t => t.Trim()).ToList();
-                var roomCodes = roomName.Split(',').Select(r => r.Trim()).ToList(); // 'roomName' variable now holds room codes
-
-                // Build a map of Day -> (StartTime, EndTime, RoomCode)
-                var dayConfigMap = new Dictionary<string, (TimeSpan start, TimeSpan end, string roomCode)>();
-                for (int i = 0; i < days.Count; i++)
-                {
-                    string dayKey = days[i].ToLower();
-                    TimeSpan sTime = TimeSpan.Parse(i < startTimes.Count ? startTimes[i] : startTimes[0]);
-                    TimeSpan eTime = TimeSpan.Parse(i < endTimes.Count ? endTimes[i] : endTimes[0]);
-                    string rCode = i < roomCodes.Count ? roomCodes[i] : roomCodes[0];
-                    dayConfigMap[dayKey] = (sTime, eTime, rCode);
-                }
-
-                // Pre-fetch all rooms to avoid multiple DB calls in the date loop
-                var distinctRoomCodes = dayConfigMap.Values.Select(v => v.roomCode).Distinct().ToList();
-                var foundRooms = await _unitOfWork.Rooms.GetAll()
-                    .Where(r => distinctRoomCodes.Contains(r.RoomCode)) 
-                    .ToDictionaryAsync(r => r.RoomCode, r => r.Id); 
-                
-                // Expand date range
-                for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
-                {
-                    var dotw = date.DayOfWeek.ToString().ToLower();
-                    var dotwShort = dotw.Substring(0, 3);
-                    
-                    string? matchedDay = null;
-                    if (dayConfigMap.ContainsKey(dotw)) matchedDay = dotw;
-                    else if (dayConfigMap.ContainsKey(dotwShort)) matchedDay = dotwShort;
-
-                    if (matchedDay != null)
-                    {
-                        var config = dayConfigMap[matchedDay];
-                        int slot = CalculateSlot(config.start);
-
-                        Guid roomId = foundRooms.ContainsKey(config.roomCode) ? foundRooms[config.roomCode] : Guid.Empty;
-
-                        var schedule = new Teaching_Schedule
-                        {
-                            Subject = subjectCode,
-                            ClassCode = classCode,
-                            LecturerId = lecturerId.ToString(),
-                            LecturerName = lecturer.FullName,
-                            LecturerEmail = lecturer.Email,
-                            Date = date,
-                            Slot = slot,
-                            StartTime = config.start,
-                            EndTime = config.end,
-                            RoomId = roomId
-                        };
-
-                        await _unitOfWork.TeachingSchedules.AddAsync(schedule);
-                        importedCount++;
-                    }
-                }
-            }
-            catch
-            {
-                errorCount++;
-            }
+            return $"Successfully imported {result.SuccessCount} sessions. Errors: {result.FailureCount}. Details: {string.Join(" | ", result.Errors.Take(10))}";
         }
-
-        await _unitOfWork.SaveChangesAsync();
-        return $"Successfully imported {importedCount} sessions. Errors: {errorCount}";
+        return $"Successfully imported {result.SuccessCount} sessions. Errors: {result.FailureCount}";
     }
 
     public async Task<List<ScheduleResponseDto>> GetSchedulesByDateAsync(DateTime date)

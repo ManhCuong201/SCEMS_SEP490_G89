@@ -16,6 +16,11 @@ import { ScheduleResponse } from '../../types/api'
 import { useAuth } from '../../context/AuthContext'
 import { format, startOfWeek, addDays, subWeeks, addWeeks, isSameDay, parseISO } from 'date-fns'
 import '../../styles/compact-calendar.css'
+import { createPortal } from 'react-dom'
+import { bookingService } from '../../services/booking.service'
+import { roomService } from '../../services/room.service'
+import { CreateScheduleChangeRequest, Room } from '../../types/api'
+import { X, Info } from 'lucide-react'
 
 export const SchedulePage: React.FC = () => {
     const { user } = useAuth()
@@ -26,6 +31,17 @@ export const SchedulePage: React.FC = () => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [classSearch, setClassSearch] = useState('')
 
+    // Schedule Change Modal State
+    const [changeModalOpen, setChangeModalOpen] = useState(false)
+    const [selectedSchedule, setSelectedSchedule] = useState<ScheduleResponse | null>(null)
+    const [rooms, setRooms] = useState<Room[]>([])
+    const [newRoomId, setNewRoomId] = useState('')
+    const [newDate, setNewDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+    const [slotType, setSlotType] = useState('New')
+    const [newSlot, setNewSlot] = useState(1)
+    const [changeReason, setChangeReason] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+
     const startDate = startOfWeek(currentDate, { weekStartsOn: 1 })
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i))
 
@@ -34,7 +50,10 @@ export const SchedulePage: React.FC = () => {
 
     useEffect(() => {
         fetchSchedule()
-    }, [currentDate, classSearch])
+        if (user?.role === 'Lecturer' || user?.role === 'Admin') {
+            roomService.getRooms(1, 100).then(res => setRooms(res.items)).catch(console.error)
+        }
+    }, [currentDate, classSearch, user?.role])
 
     const fetchSchedule = async () => {
         setLoading(true)
@@ -62,6 +81,67 @@ export const SchedulePage: React.FC = () => {
             const sDate = parseISO(s.date)
             return isSameDay(sDate, day) && s.slot === slot
         })
+    }
+
+    const getSlotTimes = (type: string, slotNumber: number) => {
+        if (type === 'Old') {
+            const times = {
+                1: '07:30 - 09:00',
+                2: '09:10 - 10:40',
+                3: '10:50 - 12:20',
+                4: '12:50 - 14:20',
+                5: '14:30 - 16:00',
+                6: '16:10 - 17:40',
+                7: '18:00 - 19:30',
+                8: '19:45 - 21:15'
+            };
+            return times[slotNumber as keyof typeof times] || '';
+        } else {
+            const times = {
+                1: '07:30 - 09:50',
+                2: '10:00 - 12:20',
+                3: '12:50 - 15:10',
+                4: '15:20 - 17:40',
+                5: '18:00 - 20:20',
+                6: '20:00 - 22:20'
+            };
+            return times[slotNumber as keyof typeof times] || '';
+        }
+    }
+
+    const handleScheduleClick = (schedule: ScheduleResponse) => {
+        if (user?.role !== 'Lecturer') return;
+        setSelectedSchedule(schedule);
+        setNewRoomId(schedule.roomId);
+        setNewDate(schedule.date.split('T')[0]);
+        setSlotType('New');
+        setNewSlot(1);
+        setChangeReason('');
+        setChangeModalOpen(true);
+    }
+
+    const handleConfirmScheduleChange = async () => {
+        if (!selectedSchedule) return;
+        setSubmitting(true);
+        try {
+            const request: CreateScheduleChangeRequest = {
+                scheduleId: selectedSchedule.id,
+                newRoomId,
+                newDate,
+                slotType,
+                newSlot,
+                reason: changeReason
+            };
+            await bookingService.createScheduleChangeRequest(request);
+            setMessage({ type: 'success', text: 'Class schedule change request sent!' });
+            setChangeModalOpen(false);
+            fetchSchedule();
+            setTimeout(() => setMessage(null), 3000);
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to request schedule change' });
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     return (
@@ -200,12 +280,27 @@ export const SchedulePage: React.FC = () => {
                                                 verticalAlign: 'top'
                                             }}>
                                                 {daySchedules.map((s, idx) => (
-                                                    <div key={idx} className="compact-schedule-card" style={{
-                                                        padding: '6px',
-                                                        borderRadius: '4px',
-                                                        marginBottom: '2px'
-                                                    }}>
-                                                        <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={s.subject}>
+                                                    <div
+                                                        key={idx}
+                                                        className={`compact-schedule-card ${user?.role === 'Lecturer' ? 'clickable-card' : ''}`}
+                                                        onClick={() => handleScheduleClick(s)}
+                                                        style={{
+                                                            padding: '6px',
+                                                            borderRadius: '4px',
+                                                            marginBottom: '2px',
+                                                            cursor: user?.role === 'Lecturer' ? 'pointer' : 'default',
+                                                            border: user?.role === 'Lecturer' ? '1px solid transparent' : 'none',
+                                                            transition: 'border-color 0.2s',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            if (user?.role === 'Lecturer') e.currentTarget.style.borderColor = 'var(--color-primary-light)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            if (user?.role === 'Lecturer') e.currentTarget.style.borderColor = 'transparent';
+                                                        }}
+                                                        title={user?.role === 'Lecturer' ? "Click to request schedule change" : s.subject}
+                                                    >
+                                                        <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                             {s.subject}
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
@@ -216,6 +311,9 @@ export const SchedulePage: React.FC = () => {
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
                                                             <BookOpen size={10} /> {s.classCode}
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem', marginTop: '1px' }}>
+                                                            <UserIcon size={10} /> {s.lecturerName}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -228,6 +326,120 @@ export const SchedulePage: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {changeModalOpen && selectedSchedule && createPortal(
+                <div className="modal-overlay">
+                    <div className="modal-panel-premium">
+                        <div className="modal-header-premium">
+                            <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <CalendarIcon size={18} /> Request Schedule Change
+                            </h3>
+                            <button onClick={() => setChangeModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'color 0.2s' }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="modal-room-card">
+                            <div className="modal-info-row">
+                                <MapPin size={14} style={{ color: '#0f172a' }} />
+                                <span>Original Room: <strong>{selectedSchedule.roomName}</strong></span>
+                            </div>
+                            <div className="modal-info-row">
+                                <CalendarIcon size={14} style={{ color: '#0f172a' }} />
+                                <span>Original Date/Time: <strong>{new Date(selectedSchedule.date).toLocaleDateString()} ({selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
+                            </div>
+                            <div className="modal-info-row">
+                                <Info size={14} style={{ color: '#0f172a' }} />
+                                <span>Class: <strong>{selectedSchedule.subject} - {selectedSchedule.classCode}</strong></span>
+                            </div>
+                        </div>
+
+                        <div className="modal-body-premium">
+                            <div className="modal-input-group">
+                                <label className="modal-label-premium">New Room</label>
+                                <select
+                                    className="form-input"
+                                    style={{ width: '100%', marginBottom: '1rem' }}
+                                    value={newRoomId}
+                                    onChange={e => setNewRoomId(e.target.value)}
+                                >
+                                    {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName}</option>)}
+                                </select>
+
+                                <label className="modal-label-premium">New Date</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    style={{ width: '100%', marginBottom: '1rem' }}
+                                    value={newDate}
+                                    onChange={e => setNewDate(e.target.value)}
+                                />
+
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="modal-label-premium">Slot Type</label>
+                                        <select
+                                            className="form-input"
+                                            style={{ width: '100%' }}
+                                            value={slotType}
+                                            onChange={e => {
+                                                setSlotType(e.target.value);
+                                                setNewSlot(1);
+                                            }}
+                                        >
+                                            <option value="New">New Slot (10w)</option>
+                                            <option value="Old">Old Slot (3w)</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="modal-label-premium">Slot Number</label>
+                                        <select
+                                            className="form-input"
+                                            style={{ width: '100%' }}
+                                            value={newSlot}
+                                            onChange={e => setNewSlot(Number(e.target.value))}
+                                        >
+                                            {Array.from({ length: slotType === 'New' ? 6 : 8 }, (_, i) => i + 1).map(n => (
+                                                <option key={n} value={n}>Slot {n}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Clock size={16} className="text-primary" />
+                                    <span style={{ fontSize: '0.9rem' }}>
+                                        Selected Time: <strong>{getSlotTimes(slotType, newSlot)}</strong>
+                                    </span>
+                                </div>
+
+                                <label className="modal-label-premium">Reason for Rescheduling</label>
+                                <textarea
+                                    className="modal-textarea-premium"
+                                    value={changeReason}
+                                    onChange={(e) => setChangeReason(e.target.value)}
+                                    placeholder="Briefly explain why this class needs to be rescheduled..."
+                                    rows={3}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="modal-footer-premium">
+                            <button className="btn-modal btn-modal-cancel" onClick={() => setChangeModalOpen(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                className="btn-modal btn-modal-primary"
+                                onClick={handleConfirmScheduleChange}
+                                disabled={submitting || !changeReason}
+                            >
+                                {submitting ? 'Processing...' : 'Submit Request'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     )
 }

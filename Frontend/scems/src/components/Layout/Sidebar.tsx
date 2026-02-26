@@ -7,7 +7,9 @@ import {
   CalendarDays,
   Calendar,
   Wrench,
-  Settings
+  Settings,
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
@@ -61,12 +63,14 @@ export const Sidebar: React.FC = () => {
               <NavLink href="/admin/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
               <NavLink href="/admin/room-types" label="Room Categories" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
               <NavLink href="/admin/equipment-types" label="Equipment Types" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />
+              <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>
           )}
           {user?.role === 'AssetStaff' && (
             <>
               <NavLink href="/admin/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
               <NavLink href="/admin/equipment" label="Equipment" icon={<Wrench size={20} />} active={isActive('/admin/equipment')} />
+              <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>
           )}
           {user?.role === 'BookingStaff' && (
@@ -76,6 +80,12 @@ export const Sidebar: React.FC = () => {
               <div style={{ margin: '0.5rem 0', borderTop: '1px solid var(--border-glass)' }}></div>
               <NavLink href="/admin/classes" label="Manage Classes" icon={<Users size={20} />} active={isActive('/admin/classes')} />
               <NavLink href="/admin/schedules" label="Schedules" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
+            </>
+          )}
+          {user?.role === 'Guard' && (
+            <>
+              <NavLink href="/admin/security-checks" label="Security Checks" icon={<ShieldCheck size={20} />} active={isActive('/admin/security-checks')} />
+              <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>
           )}
         </div>

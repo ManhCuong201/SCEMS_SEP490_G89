@@ -322,6 +322,9 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header-premium {
@@ -351,6 +354,7 @@
 
 .modal-body-premium {
     padding: 0 1.5rem 1.5rem 1.5rem;
+    overflow-y: auto;
 }
 
 .modal-info-row {

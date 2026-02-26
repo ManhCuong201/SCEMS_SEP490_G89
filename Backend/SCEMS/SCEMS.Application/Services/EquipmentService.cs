@@ -39,6 +39,11 @@ public class EquipmentService : IEquipmentService
             query = query.Where(e => e.Status == statusEnum);
         }
 
+        if (@params.RoomId.HasValue)
+        {
+            query = query.Where(e => e.RoomId == @params.RoomId.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(@params.SortBy))
         {
             query = @params.SortBy.ToLowerInvariant() switch
@@ -137,7 +142,7 @@ public class EquipmentService : IEquipmentService
              }
 
              // Create new history
-             await TrackEquipmentHistoryAsync(equipment.Id, dto.RoomId.Value, "Moved via update");
+             await TrackEquipmentHistoryAsync(equipment.Id, dto.RoomId.Value, dto.Note ?? "Moved via update");
              
              equipment.RoomId = dto.RoomId.Value;
         }

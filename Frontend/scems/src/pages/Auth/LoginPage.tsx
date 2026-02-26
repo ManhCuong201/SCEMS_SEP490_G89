@@ -24,7 +24,7 @@ export const LoginPage: React.FC = () => {
       const userStr = localStorage.getItem('user')
       if (userStr) {
         const user = JSON.parse(userStr)
-        if (user.role === 'Admin' || user.role === 'AssetStaff' || user.role === 'BookingStaff') {
+        if (user.role === 'Admin' || user.role === 'AssetStaff' || user.role === 'BookingStaff' || user.role === 'Guard') {
           navigate('/admin/dashboard')
         } else {
           navigate('/dashboard')
@@ -105,7 +105,7 @@ export const LoginPage: React.FC = () => {
                       // To be safe, we can read from context or look at localstorage for role navigation
                       const user = authService.getUser()
                       if (user) {
-                        if (user.role === 'Admin' || user.role === 'AssetStaff' || user.role === 'BookingStaff') {
+                        if (user.role === 'Admin' || user.role === 'AssetStaff' || user.role === 'BookingStaff' || user.role === 'Guard') {
                           navigate('/admin/dashboard')
                         } else {
                           navigate('/dashboard')

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Building2, CalendarDays, Calendar, Users, LayoutGrid } from 'lucide-react'
+import { Building2, CalendarDays, Calendar, Users, LayoutGrid, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 export const UserSidebar: React.FC = () => {
@@ -38,6 +38,9 @@ export const UserSidebar: React.FC = () => {
             <NavLink href="/schedule" label="Class schedule" icon={<Calendar size={20} />} active={isActive('/schedule')} />
           )}
           <NavLink href="/my-bookings" label="My Bookings" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} />
+          {(user?.role === 'Lecturer' || user?.role === 'Student') && (
+            <NavLink href="/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/issue-reports')} />
+          )}
         </div>
       </nav>
 

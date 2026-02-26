@@ -6,7 +6,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { Alert } from '../../../components/Common/Alert'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Pagination } from '../../../components/Common/Pagination'
-import { Edit, Trash2, Eye, FileDown, Upload } from 'lucide-react'
+import { Edit, Trash2, Eye, FileDown, Upload, Search, Filter } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
 export const AccountsListPage: React.FC = () => {
@@ -187,8 +187,35 @@ export const AccountsListPage: React.FC = () => {
       {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)' }}>
-          {/* Search and Filters can go here if needed */}
+        <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
+            <input
+              type="text"
+              placeholder="Search by name, email, or student code..."
+              className="form-input"
+              style={{ paddingLeft: '2.5rem', width: '100%' }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div style={{ position: 'relative', width: '200px' }}>
+            <Filter size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
+            <select
+              className="form-select"
+              style={{ paddingLeft: '2.5rem', width: '100%', appearance: 'none' }}
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              <option value="">All Roles</option>
+              <option value="Admin">Admin</option>
+              <option value="BookingStaff">Booking Staff</option>
+              <option value="AssetStaff">Asset Staff</option>
+              <option value="Guard">Guard</option>
+              <option value="Lecturer">Lecturer</option>
+              <option value="Student">Student</option>
+            </select>
+          </div>
         </div>
 
         <DataTable
