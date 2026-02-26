@@ -1,30 +1,25 @@
-# Room Management System
+# Room Management System (SCEMS)
 
-A complete three-layer architecture solution with ASP.NET Core API backend and React TypeScript frontend for managing room equipment and reservations.
+A complete three-layer architecture solution with ASP.NET Core API backend and React TypeScript frontend for managing rooms, equipment, teaching schedules, and maintenance.
 
 ## Project Structure
 
 ```
 RoomManagement/
 ├── Backend/
-│   └── RoomManagementAPI/
-│       ├── Models/              # Domain models (Account, Room, EquipmentType, etc.)
-│       ├── DTOs/                # Data Transfer Objects
-│       ├── Presentation/        # Controllers (API endpoints)
-│       ├── Business/            # Services & business logic interfaces
-│       ├── Data/                # Repositories & data access interfaces
-│       └── Program.cs           # Entry point & configuration
+│   └── SCEMS/
+│       ├── SCEMS.Api/           # Presentation Layer (Controllers)
+│       ├── SCEMS.Application/   # Business Layer (Services, DTOs, Mapping)
+│       ├── SCEMS.Domain/        # Domain Layer (Entities, Enums, Base)
+│       └── SCEMS.Infrastructure/# Data Layer (DbContext, Repositories, Migrations)
 └── Frontend/
     └── scems/
         ├── src/
         │   ├── components/      # Reusable React components
-        │   ├── pages/           # Page components for different routes
-        │   ├── services/        # API service client
-        │   ├── context/         # React Context (Authentication)
-        │   ├── styles/          # CSS with light/dark mode support
-        │   ├── App.tsx          # Main application component
-        │   └── main.tsx         # Entry point
-        ├── package.json         # Project dependencies
+        │   ├── pages/           # Page components (Admin/User/Security/Security)
+        │   ├── services/        # API service clients
+        │   ├── context/         # Auth Context & Global State
+        │   └── styles/          # Premium CSS with Glassmorphism
         └── vite.config.ts       # Vite configuration
 ```
 
@@ -33,161 +28,82 @@ RoomManagement/
 ### Backend
 - **Framework**: ASP.NET Core 8.0
 - **Language**: C#
-- **Architecture**: Three-Layer Architecture (Presentation, Business, Data)
-- **Patterns**: Dependency Injection, Repository Pattern, Async/Await
-- **Database**: SQL Server (Entity Framework Core ORM)
-- **Authentication**: JWT Token-based
+- **Architecture**: Clean Three-Layer Architecture
+- **ORM**: Entity Framework Core
+- **Database**: MySQL
+- **Authentication**: JWT Token-based (Role-based: Admin, BookingStaff, Lecturer, Student, Guard, AssetStaff)
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
-- **Styling**: CSS3 with CSS Variables for theming
-- **Features**: Light/Dark mode support
-- **State Management**: React Context API
-- **HTTP Client**: Fetch API
+- **Styling**: Vanilla CSS (Custom tokens, Dark Mode, Micro-animations)
+- **Icons**: Lucide React
 
-## Features
+## Key Features
 
-### Backend Features
-- ✅ Account Management (CRUD operations)
-- ✅ Room Management (CRUD operations)
-- ✅ Equipment Type Management (CRUD operations)
-- ✅ JWT Authentication & Authorization
-- ✅ Role-based access control
-- ✅ Input validation and error handling
-- ✅ RESTful API design
-- ✅ Swagger/OpenAPI documentation
+### Core Management
+- ✅ **Accounts**: CRUD for users with specific roles and status.
+- ✅ **Rooms & Equipment**: Manage room types, equipment inventory, and room-equipment mapping.
+- ✅ **Classes**: Manage academic classes and student enrollments.
 
-### Frontend Features
-- ✅ Responsive design (mobile, tablet, desktop)
-- ✅ Light/Dark mode theme support
-- ✅ Account management (list, create, edit, view details)
-- ✅ Room management (list, create, edit, view details)
-- ✅ Equipment Type management (list, create, edit, view details)
-- ✅ Form validation with error messages
-- ✅ Loading states and error handling
-- ✅ Secure authentication flow
-- ✅ Protected routes with role-based access
-- ✅ 404 Not Found page
+### Scheduling & Bookings
+- ✅ **Teaching Schedule**: Bulk import teaching schedules via Excel with slot-based timing.
+- ✅ **Room Booking**: Request and approve room bookings for meetings or extra classes.
+- ✅ **Schedule Changes**: Lecturers can request to reschedule class instances (Slot-based selection).
+
+### Maintenance & Security
+- ✅ **Equipment Reporting**: Students/Lecturers report broken equipment; Asset Staff manage repairs.
+- ✅ **Daily Room Checks**: Automated pending check list for Guards based on daily usage; verification tracking.
+
+### Utilities
+- ✅ **Bulk Import**: Excel-based import for Accounts, Schedules, and Student-Class mappings.
+- ✅ **Premium UI**: Dynamic scheduler, dark mode, responsive layouts, and interactive modals.
 
 ## Quick Start
 
 ### Backend Setup
+1. **Configure Connection**: Update `Backend/SCEMS/SCEMS.Api/appsettings.json` with your MySQL connection string.
+2. **Restore & Run**:
+   ```bash
+   cd Backend/SCEMS
+   dotnet restore
+   dotnet run --project SCEMS.Api
+   ```
 
+### Database Migrations
 ```bash
-cd Backend/SCEMS
-dotnet restore
-dotnet run --project SCEMS.Api
+dotnet ef database update --project SCEMS.Infrastructure --startup-project SCEMS.Api
 ```
 
-### Database Setup
-
-The project uses Entity Framework Core with MySQL.
-
-1.  **Configure Connection String**:
-    Update `Backend/SCEMS/SCEMS.Api/appsettings.json` (or `appsettings.Development.json`) with your MySQL credentials:
-    ```json
-    "ConnectionStrings": {
-      "DefaultConnection": "Server=localhost;Database=scems;User=root;Password=your_password;"
-    }
-    ```
-
-2.  **Apply Migrations**:
-    Run the following command to create the database and schema:
-    ```bash
-    cd Backend/SCEMS
-    dotnet ef database update --project SCEMS.Infrastructure --startup-project SCEMS.Api
-    ```
-
-    *If you don't have the EF tool installed:*
-    ```bash
-    dotnet tool install --global dotnet-ef
-    ```
-
-3.  **Seeding**:
-    On first run, the application will automatically seed a default admin account:
-    -   **Email**: `admin@scems.com`
-    -   **Password**: `Admin123!`
-
-**API runs on**: `http://localhost:5000`
-**Swagger UI**: `http://localhost:5000/swagger`
-
 ### Frontend Setup
-
 ```bash
 cd Frontend/scems
 npm install
 npm run dev
 ```
 
-**Frontend runs on**: `http://localhost:5173` (Vite default port)
+## API Endpoints Summary
 
-## API Endpoints
+### Management
+- `/api/accounts` - User management
+- `/api/rooms` - Room & RoomType management
+- `/api/equipment` - Inventory & Equipment types
+- `/api/classes` - Class management & Bulk Student Import
 
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Refresh token
+### Operations
+- `/api/bookings` - Booking requests & Schedule changes
+- `/api/teachingschedules` - Academic schedule management
+- `/api/issuereports` - Equipment maintenance reporting
+- `/api/roomchecks` - Daily room verification for Security
 
-### Accounts
-- `GET /api/accounts` - Get all accounts (paginated)
-- `GET /api/accounts/{id}` - Get account by ID
-- `POST /api/accounts` - Create new account
-- `PUT /api/accounts/{id}` - Update account
-- `DELETE /api/accounts/{id}` - Delete account
-
-### Rooms
-- `GET /api/rooms` - Get all rooms (paginated)
-- `GET /api/rooms/{id}` - Get room by ID
-- `POST /api/rooms` - Create new room
-- `PUT /api/rooms/{id}` - Update room
-- `DELETE /api/rooms/{id}` - Delete room
-
-### Equipment Types
-- `GET /api/equipment-types` - Get all equipment types (paginated)
-- `GET /api/equipment-types/{id}` - Get equipment type by ID
-- `POST /api/equipment-types` - Create new equipment type
-- `PUT /api/equipment-types/{id}` - Update equipment type
-- `DELETE /api/equipment-types/{id}` - Delete equipment type
+### System
+- `/api/auth` - Login & Token management
+- `/api/import` - Bulk data processing (Excel)
 
 ## Database Schema
-
-The system uses SQL Server with the following main entities:
-
-- **Accounts**: User accounts with roles
-- **Rooms**: Room information and details
-- **EquipmentTypes**: Types of equipment available
-- **RoomEquipment**: Junction table linking rooms with equipment
+The system uses MySQL via EF Core. Main entities include:
+- `Account`, `Room`, `Equipment`, `Class`, `Teaching_Schedule`, `Booking`, `IssueReport`, `ClassStudent`.
 
 ## Environment Configuration
-
-### Backend
-Configure `appsettings.json` with database connection string and JWT settings.
-
-### Frontend
-API endpoint is configured in `src/services/apiClient.ts` to point to the backend.
-
-## Development Guidelines
-
-### Code Structure
-- **Services**: Handle API communication
-- **Components**: Reusable UI elements
-- **Pages**: Route-specific components
-- **Context**: Global state management (Auth)
-- **Styles**: Organized by theme support
-
-### Styling
-- Light mode (default)
-- Dark mode (respects system preference)
-- CSS variables for consistent theming
-- Responsive grid layouts
-
-## Future Enhancements
-
-- Equipment reservation calendar
-- Advanced reporting and analytics
-- Email notifications
-- Bulk operations
-- Audit logging
-- Performance optimizations
-- Mobile app (React Native)
-- API caching strategies
+- **Backend**: JWT Secret, Database Connection String (in `appsettings.json`).
+- **Frontend**: API Base URL (in `src/services/api.ts`).
