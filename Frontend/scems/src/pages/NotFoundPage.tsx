@@ -58,9 +58,9 @@ export const NotFoundPage: React.FC = () => {
         </h1>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Page Not Found</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Không tìm thấy trang</h2>
           <p className="text-muted">
-            The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+            Trang bạn đang tìm kiếm có thể đã bị xóa, đổi tên hoặc tạm thời không có sẵn.
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export const NotFoundPage: React.FC = () => {
           }}
         >
           <Home size={18} />
-          Back to Home
+          Quay lại Trang chủ
         </button>
       </div>
     </div>

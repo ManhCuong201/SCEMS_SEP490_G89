@@ -46,7 +46,7 @@ export const AdminSchedulesPage: React.FC = () => {
             const data = await scheduleService.getAllSchedules(startStr, endStr);
             setSchedules(data);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load schedules');
+            setError(err.response?.data?.message || 'Tải lịch học thất bại');
         } finally {
             setLoading(false);
         }
@@ -72,7 +72,7 @@ export const AdminSchedulesPage: React.FC = () => {
         try {
             await scheduleService.downloadTemplate();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to download template');
+            setError(err.response?.data?.message || 'Tải mẫu Import thất bại');
         }
     };
 
@@ -82,9 +82,9 @@ export const AdminSchedulesPage: React.FC = () => {
                 setLoading(true);
                 const res = await scheduleService.importSchedule(e.target.files[0]);
                 await loadSchedules(); // Reload data
-                alert(res.message || 'Schedule import completed');
+                alert(res.message || 'Import lịch học thành công');
             } catch (err: any) {
-                setError(err.response?.data?.message || 'Failed to import schedule');
+                setError(err.response?.data?.message || 'Import lịch học thất bại');
             } finally {
                 setLoading(false);
                 e.target.value = ''; // Reset input
@@ -92,7 +92,7 @@ export const AdminSchedulesPage: React.FC = () => {
         }
     };
 
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
     const slots = Array.from({ length: 12 }, (_, i) => i + 1);
 
     const getScheduleForCell = (dayIndex: number, slot: number) => {
@@ -113,17 +113,17 @@ export const AdminSchedulesPage: React.FC = () => {
         <div className="page-container" style={{ maxWidth: '100%', overflowX: 'auto' }}>
             <div className="page-header" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1>Master Schedule</h1>
-                    <p className="subtitle">View all classes and schedules</p>
+                    <h1>Lịch học tổng hợp</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Xem tất cả các lớp học và lịch học</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-outline btn-sm" onClick={handleDownloadTemplate} title="Download Template">
-                            <Download size={18} style={{ marginRight: '0.5rem' }} /> Template
+                        <button className="btn btn-outline btn-sm" onClick={handleDownloadTemplate} title="Tải mẫu Import">
+                            <Download size={18} style={{ marginRight: '0.5rem' }} /> Mẫu Import
                         </button>
                         <div style={{ position: 'relative', overflow: 'hidden' }}>
                             <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> Import Schema
+                                <CalendarIcon size={18} /> Import Lịch học
                             </button>
                             <input
                                 type="file"
@@ -145,7 +145,7 @@ export const AdminSchedulesPage: React.FC = () => {
                                 <ArrowRight size={18} />
                             </button>
                             <button className="btn btn-secondary btn-sm" onClick={handleToday} style={{ marginLeft: '0.5rem', height: '32px', padding: '0 16px', fontWeight: 600 }}>
-                                Today
+                                Hôm nay
                             </button>
                         </div>
                     </div>
@@ -161,7 +161,7 @@ export const AdminSchedulesPage: React.FC = () => {
                     <table className="schedule-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr>
-                                <th style={{ padding: '1rem', borderBottom: '2px solid #e2e8f0', background: '#f8fafc', color: '#64748b' }}>Slot</th>
+                                <th style={{ padding: '1rem', borderBottom: '2px solid #e2e8f0', background: '#f8fafc', color: '#64748b' }}>Ca học</th>
                                 {days.map((day, index) => {
                                     const date = new Date(weekStart);
                                     date.setDate(weekStart.getDate() + index);

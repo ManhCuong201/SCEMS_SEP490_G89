@@ -105,7 +105,7 @@ export const DailySchedulerPage: React.FC = () => {
             setSchedules(schedulesData)
             setBookings(bookingsData)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load data')
+            setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
         } finally {
             setLoading(false)
         }
@@ -143,13 +143,13 @@ export const DailySchedulerPage: React.FC = () => {
                 reason: reason
             })
 
-            setSuccessMsg('Booking request sent!')
+            setSuccessMsg('Đã gửi yêu cầu mượn phòng!')
             setModalOpen(false)
             setDuration(1) // Reset
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to book slot')
+            setError(err.response?.data?.message || 'Gửi yêu cầu thất bại')
         } finally {
             setSubmitting(false)
         }
@@ -200,20 +200,20 @@ export const DailySchedulerPage: React.FC = () => {
                 <div
                     className="scheduler-cell slot-class"
                     onMouseEnter={(e) => setHoveredTooltip({
-                        title: 'Schedule',
+                        title: 'Lịch học',
                         icon: <CalendarIcon size={12} />,
                         lines: [
-                            { label: 'Subject', value: classInSlot.subject },
-                            { label: 'Class', value: classInSlot.classCode },
-                            { label: 'Teacher', value: getTeacherId(classInSlot.lecturerName, (classInSlot as any).lecturerEmail) },
-                            { label: 'Time', value: `${classInSlot.startTime} - ${classInSlot.endTime}` }
+                            { label: 'Môn học', value: classInSlot.subject },
+                            { label: 'Lớp', value: classInSlot.classCode },
+                            { label: 'Giảng viên', value: getTeacherId(classInSlot.lecturerName, (classInSlot as any).lecturerEmail) },
+                            { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` }
                         ],
                         targetRect: e.currentTarget.getBoundingClientRect()
                     })}
                     onMouseLeave={() => setHoveredTooltip(null)}
                 >
                     <div className="slot-content-wrapper">
-                        <span className="slot-status-pill pill-class">CLASS</span>
+                        <span className="slot-status-pill pill-class">LỚP HỌC</span>
                         <div className="slot-main-text">{classInSlot.subject}</div>
                     </div>
                 </div>
@@ -227,18 +227,18 @@ export const DailySchedulerPage: React.FC = () => {
                 <div
                     className="scheduler-cell slot-booked"
                     onMouseEnter={(e) => setHoveredTooltip({
-                        title: 'Booking',
+                        title: 'Yêu cầu mượn phòng',
                         icon: <Clock size={12} />,
                         lines: [
-                            { label: 'By', value: getTeacherId(approvedBooking.requestedByName || '', approvedBooking.requestedByAccount?.email) },
-                            { label: 'Reason', value: approvedBooking.reason || 'No reason provided' }
+                            { label: 'Bởi', value: getTeacherId(approvedBooking.requestedByName || '', approvedBooking.requestedByAccount?.email) },
+                            { label: 'Lý do', value: approvedBooking.reason || 'Không có lý do' }
                         ],
                         targetRect: e.currentTarget.getBoundingClientRect()
                     })}
                     onMouseLeave={() => setHoveredTooltip(null)}
                 >
                     <div className="slot-content-wrapper">
-                        <span className="slot-status-pill pill-booked">BOOKED</span>
+                        <span className="slot-status-pill pill-booked">ĐÃ ĐẶT</span>
                         <div className="slot-main-text">{(approvedBooking.requestedByName || '').split(' ').pop()}</div>
                     </div>
                 </div>
@@ -255,11 +255,11 @@ export const DailySchedulerPage: React.FC = () => {
                 className={`scheduler-cell slot-available ${alreadyRequested ? 'already-requested' : ''}`}
                 onClick={() => handleBookClick(room, hour, alreadyRequested)}
                 onMouseEnter={(e) => setHoveredTooltip({
-                    title: 'Availability',
+                    title: 'Khả dụng',
                     icon: <Users size={12} />,
                     lines: [
-                        { label: 'Pending', value: pendingForSlot.length },
-                        alreadyRequested ? { label: 'Status', value: 'Already Requested' } : { label: 'Action', value: 'Click to Book' }
+                        { label: 'Chờ duyệt', value: pendingForSlot.length },
+                        alreadyRequested ? { label: 'Trạng thái', value: 'Đã gửi yêu cầu' } : { label: 'Hành động', value: 'Nhấn để đặt' }
                     ],
                     targetRect: e.currentTarget.getBoundingClientRect()
                 })}
@@ -270,7 +270,7 @@ export const DailySchedulerPage: React.FC = () => {
                 )}
                 <div className="slot-content-wrapper">
                     <span className={`slot-status-pill ${alreadyRequested ? 'pill-requested' : 'pill-available'}`}>
-                        {alreadyRequested ? 'REQUESTED' : 'AVAILABLE'}
+                        {alreadyRequested ? 'ĐÃ YÊU CẦU' : 'KHẢ DỤNG'}
                     </span>
                 </div>
             </div>
@@ -338,7 +338,7 @@ export const DailySchedulerPage: React.FC = () => {
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="Find room..."
+                            placeholder="Tìm kiếm phòng..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ paddingLeft: '2rem' }}
@@ -353,7 +353,7 @@ export const DailySchedulerPage: React.FC = () => {
                         value={selectedType}
                         onChange={(e) => setSelectedType(e.target.value)}
                     >
-                        <option value="">All Types</option>
+                        <option value="">Tất cả loại phòng</option>
                         {roomTypes.map(t => (
                             <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
@@ -369,7 +369,7 @@ export const DailySchedulerPage: React.FC = () => {
                             onChange={(e) => setAvailableOnly(e.target.checked)}
                             className="custom-checkbox"
                         />
-                        <span className="custom-checkbox-label">Available Only</span>
+                        <span className="custom-checkbox-label">Chỉ phòng trống</span>
                     </label>
                 </div>
             </div>
@@ -380,7 +380,7 @@ export const DailySchedulerPage: React.FC = () => {
             <div className="scheduler-grid-wrapper">
                 {loading ? <Loading fullPage={false} /> : (
                     <div className="scheduler-grid">
-                        <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Rooms</div>
+                        <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Phòng</div>
                         {timeSlotsArray.map(slot => (
                             <div key={slot.hour} className="scheduler-cell scheduler-header-cell">{slot.label}</div>
                         ))}
@@ -388,7 +388,7 @@ export const DailySchedulerPage: React.FC = () => {
                         {filteredRooms.map(room => (
                             <React.Fragment key={room.id}>
                                 <div className="scheduler-cell scheduler-room-cell">
-                                    <div style={{ fontWeight: 950, fontSize: '0.65rem', color: '#0f172a', marginBottom: '0.05rem', lineHeight: 1.1 }}>{room.roomName}</div>
+                                    <div style={{ fontWeight: 900, fontSize: '0.65rem', color: '#0f172a', marginBottom: '0.05rem', lineHeight: 1.1 }}>{room.roomName}</div>
                                     <div style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 800 }}>{room.roomCode}</div>
                                 </div>
                                 {timeSlotsArray.map(slot => getSlotContent(room, slot.hour))}
@@ -405,7 +405,7 @@ export const DailySchedulerPage: React.FC = () => {
                     <div className="modal-panel-premium">
                         <div className="modal-header-premium">
                             <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> Request Booking
+                                <CalendarIcon size={18} /> Yêu cầu Mượn phòng
                             </h3>
                             <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
                                 <X size={20} />
@@ -421,15 +421,15 @@ export const DailySchedulerPage: React.FC = () => {
                                     <div className="modal-room-card">
                                         <div className="modal-info-row">
                                             <MapPin size={14} style={{ color: '#0f172a' }} />
-                                            <span>Room: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
+                                            <span>Phòng: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
                                         </div>
                                         <div className="modal-info-row">
                                             <Clock size={14} style={{ color: '#0f172a' }} />
-                                            <span>Time: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + duration}:00</strong></span>
+                                            <span>Thời gian: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + duration}:00</strong></span>
                                         </div>
                                         <div className="modal-info-row">
                                             <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                            <span>Date: <strong>{new Date(selectedSlot.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</strong></span>
+                                            <span>Ngày: <strong>{new Date(selectedSlot.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</strong></span>
                                         </div>
                                     </div>
 
@@ -437,7 +437,7 @@ export const DailySchedulerPage: React.FC = () => {
                                         <div className="modal-input-group">
                                             <label className="modal-label-premium">
                                                 <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                Duration (Hours)
+                                                Thời lượng (Giờ)
                                             </label>
                                             <select
                                                 className="form-input"
@@ -446,23 +446,23 @@ export const DailySchedulerPage: React.FC = () => {
                                                 onChange={(e) => setDuration(Number(e.target.value))}
                                             >
                                                 {durationOptions.map(h => (
-                                                    <option key={h} value={h}>{h} {h === 1 ? 'Hour' : 'Hours'}</option>
+                                                    <option key={h} value={h}>{h} {h === 1 ? 'Giờ' : 'Giờ'}</option>
                                                 ))}
                                             </select>
 
                                             <label className="modal-label-premium">
                                                 <MessageSquare size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                Purpose of Booking
+                                                Mục đích mượn phòng
                                             </label>
                                             <textarea
                                                 className="modal-textarea-premium"
                                                 value={reason}
                                                 onChange={(e) => setReason(e.target.value)}
-                                                placeholder="Briefly explain why you need this room... (Optional)"
+                                                placeholder="Giải thích ngắn gọn lý do bạn cần phòng này... (Không bắt buộc)"
                                                 rows={3}
                                             />
                                             <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <Info size={10} /> Your request will be reviewed by the room management staff.
+                                                <Info size={10} /> Yêu cầu của bạn sẽ được nhân viên quản lý phòng xem xét.
                                             </div>
                                         </div>
                                     </div>
@@ -472,16 +472,16 @@ export const DailySchedulerPage: React.FC = () => {
 
                         <div className="modal-footer-premium">
                             <button className="btn-modal btn-modal-cancel" onClick={() => setModalOpen(false)}>
-                                Cancel
+                                Hủy
                             </button>
                             <button
                                 className="btn-modal btn-modal-primary"
                                 onClick={handleConfirmBook}
                                 disabled={submitting}
                             >
-                                {submitting ? 'Processing...' : (
+                                {submitting ? 'Đang xử lý...' : (
                                     <>
-                                        Confirm Request <ArrowRight size={16} />
+                                        Xác nhận Yêu cầu <ArrowRight size={16} />
                                     </>
                                 )}
                             </button>

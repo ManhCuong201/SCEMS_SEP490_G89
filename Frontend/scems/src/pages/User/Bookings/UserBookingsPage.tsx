@@ -26,7 +26,7 @@ export const UserBookingsPage: React.FC = () => {
       setTotal(data.total)
       setPage(data.pageIndex)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load bookings')
+      setError(err.response?.data?.message || 'Tải danh sách yêu cầu thất bại')
     } finally {
       setLoading(false)
     }
@@ -42,25 +42,26 @@ export const UserBookingsPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     let className = 'badge-secondary'
-    if (status === BookingStatus.Approved) className = 'badge-success'
-    if (status === BookingStatus.Pending) className = 'badge-warning'
-    if (status === BookingStatus.Rejected) className = 'badge-danger'
+    let label = status
+    if (status === BookingStatus.Approved) { className = 'badge-success'; label = 'Đã duyệt' }
+    if (status === BookingStatus.Pending) { className = 'badge-warning'; label = 'Chờ duyệt' }
+    if (status === BookingStatus.Rejected) { className = 'badge-danger'; label = 'Đã từ chối' }
 
-    return <span className={`badge ${className}`}>{status}</span>
+    return <span className={`badge ${className}`}>{label}</span>
   }
 
   return (
     <div className="page-container">
       <div className="card-header" style={{ marginBottom: '2rem' }}>
-        <h1>My Bookings</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Track and manage your room reservation requests.</p>
+        <h1>Yêu cầu Đặt phòng</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Theo dõi và quản lý các yêu cầu mượn phòng của bạn.</p>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem', maxWidth: '400px' }}>
-          <SearchBar onSearch={setSearch} placeholder="Search bookings..." />
+          <SearchBar onSearch={setSearch} placeholder="Tìm kiếm yêu cầu..." />
         </div>
 
         {loading ? (
@@ -71,11 +72,11 @@ export const UserBookingsPage: React.FC = () => {
               <table className="glass-table">
                 <thead>
                   <tr>
-                    <th>Room</th>
-                    <th>Date & Time</th>
-                    <th>Duration</th>
-                    <th>Reason</th>
-                    <th>Status</th>
+                    <th>Phòng</th>
+                    <th>Ngày & Giờ</th>
+                    <th>Thời lượng</th>
+                    <th>Lý do</th>
+                    <th>Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -85,11 +86,11 @@ export const UserBookingsPage: React.FC = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)' }}>
                           <CalendarDays size={48} style={{ opacity: 0.5 }} />
                           <div>
-                            <h3 style={{ color: 'var(--text-main)', marginBottom: '0.25rem' }}>No bookings found</h3>
-                            <p>You haven't made any room bookings yet.</p>
+                            <h3 style={{ color: 'var(--text-main)', marginBottom: '0.25rem' }}>Không có yêu cầu nào</h3>
+                            <p>Bạn chưa thực hiện bất kỳ yêu cầu mượn phòng nào.</p>
                           </div>
                           <Link to="/rooms" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
-                            Browse Rooms
+                            Xem danh sách phòng
                           </Link>
                         </div>
                       </td>
@@ -107,7 +108,7 @@ export const UserBookingsPage: React.FC = () => {
                                 <Link to={`/rooms/${booking.room.id}/calendar`} style={{ fontWeight: 600, display: 'block' }}>
                                   {booking.room.roomName}
                                 </Link>
-                              ) : <span style={{ fontStyle: 'italic' }}>Unknown Room</span>}
+                              ) : <span style={{ fontStyle: 'italic' }}>Phòng không xác định</span>}
                               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{booking.room?.roomCode}</span>
                             </div>
                           </div>
@@ -123,7 +124,7 @@ export const UserBookingsPage: React.FC = () => {
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Clock size={16} className="text-muted" />
-                            {booking.duration} hr{booking.duration > 1 ? 's' : ''}
+                            {booking.duration} giờ
                           </div>
                         </td>
                         <td style={{ maxWidth: '300px' }}>
@@ -133,7 +134,7 @@ export const UserBookingsPage: React.FC = () => {
                             textOverflow: 'ellipsis',
                             color: booking.reason ? 'var(--text-main)' : 'var(--text-muted)'
                           }}>
-                            {booking.reason || 'No reason provided'}
+                            {booking.reason || 'Không có lý do'}
                           </div>
                         </td>
                         <td>{getStatusBadge(booking.status)}</td>

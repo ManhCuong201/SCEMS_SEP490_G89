@@ -273,11 +273,11 @@ public class RoomService : IRoomService
         var worksheet = workbook.Worksheets.Add("Room Template");
 
         // Headers
-        worksheet.Cell(1, 1).Value = "Room Code";
-        worksheet.Cell(1, 2).Value = "Room Name";
-        worksheet.Cell(1, 3).Value = "Capacity";
-        worksheet.Cell(1, 4).Value = "Status";
-        worksheet.Cell(1, 5).Value = "Room Type Code";
+        worksheet.Cell(1, 1).Value = "Mã phòng";
+        worksheet.Cell(1, 2).Value = "Tên phòng";
+        worksheet.Cell(1, 3).Value = "Sức chứa";
+        worksheet.Cell(1, 4).Value = "Trạng thái";
+        worksheet.Cell(1, 5).Value = "Mã loại phòng";
 
         // Style
         var header = worksheet.Range("A1:E1");
@@ -286,7 +286,7 @@ public class RoomService : IRoomService
 
         // Sample
         worksheet.Cell(2, 1).Value = "A101";
-        worksheet.Cell(2, 2).Value = "Lab Room 1";
+        worksheet.Cell(2, 2).Value = "Phòng Lab 1";
         worksheet.Cell(2, 3).Value = 40;
         worksheet.Cell(2, 4).Value = "Available";
         worksheet.Cell(2, 5).Value = "Lab";

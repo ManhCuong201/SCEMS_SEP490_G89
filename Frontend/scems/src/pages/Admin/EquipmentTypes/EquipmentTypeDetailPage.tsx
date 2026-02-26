@@ -21,7 +21,7 @@ export const EquipmentTypeDetailPage: React.FC = () => {
         const data = await equipmentTypeService.getEquipmentTypeById(id!)
         setType(data)
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load')
+        setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
       } finally {
         setLoading(false)
       }
@@ -39,7 +39,7 @@ export const EquipmentTypeDetailPage: React.FC = () => {
         await equipmentTypeService.deleteEquipmentType(deleteId)
         navigate('/admin/equipment-types')
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to delete')
+        setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
         setDeleteId(null)
       }
@@ -47,7 +47,7 @@ export const EquipmentTypeDetailPage: React.FC = () => {
   }
 
   if (loading) return <Loading fullPage />
-  if (!type) return <Alert type="error" message="Not found" />
+  if (!type) return <Alert type="error" message="Không tìm thấy" />
 
   const getStatusColor = (status: string) => {
     if (status === 'Active') return 'var(--color-success)'
@@ -72,19 +72,19 @@ export const EquipmentTypeDetailPage: React.FC = () => {
           </button>
           <div>
             <h1>{type.name}</h1>
-            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Equipment Type Details</p>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Chi tiết loại thiết bị</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Link to={`/admin/equipment-types/${id}/edit`} className="btn btn-secondary" style={{ gap: '0.5rem' }}>
-            <Edit size={18} /> Edit
+            <Edit size={18} /> Chỉnh sửa
           </Link>
           <button
             className="btn btn-danger"
             onClick={handleDeleteClick}
             style={{ gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
           >
-            <Trash2 size={18} /> Delete
+            <Trash2 size={18} /> Xóa
           </button>
         </div>
       </div>
@@ -95,16 +95,16 @@ export const EquipmentTypeDetailPage: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Description
+              Mô tả
             </label>
             <div style={{ fontSize: '1rem', lineHeight: '1.6' }}>
-              {type.description || 'No description provided.'}
+              {type.description || 'Không có mô tả.'}
             </div>
           </div>
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Code
+              Mã
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
               {type.code}
@@ -113,16 +113,16 @@ export const EquipmentTypeDetailPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Equipment Count
+              Số lượng thiết bị
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
-              {type.equipmentCount} Items
+              {type.equipmentCount} Mục
             </div>
           </div>
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Status
+              Trạng thái
             </label>
             <span
               className="badge"
@@ -133,13 +133,13 @@ export const EquipmentTypeDetailPage: React.FC = () => {
                 padding: '0.35em 0.8em'
               }}
             >
-              {type.status}
+              {type.status === 'Active' ? 'Hoạt động' : 'Bị khóa'}
             </span>
           </div>
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Created At
+              Ngày tạo
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
               {new Date(type.createdAt).toLocaleDateString()}
@@ -148,7 +148,7 @@ export const EquipmentTypeDetailPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Last Updated
+              Cập nhật lần cuối
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
               {new Date(type.updatedAt).toLocaleDateString()}
@@ -159,12 +159,12 @@ export const EquipmentTypeDetailPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!deleteId}
-        title="Delete Equipment Type"
-        message={`Are you sure you want to delete "${type.name}"? This action cannot be undone.`}
+        title="Xóa Loại Thiết bị"
+        message={`Bạn có chắc chắn muốn xóa "${type.name}"? Hành động này không thể hoàn tác.`}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteId(null)}
         isDanger
-        confirmText="Delete Type"
+        confirmText="Xóa Loại"
       />
     </div>
   )

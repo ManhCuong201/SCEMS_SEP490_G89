@@ -59,24 +59,24 @@ export const SecurityDashboardPage: React.FC = () => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h5">Security Dashboard: Pending Room Checks</Typography>
-                <Button variant="outlined" onClick={fetchPendingChecks}>Refresh</Button>
+                <Typography variant="h5">Bảng điều khiển An ninh: Các phòng chờ kiểm tra</Typography>
+                <Button variant="outlined" onClick={fetchPendingChecks}>Làm mới</Button>
             </Box>
 
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Room</TableCell>
-                            <TableCell>Last Activity Ended At</TableCell>
-                            <TableCell align="right">Actions</TableCell>
+                            <TableCell>Phòng</TableCell>
+                            <TableCell>Hoạt động kết thúc lúc</TableCell>
+                            <TableCell align="right">Hành động</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {pendingChecks.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={3} align="center">
-                                    No pending checks right now. All clear!
+                                    Không có yêu cầu kiểm tra nào. An toàn!
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -93,7 +93,7 @@ export const SecurityDashboardPage: React.FC = () => {
                                             color="primary"
                                             onClick={() => handleOpenDialog(check.roomId)}
                                         >
-                                            Complete Check
+                                            Hoàn tất kiểm tra
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -104,27 +104,27 @@ export const SecurityDashboardPage: React.FC = () => {
             </TableContainer>
 
             <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Complete Security Check</DialogTitle>
+                <DialogTitle>Hoàn tất Kiểm tra An ninh</DialogTitle>
                 <DialogContent>
                     <Typography gutterBottom>
-                        Marking this room as checked. If everything is fine, you can leave the note empty.
-                        If you found issues (e.g. lights left on, dirty, broken chair), describe them below.
+                        Đánh dấu phòng này đã được kiểm tra. Nếu mọi thứ ổn, bạn có thể để trống ghi chú.
+                        Nếu bạn phát hiện vấn đề (ví dụ: quên tắt đèn, dơ bẩn, ghế hỏng), hãy mô tả bên dưới.
                     </Typography>
                     <TextField
-                        label="Optional Note / Issue Description"
+                        label="Ghi chú (Tùy chọn) / Mô tả sự cố"
                         fullWidth
                         multiline
                         rows={3}
                         margin="normal"
                         value={note}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNote(e.target.value)}
-                        placeholder="[SECURITY CHECK OK] All good."
+                        placeholder="[AN NINH ỔN] Mọi thứ tốt."
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button onClick={() => setOpen(false)}>Hủy</Button>
                     <Button onClick={handleCompleteCheck} variant="contained" color="primary">
-                        Submit
+                        Xác nhận
                     </Button>
                 </DialogActions>
             </Dialog>

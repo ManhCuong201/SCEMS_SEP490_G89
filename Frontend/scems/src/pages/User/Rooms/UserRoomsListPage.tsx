@@ -25,7 +25,7 @@ export const UserRoomsListPage: React.FC = () => {
       setRooms(result.items)
       setTotal(result.total)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load rooms')
+      setError(err.response?.data?.message || 'Tải danh sách phòng thất bại')
     } finally {
       setLoading(false)
     }
@@ -59,15 +59,15 @@ export const UserRoomsListPage: React.FC = () => {
     <div className="page-container">
       <div className="card-header" style={{ marginBottom: 'var(--spacing-lg)' }}>
         <div>
-          <h1>Available Rooms</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Browse and book available spaces for your classes and meetings.</p>
+          <h1>Danh sách Phòng</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Xem và yêu cầu đặt phòng cho lớp học và môn học của bạn.</p>
         </div>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <div style={{ marginBottom: '2rem', maxWidth: '500px' }}>
-        <SearchBar onSearch={setSearch} placeholder="Search by room name or code..." />
+        <SearchBar onSearch={setSearch} placeholder="Tìm kiếm theo tên hoặc mã phòng..." />
       </div>
 
       {loading ? <Loading fullPage={false} /> : (
@@ -109,22 +109,22 @@ export const UserRoomsListPage: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
                         <Package size={18} />
-                        <span>Type: <strong style={{ color: 'var(--text-main)' }}>{room.roomTypeName || 'N/A'}</strong></span>
+                        <span>Loại phòng: <strong style={{ color: 'var(--text-main)' }}>{room.roomTypeName || 'N/A'}</strong></span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
                         <Users size={18} />
-                        <span>Capacity: <strong style={{ color: 'var(--text-main)' }}>{room.capacity} People</strong></span>
+                        <span>Sức chứa: <strong style={{ color: 'var(--text-main)' }}>{room.capacity} người</strong></span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
                         <Package size={18} />
-                        <span>Equipment: <strong style={{ color: 'var(--text-main)' }}>{room.equipmentCount} Items</strong></span>
+                        <span>Thiết bị: <strong style={{ color: 'var(--text-main)' }}>{room.equipmentCount} món</strong></span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
                         <Clock size={18} />
-                        <span>Requests: <strong style={{ color: room.pendingRequestsCount > 0 ? 'var(--color-warning)' : 'var(--text-main)' }}>
-                          {room.pendingRequestsCount} Pending
+                        <span>Yêu cầu: <strong style={{ color: room.pendingRequestsCount > 0 ? 'var(--color-warning)' : 'var(--text-main)' }}>
+                          {room.pendingRequestsCount} chờ duyệt
                         </strong></span>
                       </div>
                     </div>
@@ -137,7 +137,7 @@ export const UserRoomsListPage: React.FC = () => {
                       style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Calendar size={18} /> View Calendar
+                      <Calendar size={18} /> Xem Lịch
                     </Link>
                   </div>
                 </div>
@@ -150,8 +150,8 @@ export const UserRoomsListPage: React.FC = () => {
               <div style={{ marginBottom: '1rem', color: 'var(--text-muted)' }}>
                 <Package size={48} style={{ opacity: 0.5 }} />
               </div>
-              <h3 style={{ marginBottom: '0.5rem' }}>No rooms found</h3>
-              <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your search terms.</p>
+              <h3 style={{ marginBottom: '0.5rem' }}>Không tìm thấy phòng nào</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Vui lòng thử điều chỉnh từ khóa tìm kiếm.</p>
             </div>
           )}
 

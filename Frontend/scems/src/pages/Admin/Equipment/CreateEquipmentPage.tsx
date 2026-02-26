@@ -32,7 +32,7 @@ export const CreateEquipmentPage: React.FC = () => {
                 if (typesRes.items.length > 0) setForm(curr => ({ ...curr, equipmentTypeId: typesRes.items[0].id }));
                 if (roomsRes.items.length > 0) setForm(curr => ({ ...curr, roomId: roomsRes.items[0].id }));
             } catch (err) {
-                setError('Failed to load dependency data');
+                setError('Tải dữ liệu thất bại');
             }
         };
         fetchData();
@@ -52,7 +52,7 @@ export const CreateEquipmentPage: React.FC = () => {
             await equipmentService.create(form);
             navigate('/admin/equipment');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to create');
+            setError(err.response?.data?.message || 'Thêm thiết bị thất bại');
         } finally {
             setLoading(false);
         }
@@ -60,45 +60,45 @@ export const CreateEquipmentPage: React.FC = () => {
 
     return (
         <div className="page-container">
-            <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Add Equipment</h1>
+            <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Thêm Thiết bị</h1>
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
             <div className="card" style={{ maxWidth: '500px' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Name (e.g. Serial No.)</label>
-                        <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} placeholder="Optional identifier" disabled={loading} />
+                        <label className="form-label">Tên (Ví dụ: Số sê-ri)</label>
+                        <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} placeholder="Định danh tùy chọn" disabled={loading} />
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Equipment Type *</label>
+                        <label className="form-label">Loại Thiết bị *</label>
                         <select name="equipmentTypeId" className="form-select" value={form.equipmentTypeId} onChange={handleChange} required disabled={loading}>
-                            <option value="" disabled>Select Type</option>
+                            <option value="" disabled>Chọn Loại</option>
                             {equipmentTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Room *</label>
+                        <label className="form-label">Phòng *</label>
                         <select name="roomId" className="form-select" value={form.roomId} onChange={handleChange} required disabled={loading}>
-                            <option value="" disabled>Select Room</option>
+                            <option value="" disabled>Chọn Phòng</option>
                             {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>)}
                         </select>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Status</label>
+                        <label className="form-label">Trạng thái</label>
                         <select name="status" className="form-select" value={form.status} onChange={handleChange} disabled={loading}>
-                            <option value={EquipmentStatus.Working}>Working</option>
-                            <option value={EquipmentStatus.UnderMaintenance}>Maintenance</option>
-                            <option value={EquipmentStatus.Faulty}>Broken</option>
-                            <option value={EquipmentStatus.Retired}>Retired</option>
+                            <option value={EquipmentStatus.Working}>Hoạt động</option>
+                            <option value={EquipmentStatus.UnderMaintenance}>Bảo trì</option>
+                            <option value={EquipmentStatus.Faulty}>Hỏng</option>
+                            <option value={EquipmentStatus.Retired}>Đã thanh lý</option>
                         </select>
                     </div>
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-                        <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Creating...' : 'Create'}</button>
-                        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment')} disabled={loading}>Cancel</button>
+                        <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Đang thêm...' : 'Thêm'}</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment')} disabled={loading}>Hủy</button>
                     </div>
                 </form>
             </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { Alert } from '../../components/Common/Alert'
 import { GoogleLogin } from '@react-oauth/google'
 import { authService } from '../../services/auth.service'
+import { Eye, EyeOff } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -12,6 +13,7 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +35,7 @@ export const LoginPage: React.FC = () => {
         navigate('/dashboard')
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed')
+      setError(err.response?.data?.message || 'Đăng nhập thất bại')
     } finally {
       setLoading(false)
     }
@@ -44,20 +46,20 @@ export const LoginPage: React.FC = () => {
       <div className="auth-card">
         <div className="text-center mb-lg">
           <h1 className="text-gradient" style={{ marginBottom: '0.5rem' }}>SCEMS</h1>
-          <p className="text-muted">Smart Classroom & Equipment Management</p>
+          <p className="text-muted">Hệ thống Quản lý Thiết bị & Lớp học Thông minh</p>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">Địa chỉ Email</label>
             <input
               type="email"
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
+              placeholder="ten@vidu.com"
               required
               disabled={loading}
               autoFocus
@@ -65,16 +67,39 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              disabled={loading}
-            />
+            <label className="form-label">Mật khẩu</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Nhập mật khẩu của bạn"
+                required
+                disabled={loading}
+                style={{ paddingRight: '2.75rem' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--slate-400)',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -83,14 +108,14 @@ export const LoginPage: React.FC = () => {
             style={{ width: '100%', marginTop: '0.5rem' }}
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
 
         <div className="mt-lg">
           <div style={{ position: 'relative', textAlign: 'center', marginBottom: '1.5rem' }}>
             <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', height: '1px', background: 'var(--slate-600)', opacity: 0.3 }}></div>
-            <span style={{ position: 'relative', background: 'var(--bg-surface)', padding: '0 1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Or continue with</span>
+            <span style={{ position: 'relative', background: 'var(--bg-surface)', padding: '0 1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Hoặc tiếp tục với</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -114,13 +139,13 @@ export const LoginPage: React.FC = () => {
                     }
                   }
                 } catch (err: any) {
-                  setError('Google Login Failed: ' + (err.response?.data?.message || err.message))
+                  setError('Google đăng nhập thất bại: ' + (err.response?.data?.message || err.message))
                 } finally {
                   setLoading(false)
                 }
               }}
               onError={() => {
-                setError('Google Login Failed')
+                setError('Google đăng nhập thất bại')
               }}
               useOneTap
               shape="circle"

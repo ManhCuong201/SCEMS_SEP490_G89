@@ -46,7 +46,7 @@ export const EditEquipmentPage: React.FC = () => {
                 setCurrentType(equipment.equipmentTypeName);
                 setRooms(roomsRes.items);
             } catch (err: any) {
-                setError('Failed to load data');
+                setError('Tải dữ liệu thất bại');
             } finally {
                 setLoading(false);
             }
@@ -69,7 +69,7 @@ export const EditEquipmentPage: React.FC = () => {
             await equipmentService.update(id, form);
             navigate('/admin/equipment');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update');
+            setError(err.response?.data?.message || 'Cập nhật thất bại');
         } finally {
             setSubmitting(false);
         }
@@ -79,24 +79,24 @@ export const EditEquipmentPage: React.FC = () => {
 
     return (
         <div className="page-container">
-            <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Edit Equipment</h1>
+            <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Chỉnh sửa Thiết bị</h1>
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
             <div className="card" style={{ maxWidth: '500px' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Name</label>
+                        <label className="form-label">Tên</label>
                         <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} disabled={submitting} />
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Equipment Type</label>
+                        <label className="form-label">Loại Thiết bị</label>
                         <input type="text" className="form-input" value={currentType} disabled />
-                        <small style={{ color: 'var(--color-text-secondary)' }}>Type cannot be changed</small>
+                        <small style={{ color: 'var(--color-text-secondary)' }}>Loại không thể thay đổi</small>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Room *</label>
+                        <label className="form-label">Phòng *</label>
                         <select name="roomId" className="form-select" value={form.roomId} onChange={handleChange} required disabled={submitting}>
                             {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>)}
                         </select>
@@ -104,25 +104,25 @@ export const EditEquipmentPage: React.FC = () => {
 
                     {form.roomId !== originalRoomId && (
                         <div className="form-group">
-                            <label className="form-label">Move Note (Optional)</label>
-                            <input type="text" name="note" className="form-input" placeholder="Reason for moving..." value={form.note} onChange={handleChange} disabled={submitting} />
-                            <small style={{ color: 'var(--color-text-secondary)' }}>e.g. Broken in old room, requested by teacher, etc.</small>
+                            <label className="form-label">Ghi chú di chuyển (Tùy chọn)</label>
+                            <input type="text" name="note" className="form-input" placeholder="Lý do di chuyển..." value={form.note} onChange={handleChange} disabled={submitting} />
+                            <small style={{ color: 'var(--color-text-secondary)' }}>Ví dụ: Hỏng ở phòng cũ, giáo viên yêu cầu, v.v.</small>
                         </div>
                     )}
 
                     <div className="form-group">
-                        <label className="form-label">Status</label>
+                        <label className="form-label">Trạng thái</label>
                         <select name="status" className="form-select" value={form.status} onChange={handleChange} disabled={submitting}>
-                            <option value={EquipmentStatus.Working}>Working</option>
-                            <option value={EquipmentStatus.UnderMaintenance}>Maintenance</option>
-                            <option value={EquipmentStatus.Faulty}>Broken</option>
-                            <option value={EquipmentStatus.Retired}>Retired</option>
+                            <option value={EquipmentStatus.Working}>Hoạt động</option>
+                            <option value={EquipmentStatus.UnderMaintenance}>Bảo trì</option>
+                            <option value={EquipmentStatus.Faulty}>Hỏng</option>
+                            <option value={EquipmentStatus.Retired}>Đã thanh lý</option>
                         </select>
                     </div>
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-                        <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Saving...' : 'Save Changes'}</button>
-                        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment')} disabled={submitting}>Cancel</button>
+                        <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Đang lưu...' : 'Lưu Thay đổi'}</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment')} disabled={submitting}>Hủy</button>
                     </div>
                 </form>
             </div>

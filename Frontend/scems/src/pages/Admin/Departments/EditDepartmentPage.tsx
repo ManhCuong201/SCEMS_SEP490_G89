@@ -28,7 +28,7 @@ export const EditDepartmentPage: React.FC = () => {
                     description: dept.description || ''
                 })
             } catch (err: any) {
-                setError('Failed to load department details')
+                setError('Tải chi tiết tòa nhà thất bại')
             } finally {
                 setLoading(false)
             }
@@ -46,7 +46,7 @@ export const EditDepartmentPage: React.FC = () => {
             await departmentService.update(id, formData)
             navigate('/admin/departments')
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update department')
+            setError(err.response?.data?.message || 'Cập nhật tòa nhà thất bại')
         } finally {
             setSaving(false)
         }
@@ -58,8 +58,8 @@ export const EditDepartmentPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Edit Department</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Update department details</p>
+                    <h1>Chỉnh sửa Tòa nhà</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Cập nhật thông tin tòa nhà</p>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@ export const EditDepartmentPage: React.FC = () => {
             <div className="glass-panel" style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem' }}>
                 <form onSubmit={handleSubmit} className="form-group">
                     <div className="form-group">
-                        <label className="form-label">Department Code (Short Name)</label>
+                        <label className="form-label">Mã tòa nhà (Ví dụ: Alpha, Beta)</label>
                         <input
                             type="text"
                             className="form-input"
@@ -79,7 +79,7 @@ export const EditDepartmentPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Department Name (Full Name)</label>
+                        <label className="form-label">Tên tòa nhà (Cách gọi đầy đủ)</label>
                         <input
                             type="text"
                             className="form-input"
@@ -90,7 +90,7 @@ export const EditDepartmentPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">Mô tả</label>
                         <textarea
                             className="form-input"
                             rows={4}
@@ -106,7 +106,7 @@ export const EditDepartmentPage: React.FC = () => {
                             onClick={() => navigate('/admin/departments')}
                             style={{ flex: 1 }}
                         >
-                            Cancel
+                            Hủy
                         </button>
                         <button
                             type="submit"
@@ -114,7 +114,7 @@ export const EditDepartmentPage: React.FC = () => {
                             disabled={saving}
                             style={{ flex: 1 }}
                         >
-                            {saving ? 'Saving...' : 'Save Changes'}
+                            {saving ? 'Đang lưu...' : 'Lưu Thay đổi'}
                         </button>
                     </div>
                 </form>

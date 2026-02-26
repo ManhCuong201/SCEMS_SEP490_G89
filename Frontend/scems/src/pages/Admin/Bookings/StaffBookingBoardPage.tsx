@@ -55,7 +55,7 @@ export const StaffBookingBoardPage: React.FC = () => {
             setSchedules(schedulesData)
             setBookings(bookingsData)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load data')
+            setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
         } finally {
             setLoading(false)
         }
@@ -68,12 +68,12 @@ export const StaffBookingBoardPage: React.FC = () => {
     const handleUpdateStatus = async (id: string, status: BookingStatus) => {
         try {
             await bookingService.updateStatus(id, status)
-            setSuccessMsg(`Booking ${status.toLowerCase()} successfully`)
+            setSuccessMsg(status === BookingStatus.Approved ? 'Duyệt yêu cầu thành công' : 'Từ chối yêu cầu thành công')
             setModalOpen(false)
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update booking')
+            setError(err.response?.data?.message || 'Cập nhật yêu cầu thất bại')
         }
     }
 
@@ -117,7 +117,7 @@ export const StaffBookingBoardPage: React.FC = () => {
             return (
                 <div className="scheduler-cell slot-class">
                     <div className="slot-content-wrapper">
-                        <span className="slot-status-pill pill-class">CLASS</span>
+                        <span className="slot-status-pill pill-class">LỚP HỌC</span>
                         <div className="slot-main-text">{classInSlot.subject}</div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ export const StaffBookingBoardPage: React.FC = () => {
             return (
                 <div className="scheduler-cell slot-booked" onClick={() => handleSlotClick(room, hour, [approvedBooking])}>
                     <div className="slot-content-wrapper">
-                        <span className="slot-status-pill pill-booked">BOOKED</span>
+                        <span className="slot-status-pill pill-booked">ĐÃ ĐẶT</span>
                         <div className="slot-main-text">{(approvedBooking.requestedByName || '').split(' ').pop()}</div>
                     </div>
                 </div>
@@ -146,9 +146,9 @@ export const StaffBookingBoardPage: React.FC = () => {
                 >
                     <div className="slot-content-wrapper">
                         <span className="slot-status-pill" style={{ background: '#ffedd5', color: '#c2410c', border: '1px solid #fdba74' }}>
-                            {pendingBookings.length} PENDING
+                            {pendingBookings.length} CHỜ DUYỆT
                         </span>
-                        <div className="slot-main-text" style={{ color: '#ea580c' }}>Click to Review</div>
+                        <div className="slot-main-text" style={{ color: '#ea580c' }}>Nhấn để xem</div>
                     </div>
                 </div>
             )
@@ -166,8 +166,8 @@ export const StaffBookingBoardPage: React.FC = () => {
         <div className="scheduler-container staff-mode">
             <div className="page-header-simple">
                 <div>
-                    <h1>Staff Booking Board</h1>
-                    <p className="text-muted">Manage real-time room bookings and schedules</p>
+                    <h1>Bảng Đặt phòng cho Nhân viên</h1>
+                    <p className="text-muted">Quản lý yêu cầu đặt phòng và lịch trình theo thời gian thực</p>
                 </div>
             </div>
 
@@ -189,7 +189,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="Search rooms..."
+                            placeholder="Tìm kiếm phòng..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ paddingLeft: '2rem' }}
@@ -204,7 +204,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                         value={selectedType}
                         onChange={(e) => setSelectedType(e.target.value)}
                     >
-                        <option value="">All Categories</option>
+                        <option value="">Tất cả danh mục</option>
                         {roomTypes.map(t => (
                             <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
@@ -218,7 +218,7 @@ export const StaffBookingBoardPage: React.FC = () => {
             <div className="scheduler-grid-wrapper">
                 {loading ? <Loading fullPage={false} /> : (
                     <div className="scheduler-grid">
-                        <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Rooms</div>
+                        <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Phòng</div>
                         {timeSlotsArray.map(slot => (
                             <div key={slot.hour} className="scheduler-cell scheduler-header-cell">{slot.label}</div>
                         ))}
@@ -242,7 +242,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                         <div className="modal-panel-premium" style={{ maxWidth: '500px' }}>
                             <div className="modal-header-premium">
                                 <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Clock size={18} /> Manage Slot: {selectedSlotHour}:00 - {selectedSlotHour! + 1}:00
+                                    <Clock size={18} /> Quản lý Khung giờ: {selectedSlotHour}:00 - {selectedSlotHour! + 1}:00
                                 </h3>
                                 <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
                                     <X size={20} />
@@ -250,7 +250,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                             </div>
                             <div className="modal-body-premium" style={{ paddingTop: '1.5rem' }}>
                                 <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
-                                    <strong>Room:</strong> {selectedSlotRoom.roomName} ({selectedSlotRoom.roomCode})
+                                    <strong>Phòng:</strong> {selectedSlotRoom.roomName} ({selectedSlotRoom.roomCode})
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -264,23 +264,23 @@ export const StaffBookingBoardPage: React.FC = () => {
                                         }}>
                                             {booking.status === 'Pending' && (
                                                 <div style={{ position: 'absolute', top: '-8px', right: '10px', background: '#fb923c', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                                                    {booking.reason?.includes('Reschedule original class') ? 'CLASS RESCHEDULE REQUEST' : 'PENDING REVIEW'}
+                                                    {booking.reason?.includes('Reschedule original class') ? 'YÊU CẦU ĐỔI LỊCH' : 'ĐANG CHỜ DUYỆT'}
                                                 </div>
                                             )}
                                             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.9rem' }}>
-                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Requester:</div>
+                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Người yêu cầu:</div>
                                                 <div style={{ fontWeight: 700 }}>{booking.requestedByName || booking.requestedByAccount?.fullName}</div>
 
-                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Duration:</div>
-                                                <div>{booking.duration} Hour(s)</div>
+                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Thời lượng:</div>
+                                                <div>{booking.duration} Giờ</div>
 
-                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Reason:</div>
-                                                <div style={{ fontStyle: 'italic', color: '#334155' }}>"{booking.reason || 'No reason provided'}"</div>
+                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do:</div>
+                                                <div style={{ fontStyle: 'italic', color: '#334155' }}>"{booking.reason || 'Không có lý do'}"</div>
                                             </div>
 
                                             {booking.reason?.includes('Reschedule original class') && (
                                                 <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '4px', fontSize: '0.8rem', color: '#b91c1c' }}>
-                                                    <strong>⚠️ Warning:</strong> Approving this will permanently move the class schedule to this new time and room.
+                                                    <strong>⚠️ Cảnh báo:</strong> Việc phê duyệt yêu cầu này sẽ chuyển vĩnh viễn lịch học sang thời gian và phòng mới này.
                                                 </div>
                                             )}
 
@@ -298,7 +298,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                             fontWeight: 600
                                                         }}
                                                     >
-                                                        Reject
+                                                        Từ chối
                                                     </button>
                                                     <button
                                                         onClick={() => handleUpdateStatus(booking.id, BookingStatus.Approved)}
@@ -312,14 +312,14 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                             fontWeight: 600
                                                         }}
                                                     >
-                                                        Approve
+                                                        Duyệt
                                                     </button>
                                                 </div>
                                             )}
 
                                             {booking.status === 'Approved' && (
                                                 <div style={{ marginTop: '1rem', color: '#166534', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Check size={14} /> This booking is approved.
+                                                    <Check size={14} /> Yêu cầu này đã được phê duyệt.
                                                 </div>
                                             )}
                                         </div>

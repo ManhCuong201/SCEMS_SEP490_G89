@@ -32,7 +32,7 @@ export const EquipmentTypesListPage: React.FC = () => {
       setTypes(filtered)
       setTotal(result.total)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load')
+      setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
     } finally {
       setLoading(false)
     }
@@ -55,10 +55,10 @@ export const EquipmentTypesListPage: React.FC = () => {
     if (deleteId) {
       try {
         await equipmentTypeService.deleteEquipmentType(deleteId)
-        setSuccess('Deleted')
+        setSuccess('Đã xóa')
         loadTypes()
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to delete')
+        setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
         setDeleteId(null)
       }
@@ -70,20 +70,20 @@ export const EquipmentTypesListPage: React.FC = () => {
     try {
       const statusValue = newStatus === 'Active' ? 0 : 1
       await equipmentTypeService.updateStatus(id, statusValue)
-      setSuccess('Status updated')
+      setSuccess('Đã cập nhật trạng thái')
       loadTypes()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update')
+      setError(err.response?.data?.message || 'Cập nhật thất bại')
     }
   }
 
   const columns: Column<EquipmentType>[] = [
-    { header: 'Name', accessor: 'name' },
-    { header: 'Code', accessor: 'code', width: '120px' },
-    { header: 'Description', accessor: 'description' },
-    { header: 'Count', accessor: 'equipmentCount', width: '100px' },
+    { header: 'Tên', accessor: 'name' },
+    { header: 'Mã', accessor: 'code', width: '120px' },
+    { header: 'Mô tả', accessor: 'description' },
+    { header: 'Số lượng', accessor: 'equipmentCount', width: '100px' },
     {
-      header: 'Status',
+      header: 'Trạng thái',
       accessor: (item) => (
         <select
           value={item.status}
@@ -99,24 +99,24 @@ export const EquipmentTypesListPage: React.FC = () => {
             borderColor: 'transparent'
           }}
         >
-          <option value="Active">Active</option>
-          <option value="Hidden">Hidden</option>
+          <option value="Active">Hoạt động</option>
+          <option value="Hidden">Ẩn</option>
         </select>
       )
     },
     {
-      header: 'Created',
+      header: 'Ngày tạo',
       accessor: (item) => new Date(item.createdAt).toLocaleDateString()
     },
     {
-      header: 'Actions',
+      header: 'Hành động',
       accessor: (item) => (
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Link
             to={`/admin/equipment-types/${item.id}`}
             className="btn btn-secondary"
             style={{ padding: '0.4rem', height: 'auto' }}
-            title="View Details"
+            title="Xem chi tiết"
           >
             <Eye size={16} />
           </Link>
@@ -124,7 +124,7 @@ export const EquipmentTypesListPage: React.FC = () => {
             to={`/admin/equipment-types/${item.id}/edit`}
             className="btn btn-secondary"
             style={{ padding: '0.4rem', height: 'auto' }}
-            title="Edit Type"
+            title="Chỉnh sửa loại"
           >
             <Edit size={16} />
           </Link>
@@ -132,7 +132,7 @@ export const EquipmentTypesListPage: React.FC = () => {
             className="btn btn-danger"
             onClick={(e) => handleDeleteClick(item.id, e)}
             style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
-            title="Delete Type"
+            title="Xóa loại"
           >
             <Trash2 size={16} />
           </button>
@@ -145,10 +145,10 @@ export const EquipmentTypesListPage: React.FC = () => {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1>Equipment Types</h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage categories of equipment</p>
+          <h1>Loại Thiết bị</h1>
+          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Quản lý danh mục thiết bị</p>
         </div>
-        <Link to="/admin/equipment-types/create" className="btn btn-primary">+ New Type</Link>
+        <Link to="/admin/equipment-types/create" className="btn btn-primary">+ Thêm Loại</Link>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -157,7 +157,7 @@ export const EquipmentTypesListPage: React.FC = () => {
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
-            <SearchBar placeholder="Search types..." onSearch={setSearch} />
+            <SearchBar placeholder="Tìm kiếm loại..." onSearch={setSearch} />
           </div>
           <select
             className="form-input"
@@ -165,9 +165,9 @@ export const EquipmentTypesListPage: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{ width: '150px' }}
           >
-            <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Hidden">Hidden</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="Active">Hoạt động</option>
+            <option value="Hidden">Ẩn</option>
           </select>
         </div>
 
@@ -175,7 +175,7 @@ export const EquipmentTypesListPage: React.FC = () => {
           columns={columns}
           data={types}
           isLoading={loading}
-          emptyMessage="No equipment types found."
+          emptyMessage="Không tìm thấy loại thiết bị nào."
         />
 
         {!loading && total > 0 && (
@@ -191,12 +191,12 @@ export const EquipmentTypesListPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!deleteId}
-        title="Delete Equipment Type"
-        message="Are you sure you want to delete this equipment type?"
+        title="Xóa Loại Thiết bị"
+        message="Bạn có chắc chắn muốn xóa loại thiết bị này không?"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteId(null)}
         isDanger
-        confirmText="Delete"
+        confirmText="Xóa"
       />
     </div>
   )

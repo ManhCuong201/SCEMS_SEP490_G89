@@ -21,7 +21,7 @@ export const DepartmentsListPage: React.FC = () => {
             const result = await departmentService.getAll()
             setDepartments(result)
         } catch (err: any) {
-            setError('Failed to load departments')
+            setError('Tải danh sách tòa nhà thất bại')
         } finally {
             setLoading(false)
         }
@@ -35,10 +35,10 @@ export const DepartmentsListPage: React.FC = () => {
         if (deleteId) {
             try {
                 await departmentService.delete(deleteId)
-                setSuccess('Department deleted successfully')
+                setSuccess('Đã xóa tòa nhà')
                 loadDepartments()
             } catch (err: any) {
-                setError(err.response?.data?.message || 'Failed to delete department')
+                setError(err.response?.data?.message || 'Xóa tòa nhà thất bại')
             } finally {
                 setDeleteId(null)
             }
@@ -46,18 +46,18 @@ export const DepartmentsListPage: React.FC = () => {
     }
 
     const columns: Column<Department>[] = [
-        { header: 'Code', accessor: 'departmentCode' },
-        { header: 'Name', accessor: 'departmentName' },
-        { header: 'Description', accessor: 'description' },
+        { header: 'Mã tòa nhà', accessor: 'departmentCode' },
+        { header: 'Tên tòa nhà', accessor: 'departmentName' },
+        { header: 'Mô tả', accessor: 'description' },
         {
-            header: 'Actions',
+            header: 'Hành động',
             accessor: (item) => (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Link
                         to={`/admin/departments/${item.id}/edit`}
                         className="btn btn-secondary"
                         style={{ padding: '0.4rem', height: 'auto' }}
-                        title="Edit"
+                        title="Chỉnh sửa"
                     >
                         <Edit size={16} />
                     </Link>
@@ -65,7 +65,7 @@ export const DepartmentsListPage: React.FC = () => {
                         className="btn btn-danger"
                         onClick={() => setDeleteId(item.id)}
                         style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
-                        title="Delete"
+                        title="Xóa"
                     >
                         <Trash2 size={16} />
                     </button>
@@ -78,11 +78,11 @@ export const DepartmentsListPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Departments</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage academic and administrative departments</p>
+                    <h1>Tòa nhà</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Quản lý các tòa nhà trong hệ thống</p>
                 </div>
                 <Link to="/admin/departments/create" className="btn btn-primary">
-                    <Plus size={18} style={{ marginRight: '0.5rem' }} /> New Department
+                    <Plus size={18} style={{ marginRight: '0.5rem' }} /> Thêm Tòa nhà
                 </Link>
             </div>
 
@@ -94,14 +94,14 @@ export const DepartmentsListPage: React.FC = () => {
                     columns={columns}
                     data={departments}
                     isLoading={loading}
-                    emptyMessage="No departments found."
+                    emptyMessage="Không tìm thấy tòa nhà nào."
                 />
             </div>
 
             <ConfirmModal
                 isOpen={!!deleteId}
-                title="Delete Department"
-                message="Are you sure you want to delete this department? This action cannot be undone."
+                title="Xóa Tòa nhà"
+                message="Bạn có chắc chắn muốn xóa tòa nhà này không? Hành động này không thể hoàn tác."
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setDeleteId(null)}
                 isDanger

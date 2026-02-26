@@ -21,17 +21,17 @@ const TeacherClassesPage: React.FC = () => {
             const data = await classService.getTeacherClasses();
             setClasses(data);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load classes');
+            setError(err.response?.data?.message || 'Tải danh sách lớp học thất bại');
         } finally {
             setLoading(false);
         }
     };
 
     const columns: Column<ClassResponse>[] = [
-        { header: 'Class Code', accessor: 'classCode' },
-        { header: 'Subject', accessor: 'subjectName' },
+        { header: 'Mã lớp', accessor: 'classCode' },
+        { header: 'Môn học', accessor: 'subjectName' },
         {
-            header: 'Actions',
+            header: 'Hành động',
             accessor: (item: ClassResponse) => (
                 <button
                     className="btn btn-primary btn-sm"
@@ -39,7 +39,7 @@ const TeacherClassesPage: React.FC = () => {
                     style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
                     <Users size={16} />
-                    Manage Students
+                    Quản lý Sinh viên
                 </button>
             )
         }
@@ -50,7 +50,7 @@ const TeacherClassesPage: React.FC = () => {
     return (
         <div className="page-container">
             <div className="page-header compact-page-header">
-                <h2>My Classes</h2>
+                <h2>Lớp học của tôi</h2>
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
@@ -59,7 +59,7 @@ const TeacherClassesPage: React.FC = () => {
                 <DataTable
                     columns={columns}
                     data={classes}
-                    emptyMessage="You have no classes assigned yet."
+                    emptyMessage="Bạn chưa được phân công lớp học nào."
                 />
             </div>
         </div>

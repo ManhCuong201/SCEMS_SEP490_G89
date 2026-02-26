@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
           <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--primary-100)', color: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
             {user?.fullName?.charAt(0) || 'U'}
           </div>
-          {user?.fullName || 'User'}
+          {user?.fullName || 'Người dùng'}
           <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>▼</span>
         </button>
         {showMenu && (
@@ -65,7 +65,7 @@ export const Header: React.FC = () => {
             boxShadow: 'var(--shadow-lg)'
           }}>
             <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border-glass)', marginBottom: '0.5rem' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Signed in as</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Đăng nhập với</p>
               <p style={{ fontSize: '0.875rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-main)' }}>{user?.email}</p>
             </div>
             <button
@@ -89,7 +89,7 @@ export const Header: React.FC = () => {
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <LogOut size={16} />
-              Sign out
+              Đăng xuất
             </button>
           </div>
         )}

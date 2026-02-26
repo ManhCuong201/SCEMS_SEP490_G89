@@ -43,7 +43,7 @@ export const EditRoomPage: React.FC = () => {
           departmentId: room.departmentId || (depts.length > 0 ? depts[0].id : '')
         })
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load')
+        setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
       } finally {
         setLoading(false)
       }
@@ -75,7 +75,7 @@ export const EditRoomPage: React.FC = () => {
       await roomService.updateRoom(id!, form)
       navigate('/admin/rooms')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save')
+      setError(err.response?.data?.message || 'Lưu thất bại')
     } finally {
       setSaving(false)
     }
@@ -85,28 +85,28 @@ export const EditRoomPage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 style={{ marginBottom: '1.5rem' }}>Edit Room</h1>
+      <h1 style={{ marginBottom: '1.5rem' }}>Chỉnh sửa phòng</h1>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <div className="glass-panel" style={{ maxWidth: '600px', padding: '2rem' }}>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Room Code</label>
+            <label className="form-label">Mã phòng</label>
             <input type="text" name="roomCode" className="form-input" value={form.roomCode} onChange={handleChange} disabled={saving} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Room Name</label>
+            <label className="form-label">Tên phòng</label>
             <input type="text" name="roomName" className="form-input" value={form.roomName} onChange={handleChange} disabled={saving} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Capacity</label>
+            <label className="form-label">Sức chứa</label>
             <input type="number" name="capacity" className="form-input" value={form.capacity} onChange={handleChange} min="1" disabled={saving} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Room Type</label>
+            <label className="form-label">Loại phòng</label>
             <select
               name="roomTypeId"
               className="form-input"
@@ -114,7 +114,7 @@ export const EditRoomPage: React.FC = () => {
               onChange={handleChange}
               disabled={saving}
             >
-              <option value="">-- Select Type --</option>
+              <option value="">-- Chọn Loại phòng --</option>
               {roomTypes.map(type => (
                 <option key={type.id} value={type.id}>
                   {type.name}
@@ -124,7 +124,7 @@ export const EditRoomPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Department / Building</label>
+            <label className="form-label">Tòa nhà</label>
             <select
               name="departmentId"
               className="form-input"
@@ -133,7 +133,7 @@ export const EditRoomPage: React.FC = () => {
               disabled={saving}
               required
             >
-              <option value="">-- Select Department --</option>
+              <option value="">-- Chọn Tòa nhà --</option>
               {departments.map(dept => (
                 <option key={dept.id} value={dept.id}>
                   {dept.departmentName} ({dept.departmentCode})
@@ -143,8 +143,8 @@ export const EditRoomPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/rooms')} disabled={saving}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/rooms')} disabled={saving}>Hủy</button>
           </div>
         </form>
       </div>

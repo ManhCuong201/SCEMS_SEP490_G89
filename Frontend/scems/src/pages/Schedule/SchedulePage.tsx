@@ -133,12 +133,12 @@ export const SchedulePage: React.FC = () => {
                 reason: changeReason
             };
             await bookingService.createScheduleChangeRequest(request);
-            setMessage({ type: 'success', text: 'Class schedule change request sent!' });
+            setMessage({ type: 'success', text: 'Đã gửi yêu cầu đổi lịch học!' });
             setChangeModalOpen(false);
             fetchSchedule();
             setTimeout(() => setMessage(null), 3000);
         } catch (err: any) {
-            setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to request schedule change' });
+            setMessage({ type: 'error', text: err.response?.data?.message || 'Gửi yêu cầu đổi lịch học thất bại' });
         } finally {
             setSubmitting(false);
         }
@@ -148,8 +148,8 @@ export const SchedulePage: React.FC = () => {
         <div className="page-container">
             <div className="page-header compact-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
-                    <h1 className="page-title">Class schedule</h1>
-                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>Manage and view your academic schedule</p>
+                    <h1 className="page-title">Lịch học</h1>
+                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>Quản lý và xem lịch học của bạn</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     {user?.role === 'Student' && (
@@ -159,7 +159,7 @@ export const SchedulePage: React.FC = () => {
                                 <input
                                     type="text"
                                     className="form-input"
-                                    placeholder="Class Code (e.g. SE1701)"
+                                    placeholder="Mã lớp (VD: SE1701)"
                                     value={classSearch}
                                     onChange={(e) => setClassSearch(e.target.value)}
                                     style={{ padding: '0.4rem 0.75rem' }}
@@ -175,11 +175,11 @@ export const SchedulePage: React.FC = () => {
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                             >
                                 <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
-                                Download Template
+                                Tải mẫu Import
                             </button>
                             <label className={`btn btn-primary ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Upload size={18} />
-                                {importing ? 'Importing...' : 'Import Schedule'}
+                                {importing ? 'Đang tải lên...' : 'Import Lịch học'}
                                 <input
                                     type="file"
                                     accept=".xlsx, .xls"
@@ -196,7 +196,7 @@ export const SchedulePage: React.FC = () => {
                                             setMessage({ type: 'success', text: resp.message })
                                             fetchSchedule()
                                         } catch (error: any) {
-                                            setMessage({ type: 'error', text: error.response?.data?.message || 'Import failed' })
+                                            setMessage({ type: 'error', text: error.response?.data?.message || 'Import thất bại' })
                                         } finally {
                                             setImporting(false)
                                             e.target.value = ''
@@ -223,7 +223,7 @@ export const SchedulePage: React.FC = () => {
                         </h2>
                         <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                             <button className="btn btn-secondary btn-sm" onClick={handlePrevWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '28px', width: '32px', padding: 0 }}><ChevronLeft size={16} /></button>
-                            <button className="btn btn-secondary btn-sm" onClick={handleToday} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center' }}>Today</button>
+                            <button className="btn btn-secondary btn-sm" onClick={handleToday} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center' }}>Hôm nay</button>
                             <button className="btn btn-secondary btn-sm" onClick={handleNextWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '28px', width: '32px', padding: 0 }}><ChevronRight size={16} /></button>
                         </div>
                     </div>
@@ -236,7 +236,7 @@ export const SchedulePage: React.FC = () => {
                     <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '2px' }} className="compact-grid">
                         <thead>
                             <tr>
-                                <th style={{ width: '60px', padding: '0.4rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Slot</th>
+                                <th style={{ width: '60px', padding: '0.4rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Ca học</th>
                                 {weekDays.map(day => (
                                     <th key={day.toString()} style={{
                                         padding: '0.5rem',
@@ -298,13 +298,13 @@ export const SchedulePage: React.FC = () => {
                                                         onMouseLeave={(e) => {
                                                             if (user?.role === 'Lecturer') e.currentTarget.style.borderColor = 'transparent';
                                                         }}
-                                                        title={user?.role === 'Lecturer' ? "Click to request schedule change" : s.subject}
+                                                        title={user?.role === 'Lecturer' ? "Nhấn để yêu cầu đổi lịch học" : s.subject}
                                                     >
                                                         <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                             {s.subject}
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-                                                            <MapPin size={10} /> {s.roomName || 'TBA'}
+                                                            <MapPin size={10} /> {s.roomName || 'Chưa có'}
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
                                                             <Clock size={10} /> {s.startTime} - {s.endTime}
@@ -332,7 +332,7 @@ export const SchedulePage: React.FC = () => {
                     <div className="modal-panel-premium">
                         <div className="modal-header-premium">
                             <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> Request Schedule Change
+                                <CalendarIcon size={18} /> Yêu cầu Đổi lịch học
                             </h3>
                             <button onClick={() => setChangeModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'color 0.2s' }}>
                                 <X size={20} />
@@ -342,21 +342,21 @@ export const SchedulePage: React.FC = () => {
                         <div className="modal-room-card">
                             <div className="modal-info-row">
                                 <MapPin size={14} style={{ color: '#0f172a' }} />
-                                <span>Original Room: <strong>{selectedSchedule.roomName}</strong></span>
+                                <span>Phòng ban đầu: <strong>{selectedSchedule.roomName}</strong></span>
                             </div>
                             <div className="modal-info-row">
                                 <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                <span>Original Date/Time: <strong>{new Date(selectedSchedule.date).toLocaleDateString()} ({selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
+                                <span>Thời gian ban đầu: <strong>{new Date(selectedSchedule.date).toLocaleDateString()} ({selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
                             </div>
                             <div className="modal-info-row">
                                 <Info size={14} style={{ color: '#0f172a' }} />
-                                <span>Class: <strong>{selectedSchedule.subject} - {selectedSchedule.classCode}</strong></span>
+                                <span>Lớp: <strong>{selectedSchedule.subject} - {selectedSchedule.classCode}</strong></span>
                             </div>
                         </div>
 
                         <div className="modal-body-premium">
                             <div className="modal-input-group">
-                                <label className="modal-label-premium">New Room</label>
+                                <label className="modal-label-premium">Phòng mới</label>
                                 <select
                                     className="form-input"
                                     style={{ width: '100%', marginBottom: '1rem' }}
@@ -366,7 +366,7 @@ export const SchedulePage: React.FC = () => {
                                     {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName}</option>)}
                                 </select>
 
-                                <label className="modal-label-premium">New Date</label>
+                                <label className="modal-label-premium">Ngày mới</label>
                                 <input
                                     type="date"
                                     className="form-input"
@@ -377,7 +377,7 @@ export const SchedulePage: React.FC = () => {
 
                                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                                     <div style={{ flex: 1 }}>
-                                        <label className="modal-label-premium">Slot Type</label>
+                                        <label className="modal-label-premium">Loại Ca học</label>
                                         <select
                                             className="form-input"
                                             style={{ width: '100%' }}
@@ -387,12 +387,12 @@ export const SchedulePage: React.FC = () => {
                                                 setNewSlot(1);
                                             }}
                                         >
-                                            <option value="New">New Slot (10w)</option>
-                                            <option value="Old">Old Slot (3w)</option>
+                                            <option value="New">Ca mới (10 tuần)</option>
+                                            <option value="Old">Ca cũ (3 tuần)</option>
                                         </select>
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <label className="modal-label-premium">Slot Number</label>
+                                        <label className="modal-label-premium">Ca học</label>
                                         <select
                                             className="form-input"
                                             style={{ width: '100%' }}
@@ -400,7 +400,7 @@ export const SchedulePage: React.FC = () => {
                                             onChange={e => setNewSlot(Number(e.target.value))}
                                         >
                                             {Array.from({ length: slotType === 'New' ? 6 : 8 }, (_, i) => i + 1).map(n => (
-                                                <option key={n} value={n}>Slot {n}</option>
+                                                <option key={n} value={n}>Ca {n}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -409,16 +409,16 @@ export const SchedulePage: React.FC = () => {
                                 <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Clock size={16} className="text-primary" />
                                     <span style={{ fontSize: '0.9rem' }}>
-                                        Selected Time: <strong>{getSlotTimes(slotType, newSlot)}</strong>
+                                        Thời gian đã chọn: <strong>{getSlotTimes(slotType, newSlot)}</strong>
                                     </span>
                                 </div>
 
-                                <label className="modal-label-premium">Reason for Rescheduling</label>
+                                <label className="modal-label-premium">Lý do Đổi lịch</label>
                                 <textarea
                                     className="modal-textarea-premium"
                                     value={changeReason}
                                     onChange={(e) => setChangeReason(e.target.value)}
-                                    placeholder="Briefly explain why this class needs to be rescheduled..."
+                                    placeholder="Giải thích ngắn gọn lý do cần đổi lịch học này..."
                                     rows={3}
                                 />
                             </div>
@@ -426,14 +426,14 @@ export const SchedulePage: React.FC = () => {
 
                         <div className="modal-footer-premium">
                             <button className="btn-modal btn-modal-cancel" onClick={() => setChangeModalOpen(false)}>
-                                Cancel
+                                Hủy
                             </button>
                             <button
                                 className="btn-modal btn-modal-primary"
                                 onClick={handleConfirmScheduleChange}
                                 disabled={submitting || !changeReason}
                             >
-                                {submitting ? 'Processing...' : 'Submit Request'}
+                                {submitting ? 'Đang xử lý...' : 'Gửi Yêu cầu'}
                             </button>
                         </div>
                     </div>

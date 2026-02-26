@@ -33,7 +33,7 @@ export const EquipmentListPage: React.FC = () => {
             setEquipment(result.items);
             setTotal(result.total);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load equipment');
+            setError(err.response?.data?.message || 'Tải danh sách thiết bị thất bại');
         } finally {
             setLoading(false);
         }
@@ -58,10 +58,10 @@ export const EquipmentListPage: React.FC = () => {
         if (deleteId) {
             try {
                 await equipmentService.delete(deleteId);
-                setSuccess('Equipment deleted');
+                setSuccess('Đã xóa thiết bị');
                 loadEquipment();
             } catch (err: any) {
-                setError(err.response?.data?.message || 'Failed to delete');
+                setError(err.response?.data?.message || 'Xóa thất bại');
             } finally {
                 setDeleteId(null);
             }
@@ -71,24 +71,24 @@ export const EquipmentListPage: React.FC = () => {
     const getStatusInfo = (status: EquipmentStatus) => {
         switch (status) {
             case EquipmentStatus.Working:
-                return { label: 'Working', color: 'var(--color-success)', bg: 'rgba(16, 185, 129, 0.1)' };
+                return { label: 'Hoạt động', color: 'var(--color-success)', bg: 'rgba(16, 185, 129, 0.1)' };
             case EquipmentStatus.UnderMaintenance:
-                return { label: 'Maintenance', color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.1)' };
+                return { label: 'Bảo trì', color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.1)' };
             case EquipmentStatus.Faulty:
-                return { label: 'Broken', color: 'var(--color-danger)', bg: 'rgba(239, 68, 68, 0.1)' };
+                return { label: 'Hỏng', color: 'var(--color-danger)', bg: 'rgba(239, 68, 68, 0.1)' };
             case EquipmentStatus.Retired:
-                return { label: 'Retired', color: 'var(--text-muted)', bg: 'rgba(148, 163, 184, 0.1)' };
+                return { label: 'Đã thanh lý', color: 'var(--text-muted)', bg: 'rgba(148, 163, 184, 0.1)' };
             default:
                 return { label: status, color: 'var(--text-main)', bg: 'transparent' };
         }
     };
 
     const columns: Column<Equipment>[] = [
-        { header: 'Name', accessor: 'name' },
-        { header: 'Type', accessor: 'equipmentTypeName' },
-        { header: 'Room', accessor: (item) => `${item.roomName} (${item.roomCode})` },
+        { header: 'Tên', accessor: 'name' },
+        { header: 'Loại', accessor: 'equipmentTypeName' },
+        { header: 'Phòng', accessor: (item) => `${item.roomName} (${item.roomCode})` },
         {
-            header: 'Status',
+            header: 'Trạng thái',
             accessor: (item) => {
                 const info = getStatusInfo(item.status);
                 return (
@@ -99,14 +99,14 @@ export const EquipmentListPage: React.FC = () => {
             }
         },
         {
-            header: 'Actions',
+            header: 'Hành động',
             accessor: (item) => (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Link
                         to={`/admin/equipment/${item.id}/edit`}
                         className="btn btn-secondary"
                         style={{ padding: '0.4rem', height: 'auto' }}
-                        title="Edit Equipment"
+                        title="Chỉnh sửa thiết bị"
                     >
                         <Edit size={16} />
                     </Link>
@@ -120,13 +120,13 @@ export const EquipmentListPage: React.FC = () => {
                                 const data = await equipmentService.getHistory(item.id);
                                 setHistoryData(data);
                             } catch (err: any) {
-                                setError('Failed to load history');
+                                setError('Tải lịch sử thất bại');
                             } finally {
                                 setHistoryLoading(false);
                             }
                         }}
                         style={{ padding: '0.4rem', height: 'auto' }}
-                        title="View History"
+                        title="Xem lịch sử"
                     >
                         <History size={16} />
                     </button>
@@ -134,7 +134,7 @@ export const EquipmentListPage: React.FC = () => {
                         className="btn btn-danger"
                         onClick={(e) => handleDeleteClick(item.id, e)}
                         style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
-                        title="Delete Equipment"
+                        title="Xóa thiết bị"
                     >
                         <Trash2 size={16} />
                     </button>
@@ -147,22 +147,22 @@ export const EquipmentListPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Equipment</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage all physical assets</p>
+                    <h1>Thiết bị</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Quản lý tất cả tài sản vật chất</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <label className="btn btn-secondary" style={{ cursor: 'pointer', gap: '0.5rem' }}>
                         <Upload size={16} />
-                        Import Excel
+                        Nhập Excel
                         <input type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={async (e) => {
                             if (e.target.files && e.target.files[0]) {
                                 try {
                                     setLoading(true);
                                     const res = await equipmentService.import(e.target.files[0]);
-                                    setSuccess(`Successfully imported ${res.count} items`);
+                                    setSuccess(`Đã nhập thành công ${res.count} thiết bị`);
                                     loadEquipment();
                                 } catch (err: any) {
-                                    setError(err.response?.data?.message || 'Failed to import');
+                                    setError(err.response?.data?.message || 'Nhập thiết bị thất bại');
                                 } finally {
                                     setLoading(false);
                                     e.target.value = '';
@@ -172,9 +172,9 @@ export const EquipmentListPage: React.FC = () => {
                     </label>
                     <button className="btn btn-secondary" onClick={() => equipmentService.downloadTemplate()} style={{ gap: '0.5rem' }}>
                         <FileDown size={16} />
-                        Template
+                        Biểu mẫu
                     </button>
-                    <Link to="/admin/equipment/create" className="btn btn-primary">+ New Equipment</Link>
+                    <Link to="/admin/equipment/create" className="btn btn-primary">+ Thêm Thiết bị</Link>
                 </div>
             </div>
 
@@ -184,7 +184,7 @@ export const EquipmentListPage: React.FC = () => {
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1 }}>
-                        <SearchBar placeholder="Search equipment by name, type or room..." onSearch={setSearch} />
+                        <SearchBar placeholder="Tìm kiếm thiết bị theo tên, loại hoặc phòng..." onSearch={setSearch} />
                     </div>
                     <select
                         className="form-select"
@@ -192,11 +192,11 @@ export const EquipmentListPage: React.FC = () => {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         style={{ width: '150px' }}
                     >
-                        <option value="">All Status</option>
-                        <option value="Working">Working</option>
-                        <option value="UnderMaintenance">Maintenance</option>
-                        <option value="Faulty">Broken</option>
-                        <option value="Retired">Retired</option>
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Working">Hoạt động</option>
+                        <option value="UnderMaintenance">Bảo trì</option>
+                        <option value="Faulty">Hỏng</option>
+                        <option value="Retired">Đã thanh lý</option>
                     </select>
                 </div>
 
@@ -204,7 +204,7 @@ export const EquipmentListPage: React.FC = () => {
                     columns={columns}
                     data={equipment}
                     isLoading={loading}
-                    emptyMessage="No equipment found."
+                    emptyMessage="Không tìm thấy thiết bị nào."
                 />
 
                 {!loading && total > 0 && (
@@ -220,12 +220,12 @@ export const EquipmentListPage: React.FC = () => {
 
             <ConfirmModal
                 isOpen={!!deleteId}
-                title="Delete Equipment"
-                message="Are you sure you want to delete this equipment? This action cannot be undone."
+                title="Xóa thiết bị"
+                message="Bạn có chắc chắn muốn xóa thiết bị này không? Hành động này không thể hoàn tác."
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setDeleteId(null)}
                 isDanger
-                confirmText="Delete"
+                confirmText="Xóa"
             />
 
             {/* History Modal */}
@@ -251,22 +251,22 @@ export const EquipmentListPage: React.FC = () => {
                         overflowY: 'auto'
                     }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h2>Movement History</h2>
-                            <button className="btn btn-secondary" onClick={() => setHistoryItemId(null)}>Close</button>
+                            <h2>Lịch sử di chuyển</h2>
+                            <button className="btn btn-secondary" onClick={() => setHistoryItemId(null)}>Đóng</button>
                         </div>
 
                         {historyLoading ? (
-                            <div style={{ textAlign: 'center', padding: '2rem' }}>Loading history...</div>
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>Đang tải lịch sử...</div>
                         ) : (
                             <DataTable
                                 columns={[
-                                    { header: 'Room', accessor: (h) => `${h.roomName} (${h.roomCode})` },
-                                    { header: 'Assigned', accessor: (h) => new Date(h.assignedAt).toLocaleString() },
-                                    { header: 'Unassigned', accessor: (h) => h.unassignedAt ? new Date(h.unassignedAt).toLocaleString() : 'Current' },
-                                    { header: 'Notes', accessor: 'notes' }
+                                    { header: 'Phòng', accessor: (h) => `${h.roomName} (${h.roomCode})` },
+                                    { header: 'Đã giao', accessor: (h) => new Date(h.assignedAt).toLocaleString() },
+                                    { header: 'Đã thu hồi', accessor: (h) => h.unassignedAt ? new Date(h.unassignedAt).toLocaleString() : 'Hiện tại' },
+                                    { header: 'Ghi chú', accessor: 'notes' }
                                 ]}
                                 data={historyData}
-                                emptyMessage="No history records found."
+                                emptyMessage="Không tìm thấy lịch sử nào."
                             />
                         )}
                     </div>

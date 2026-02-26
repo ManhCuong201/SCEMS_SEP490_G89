@@ -14,8 +14,7 @@ export const RoomTypesListPage: React.FC = () => {
     const [success, setSuccess] = useState('')
     const [deleteId, setDeleteId] = useState<string | null>(null)
 
-    // Custom message for cascade delete
-    const [deleteMessage, setDeleteMessage] = useState("Are you sure you want to delete this room type?")
+    const [deleteMessage, setDeleteMessage] = useState("Bạn có chắc chắn muốn xóa loại phòng này không?")
 
     const loadTypes = async () => {
         setLoading(true)
@@ -24,7 +23,7 @@ export const RoomTypesListPage: React.FC = () => {
             const result = await roomTypeService.getAll()
             setTypes(result)
         } catch (err: any) {
-            setError('Failed to load room types')
+            setError('Tải danh sách loại phòng thất bại')
         } finally {
             setLoading(false)
         }
@@ -38,9 +37,9 @@ export const RoomTypesListPage: React.FC = () => {
         e.stopPropagation()
         setDeleteId(type.id)
         if (type.roomCount > 0) {
-            setDeleteMessage(`WARNING: This Room Type contains ${type.roomCount} room(s). Deleting it will PERMANENTLY DELETE all associated rooms. Are you sure?`)
+            setDeleteMessage(`CẢNH BÁO: Loại phòng này chứa ${type.roomCount} phòng. Xóa loại phòng này sẽ XÓA VĨNH VIỄN tất cả các phòng liên quan. Bạn có chắc chắn không?`)
         } else {
-            setDeleteMessage("Are you sure you want to delete this room type? This action cannot be undone.")
+            setDeleteMessage("Bạn có chắc chắn muốn xóa loại phòng này không? Hành động này không thể hoàn tác.")
         }
     }
 
@@ -48,10 +47,10 @@ export const RoomTypesListPage: React.FC = () => {
         if (deleteId) {
             try {
                 await roomTypeService.delete(deleteId)
-                setSuccess('Room Type deleted successfully')
+                setSuccess('Đã xóa loại phòng')
                 loadTypes()
             } catch (err: any) {
-                setError(err.response?.data?.message || 'Failed to delete room type')
+                setError(err.response?.data?.message || 'Xóa loại phòng thất bại')
             } finally {
                 setDeleteId(null)
             }
@@ -59,22 +58,22 @@ export const RoomTypesListPage: React.FC = () => {
     }
 
     const columns: Column<RoomType>[] = [
-        { header: 'Name', accessor: 'name' },
-        { header: 'Code', accessor: 'code' },
-        { header: 'Description', accessor: 'description' },
+        { header: 'Tên', accessor: 'name' },
+        { header: 'Mã', accessor: 'code' },
+        { header: 'Mô tả', accessor: 'description' },
         {
-            header: 'Rooms',
+            header: 'Số phòng',
             accessor: (item) => (
                 <span className={`badge ${item.roomCount > 0 ? 'badge-primary' : 'badge-secondary'}`} style={{
                     background: item.roomCount > 0 ? 'var(--primary-100)' : 'var(--slate-100)',
                     color: item.roomCount > 0 ? 'var(--primary-700)' : 'var(--slate-500)'
                 }}>
-                    {item.roomCount} Rooms
+                    {item.roomCount} Phòng
                 </span>
             )
         },
         {
-            header: 'Actions',
+            header: 'Hành động',
             accessor: (item) => (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Link
@@ -102,10 +101,10 @@ export const RoomTypesListPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Room Types</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage room categories and classifications</p>
+                    <h1>Loại phòng</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Quản lý danh mục và phân loại phòng</p>
                 </div>
-                <Link to="/admin/room-types/create" className="btn btn-primary">+ New Room Type</Link>
+                <Link to="/admin/room-types/create" className="btn btn-primary">+ Thêm Loại phòng</Link>
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -116,18 +115,18 @@ export const RoomTypesListPage: React.FC = () => {
                     columns={columns}
                     data={types}
                     isLoading={loading}
-                    emptyMessage="No room types found."
+                    emptyMessage="Không tìm thấy loại phòng nào."
                 />
             </div>
 
             <ConfirmModal
                 isOpen={!!deleteId}
-                title="Delete Room Type"
+                title="Xóa Loại phòng"
                 message={deleteMessage}
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setDeleteId(null)}
                 isDanger
-                confirmText="Delete & Cascade"
+                confirmText="Xóa"
             />
         </div>
     )

@@ -8,7 +8,7 @@ interface AdminLayoutProps {
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0fdfa 100%)' }}>
       <Header />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', padding: '0 1rem 1rem 1rem', gap: '1rem' }}>
         <Sidebar />

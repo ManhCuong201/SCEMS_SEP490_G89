@@ -41,9 +41,9 @@ export const Sidebar: React.FC = () => {
             letterSpacing: '0.05em',
             marginBottom: '1rem'
           }}>
-            Main
+            Chính
           </p>
-          <NavLink href="/admin/dashboard" label="Dashboard" icon={<LayoutDashboard size={20} />} active={isActive('/admin/dashboard')} />
+          <NavLink href="/admin/dashboard" label="Bảng điều khiển" icon={<LayoutDashboard size={20} />} active={isActive('/admin/dashboard')} />
         </div>
 
         <div>
@@ -55,38 +55,38 @@ export const Sidebar: React.FC = () => {
             letterSpacing: '0.05em',
             marginBottom: '1rem'
           }}>
-            Management
+            Quản lý
           </p>
           {user?.role === 'Admin' && (
             <>
-              <NavLink href="/admin/accounts" label="Accounts" icon={<Users size={20} />} active={isActive('/admin/accounts')} />
-              <NavLink href="/admin/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
-              <NavLink href="/admin/departments" label="Departments" icon={<Users size={20} />} active={isActive('/admin/departments')} />
-              <NavLink href="/admin/room-types" label="Room Categories" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
-              <NavLink href="/admin/equipment-types" label="Equipment Types" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />
-              <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
+              <NavLink href="/admin/accounts" label="Tài khoản" icon={<Users size={20} />} active={isActive('/admin/accounts')} />
+              <NavLink href="/admin/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
+              <NavLink href="/admin/departments" label="Tòa nhà" icon={<Users size={20} />} active={isActive('/admin/departments')} />
+              <NavLink href="/admin/room-types" label="Loại phòng" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
+              <NavLink href="/admin/equipment-types" label="Loại thiết bị" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />
+              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>
           )}
           {user?.role === 'AssetStaff' && (
             <>
-              <NavLink href="/admin/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
-              <NavLink href="/admin/equipment" label="Equipment" icon={<Wrench size={20} />} active={isActive('/admin/equipment')} />
-              <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
+              <NavLink href="/admin/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
+              <NavLink href="/admin/equipment" label="Thiết bị" icon={<Wrench size={20} />} active={isActive('/admin/equipment')} />
+              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>
           )}
           {user?.role === 'BookingStaff' && (
             <>
-              <NavLink href="/admin/booking-board" label="Booking Board" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} />
-              <NavLink href="/admin/bookings" label="Bookings" icon={<CalendarDays size={20} />} active={isActive('/admin/bookings')} />
+              <NavLink href="/admin/booking-board" label="Bảng đặt phòng" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} />
+              <NavLink href="/admin/bookings" label="Yêu cầu đặt phòng" icon={<CalendarDays size={20} />} active={isActive('/admin/bookings')} />
               <div style={{ margin: '0.5rem 0', borderTop: '1px solid var(--border-glass)' }}></div>
-              <NavLink href="/admin/classes" label="Manage Classes" icon={<Users size={20} />} active={isActive('/admin/classes')} />
-              <NavLink href="/admin/schedules" label="Schedules" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
+              <NavLink href="/admin/classes" label="Quản lý Lớp học" icon={<Users size={20} />} active={isActive('/admin/classes')} />
+              <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
             </>
           )}
           {user?.role === 'Guard' && (
             <>
-              <NavLink href="/admin/security-checks" label="Security Checks" icon={<ShieldCheck size={20} />} active={isActive('/admin/security-checks')} />
-              <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
+              <NavLink href="/admin/security-checks" label="Kiểm tra an ninh" icon={<ShieldCheck size={20} />} active={isActive('/admin/security-checks')} />
+              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>
           )}
         </div>
@@ -109,15 +109,27 @@ const NavLink: React.FC<{ href: string; label: string; icon: React.ReactNode; ac
       alignItems: 'center',
       gap: '0.75rem',
       padding: '0.75rem 1rem',
-      marginBottom: '0.5rem',
+      marginBottom: '0.25rem',
       borderRadius: 'var(--radius-md)',
       backgroundColor: active ? 'var(--color-primary)' : 'transparent',
-      color: active ? 'white' : 'var(--slate-400)',
+      color: active ? 'white' : 'var(--slate-500)',
       fontWeight: active ? 600 : 500,
+      fontSize: '0.925rem',
       textDecoration: 'none',
       transition: 'all 0.2s ease',
-      borderLeft: 'none',
       boxShadow: active ? '0 4px 6px -1px rgba(79, 70, 229, 0.3)' : 'none'
+    }}
+    onMouseEnter={(e) => {
+      if (!active) {
+        e.currentTarget.style.backgroundColor = 'var(--primary-50)';
+        e.currentTarget.style.color = 'var(--primary-600)';
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (!active) {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = 'var(--slate-500)';
+      }
     }}
   >
     {icon}

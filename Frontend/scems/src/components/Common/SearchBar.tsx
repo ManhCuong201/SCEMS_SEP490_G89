@@ -6,7 +6,7 @@ interface SearchBarProps {
   debounceMs?: number
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ placeholder = 'Search...', onSearch, debounceMs = 300 }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({ placeholder = 'Tìm kiếm...', onSearch, debounceMs = 300 }) => {
   const [query, setQuery] = useState('')
 
   useEffect(() => {

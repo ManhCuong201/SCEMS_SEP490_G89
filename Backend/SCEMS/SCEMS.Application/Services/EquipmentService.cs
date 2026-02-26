@@ -245,11 +245,11 @@ public class EquipmentService : IEquipmentService
         var worksheet = workbook.Worksheets.Add("Equipment Template");
 
         // Headers
-        worksheet.Cell(1, 1).Value = "Name";
-        worksheet.Cell(1, 2).Value = "Description";
-        worksheet.Cell(1, 3).Value = "Type Code";
-        worksheet.Cell(1, 4).Value = "Room Code";
-        worksheet.Cell(1, 5).Value = "Status";
+        worksheet.Cell(1, 1).Value = "Tên thiết bị";
+        worksheet.Cell(1, 2).Value = "Mô tả";
+        worksheet.Cell(1, 3).Value = "Mã loại";
+        worksheet.Cell(1, 4).Value = "Mã phòng";
+        worksheet.Cell(1, 5).Value = "Trạng thái";
 
         // Style
         var header = worksheet.Range("A1:E1");
@@ -257,16 +257,16 @@ public class EquipmentService : IEquipmentService
         header.Style.Fill.BackgroundColor = XLColor.LightGray;
 
         // Sample Data / Comments
-        worksheet.Cell(2, 1).Value = "Dell Monitor";
-        worksheet.Cell(2, 2).Value = "24 inch monitor";
+        worksheet.Cell(2, 1).Value = "Màn hình Dell";
+        worksheet.Cell(2, 2).Value = "Màn hình 24 inch";
         worksheet.Cell(2, 3).Value = "MON-01";
         worksheet.Cell(2, 4).Value = "A101";
         worksheet.Cell(2, 5).Value = "Working";
         
         // Add comments to help user
-        worksheet.Cell(1, 3).GetComment().AddText("Must match an existing Equipment Type Code");
-        worksheet.Cell(1, 4).GetComment().AddText("Must match an existing Room Code");
-        worksheet.Cell(1, 5).GetComment().AddText("Working, Maintenance, Broken, or Retired");
+        worksheet.Cell(1, 3).GetComment().AddText("Phải khớp với Mã loại thiết bị đã có");
+        worksheet.Cell(1, 4).GetComment().AddText("Phải khớp với Mã phòng đã có");
+        worksheet.Cell(1, 5).GetComment().AddText("Working (Hoạt động), Maintenance (Bảo trì), Faulty (Hỏng), hoặc Retired (Đã thanh lý)");
 
         worksheet.Columns().AdjustToContents();
 

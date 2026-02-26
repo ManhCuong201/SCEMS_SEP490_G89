@@ -23,7 +23,7 @@ export const CreateDepartmentPage: React.FC = () => {
             await departmentService.create(formData)
             navigate('/admin/departments')
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to create department')
+            setError(err.response?.data?.message || 'Thêm tòa nhà thất bại')
         } finally {
             setLoading(false)
         }
@@ -33,8 +33,8 @@ export const CreateDepartmentPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Create Department</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Add a new academic or administrative department</p>
+                    <h1>Thêm Tòa nhà</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Thêm tòa nhà mới vào hệ thống</p>
                 </div>
             </div>
 
@@ -43,11 +43,11 @@ export const CreateDepartmentPage: React.FC = () => {
             <div className="glass-panel" style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem' }}>
                 <form onSubmit={handleSubmit} className="form-group">
                     <div className="form-group">
-                        <label className="form-label">Department Code (Short Name)</label>
+                        <label className="form-label">Mã tòa nhà (Ví dụ: Alpha, Beta)</label>
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="e.g. IT, BUS, GS"
+                            placeholder="Ví dụ: Alpha, Beta"
                             value={formData.departmentCode}
                             onChange={(e) => setFormData({ ...formData, departmentCode: e.target.value })}
                             required
@@ -55,11 +55,11 @@ export const CreateDepartmentPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Department Name (Full Name)</label>
+                        <label className="form-label">Tên tòa nhà (Cách gọi đầy đủ)</label>
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="e.g. Information Technology"
+                            placeholder="Ví dụ: Tòa nhà Alpha"
                             value={formData.departmentName}
                             onChange={(e) => setFormData({ ...formData, departmentName: e.target.value })}
                             required
@@ -67,11 +67,11 @@ export const CreateDepartmentPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">Mô tả</label>
                         <textarea
                             className="form-input"
                             rows={4}
-                            placeholder="Optional description of the department"
+                            placeholder="Mô tả tòa nhà (tùy chọn)"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
@@ -84,7 +84,7 @@ export const CreateDepartmentPage: React.FC = () => {
                             onClick={() => navigate('/admin/departments')}
                             style={{ flex: 1 }}
                         >
-                            Cancel
+                            Hủy
                         </button>
                         <button
                             type="submit"
@@ -92,7 +92,7 @@ export const CreateDepartmentPage: React.FC = () => {
                             disabled={loading}
                             style={{ flex: 1 }}
                         >
-                            {loading ? 'Creating...' : 'Create Department'}
+                            {loading ? 'Đang thêm...' : 'Thêm Tòa nhà'}
                         </button>
                     </div>
                 </form>

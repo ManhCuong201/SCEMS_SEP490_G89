@@ -23,7 +23,7 @@ export const AccountDetailPage: React.FC = () => {
         const data = await accountService.getAccountById(id!)
         setAccount(data)
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load')
+        setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
       } finally {
         setLoading(false)
       }
@@ -36,13 +36,13 @@ export const AccountDetailPage: React.FC = () => {
       await accountService.deleteAccount(id!)
       navigate('/admin/accounts')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete')
+      setError(err.response?.data?.message || 'Xóa tài khoản thất bại')
       setShowDeleteModal(false)
     }
   }
 
   if (loading) return <Loading fullPage />
-  if (!account) return <Alert type="error" message="Not found" />
+  if (!account) return <Alert type="error" message="Không tìm thấy tài khoản" />
 
   const getStatusColor = (status: AccountStatus) => {
     return status === AccountStatus.Active ? 'var(--color-success)' : 'var(--color-danger)'
@@ -57,21 +57,21 @@ export const AccountDetailPage: React.FC = () => {
       <div className="page-header">
         <div>
           <h1>{account.fullName}</h1>
-          <p className="text-muted">Account Details</p>
+          <p className="text-muted">Chi tiết Tài khoản</p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
           {account.id !== currentUser?.id && (
             <>
               <Link to={`/admin/accounts/${id}/edit`} className="btn btn-primary" style={{ gap: '0.5rem' }}>
-                <Edit size={16} /> Edit
+                <Edit size={16} /> Chỉnh sửa
               </Link>
               <button className="btn btn-danger" onClick={() => setShowDeleteModal(true)} style={{ gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                <Trash2 size={16} /> Delete
+                <Trash2 size={16} /> Xóa
               </button>
             </>
           )}
           <button className="btn btn-secondary" onClick={() => navigate('/admin/accounts')} style={{ gap: '0.5rem' }}>
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> Quay lại
           </button>
         </div>
       </div>
@@ -85,21 +85,21 @@ export const AccountDetailPage: React.FC = () => {
             <p style={{ fontWeight: 500, fontSize: '1.1rem' }}>{account.email}</p>
           </div>
           <div>
-            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Phone</p>
+            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Số điện thoại</p>
             <p style={{ fontWeight: 500, fontSize: '1.1rem' }}>{account.phone || '-'}</p>
           </div>
           <div>
-            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Role</p>
+            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Vai trò</p>
             <p style={{ fontWeight: 500, fontSize: '1.1rem' }}>{account.role}</p>
           </div>
           {account.studentCode && (
             <div>
-              <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Student Code</p>
+              <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Mã sinh viên</p>
               <p style={{ fontWeight: 500, fontSize: '1.1rem' }}>{account.studentCode}</p>
             </div>
           )}
           <div>
-            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Status</p>
+            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Trạng thái</p>
             <span
               className="badge"
               style={{
@@ -109,28 +109,28 @@ export const AccountDetailPage: React.FC = () => {
                 padding: '0.35em 0.8em'
               }}
             >
-              {account.status === AccountStatus.Active ? 'Active' : 'Blocked'}
+              {account.status === AccountStatus.Active ? 'Hoạt động' : 'Bị khóa'}
             </span>
           </div>
           <div>
-            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Created</p>
+            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Ngày tạo</p>
             <p style={{ fontWeight: 500 }}>{new Date(account.createdAt).toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Updated</p>
-            <p style={{ fontWeight: 500 }}>{account.updatedAt ? new Date(account.updatedAt).toLocaleString() : 'Never'}</p>
+            <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Cập nhật lần cuối</p>
+            <p style={{ fontWeight: 500 }}>{account.updatedAt ? new Date(account.updatedAt).toLocaleString() : 'Chưa từng'}</p>
           </div>
         </div>
       </div>
 
       <ConfirmModal
         isOpen={showDeleteModal}
-        title="Delete Account"
-        message={`Are you sure you want to delete account "${account.fullName}"? This action cannot be undone.`}
+        title="Xóa Tài khoản"
+        message={`Bạn có chắc chắn muốn xóa tài khoản "${account.fullName}" không? Hành động này không thể hoàn tác.`}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteModal(false)}
         isDanger
-        confirmText="Delete"
+        confirmText="Xóa"
       />
     </div>
   )

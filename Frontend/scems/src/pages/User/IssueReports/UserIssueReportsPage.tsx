@@ -86,9 +86,9 @@ export const UserIssueReportsPage: React.FC = () => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h5">My Issue Reports</Typography>
+                <Typography variant="h5">Báo cáo Sự cố của tôi</Typography>
                 <Button variant="contained" color="primary" onClick={() => setOpen(true)}>
-                    Report Issue
+                    Báo cáo Sự cố
                 </Button>
             </Box>
 
@@ -96,11 +96,11 @@ export const UserIssueReportsPage: React.FC = () => {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Room</TableCell>
-                            <TableCell>Equipment</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell>Status</TableCell>
+                            <TableCell>Ngày</TableCell>
+                            <TableCell>Phòng</TableCell>
+                            <TableCell>Thiết bị</TableCell>
+                            <TableCell>Mô tả</TableCell>
+                            <TableCell>Trạng thái</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -112,7 +112,11 @@ export const UserIssueReportsPage: React.FC = () => {
                                 <TableCell>{r.description}</TableCell>
                                 <TableCell>
                                     <Chip
-                                        label={r.status}
+                                        label={
+                                            r.status === IssueReportStatus.Open ? 'Mới' :
+                                                r.status === IssueReportStatus.InProgress ? 'Đang xử lý' :
+                                                    r.status === IssueReportStatus.Resolved ? 'Đã giải quyết' : r.status
+                                        }
                                         color={
                                             r.status === IssueReportStatus.Open ? 'error' :
                                                 r.status === IssueReportStatus.InProgress ? 'warning' :
@@ -128,34 +132,34 @@ export const UserIssueReportsPage: React.FC = () => {
             </TableContainer>
 
             <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Report an Issue</DialogTitle>
+                <DialogTitle>Báo cáo Sự cố Mới</DialogTitle>
                 <DialogContent>
                     <TextField
                         select
-                        label="Room (Optional)"
+                        label="Phòng (Không bắt buộc)"
                         fullWidth
                         margin="normal"
                         value={roomId}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoomId(e.target.value)}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
+                        <MenuItem value=""><em>Không</em></MenuItem>
                         {rooms.map(r => <MenuItem key={r.id} value={r.id}>{r.roomName}</MenuItem>)}
                     </TextField>
 
                     <TextField
                         select
-                        label="Equipment (Optional)"
+                        label="Thiết bị (Không bắt buộc)"
                         fullWidth
                         margin="normal"
                         value={equipmentId}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEquipmentId(e.target.value)}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
+                        <MenuItem value=""><em>Không</em></MenuItem>
                         {equipments.map(e => <MenuItem key={e.id} value={e.id}>{e.name} ({e.equipmentTypeName})</MenuItem>)}
                     </TextField>
 
                     <TextField
-                        label="Description"
+                        label="Mô tả"
                         fullWidth
                         multiline
                         rows={4}
@@ -166,8 +170,8 @@ export const UserIssueReportsPage: React.FC = () => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button onClick={handleCreate} variant="contained" disabled={!description}>Submit</Button>
+                    <Button onClick={() => setOpen(false)}>Hủy</Button>
+                    <Button onClick={handleCreate} variant="contained" disabled={!description}>Gửi</Button>
                 </DialogActions>
             </Dialog>
         </Container>

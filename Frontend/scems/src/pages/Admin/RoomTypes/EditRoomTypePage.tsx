@@ -27,7 +27,7 @@ export const EditRoomTypePage: React.FC = () => {
                     description: data.description || ''
                 })
             } catch (err: any) {
-                setError('Failed to load room type details')
+                setError('Tải chi tiết loại phòng thất bại')
             } finally {
                 setLoading(false)
             }
@@ -46,20 +46,20 @@ export const EditRoomTypePage: React.FC = () => {
             await roomTypeService.update(id, formData)
             navigate('/admin/room-types')
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update room type')
+            setError(err.response?.data?.message || 'Cập nhật loại phòng thất bại')
             setSaving(false)
         }
     }
 
-    if (loading) return <div className="page-container">Loading...</div>
+    if (loading) return <div className="page-container">Đang tải...</div>
 
     return (
         <div className="page-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
                 <Link to="/admin/room-types" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    <ArrowLeft size={20} /> Back to List
+                    <ArrowLeft size={20} /> Quay lại danh sách
                 </Link>
-                <h1>Edit Room Type</h1>
+                <h1>Chỉnh sửa Loại phòng</h1>
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -67,7 +67,7 @@ export const EditRoomTypePage: React.FC = () => {
             <div className="glass-panel" style={{ padding: '2rem' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Name</label>
+                        <label className="form-label">Tên loại phòng</label>
                         <input
                             type="text"
                             className="form-input"
@@ -78,7 +78,7 @@ export const EditRoomTypePage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Code</label>
+                        <label className="form-label">Mã</label>
                         <input
                             type="text"
                             className="form-input"
@@ -89,7 +89,7 @@ export const EditRoomTypePage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">Mô tả</label>
                         <textarea
                             className="form-textarea"
                             value={formData.description}
@@ -98,9 +98,9 @@ export const EditRoomTypePage: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                        <Link to="/admin/room-types" className="btn btn-secondary">Cancel</Link>
+                        <Link to="/admin/room-types" className="btn btn-secondary">Hủy</Link>
                         <button type="submit" className="btn btn-primary" disabled={saving}>
-                            {saving ? 'Saving...' : 'Save Changes'}
+                            {saving ? 'Đang lưu...' : 'Lưu Thay đổi'}
                         </button>
                     </div>
                 </form>

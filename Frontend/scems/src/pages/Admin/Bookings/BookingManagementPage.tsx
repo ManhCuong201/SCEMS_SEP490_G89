@@ -24,7 +24,7 @@ export const BookingManagementPage: React.FC = () => {
             setBookings(result.items)
             setTotal(result.total)
         } catch (err: any) {
-            setError('Failed to load bookings')
+            setError('Tải danh sách yêu cầu thất bại')
         } finally {
             setLoading(false)
         }
@@ -37,10 +37,10 @@ export const BookingManagementPage: React.FC = () => {
     const handleStatusUpdate = async (id: string, newStatus: BookingStatus) => {
         try {
             await bookingService.updateStatus(id, newStatus)
-            setSuccess('Booking updated')
+            setSuccess('Cập nhật trạng thái thành công')
             loadBookings()
         } catch (err: any) {
-            setError('Failed to update status')
+            setError('Cập nhật trạng thái thất bại')
         }
     }
 
@@ -53,10 +53,10 @@ export const BookingManagementPage: React.FC = () => {
         if (rejectId) {
             try {
                 await bookingService.updateStatus(rejectId, BookingStatus.Rejected)
-                setSuccess('Booking rejected')
+                setSuccess('Đã từ chối yêu cầu')
                 loadBookings()
             } catch (err: any) {
-                setError('Failed to reject booking')
+                setError('Từ chối yêu cầu thất bại')
             } finally {
                 setRejectId(null)
             }
@@ -65,21 +65,21 @@ export const BookingManagementPage: React.FC = () => {
 
     const getStatusInfo = (status: string) => {
         switch (status) {
-            case BookingStatus.Pending: return { label: 'Pending', color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.1)' }
-            case BookingStatus.Approved: return { label: 'Approved', color: 'var(--color-success)', bg: 'rgba(16, 185, 129, 0.1)' }
-            case BookingStatus.Rejected: return { label: 'Rejected', color: 'var(--color-danger)', bg: 'rgba(239, 68, 68, 0.1)' }
+            case BookingStatus.Pending: return { label: 'Chờ duyệt', color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.1)' }
+            case BookingStatus.Approved: return { label: 'Đã duyệt', color: 'var(--color-success)', bg: 'rgba(16, 185, 129, 0.1)' }
+            case BookingStatus.Rejected: return { label: 'Đã từ chối', color: 'var(--color-danger)', bg: 'rgba(239, 68, 68, 0.1)' }
             default: return { label: status, color: 'var(--text-muted)', bg: 'rgba(148, 163, 184, 0.1)' }
         }
     }
 
     const columns: Column<Booking>[] = [
-        { header: 'Room', accessor: (b) => b.room?.roomName || 'Unknown' },
-        { header: 'Requester', accessor: (b) => b.requestedByAccount?.fullName || 'Unknown' },
-        { header: 'Time Slot', accessor: (b) => new Date(b.timeSlot).toLocaleString() },
-        { header: 'Duration', accessor: (b) => `${b.duration}h`, width: '100px' },
-        { header: 'Reason', accessor: (b) => b.reason || '-' },
+        { header: 'Phòng', accessor: (b) => b.room?.roomName || 'Không xác định' },
+        { header: 'Người yêu cầu', accessor: (b) => b.requestedByAccount?.fullName || 'Không xác định' },
+        { header: 'Khung giờ', accessor: (b) => new Date(b.timeSlot).toLocaleString() },
+        { header: 'Thời lượng', accessor: (b) => `${b.duration}h`, width: '100px' },
+        { header: 'Lý do', accessor: (b) => b.reason || '-' },
         {
-            header: 'Status',
+            header: 'Trạng thái',
             accessor: (b) => {
                 const info = getStatusInfo(b.status)
                 return (
@@ -90,7 +90,7 @@ export const BookingManagementPage: React.FC = () => {
             }
         },
         {
-            header: 'Actions',
+            header: 'Hành động',
             accessor: (b) => (
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {b.status === BookingStatus.Pending && (
@@ -106,7 +106,7 @@ export const BookingManagementPage: React.FC = () => {
                                     gap: '0.25rem'
                                 }}
                             >
-                                <Check size={14} /> Approve
+                                <Check size={14} /> Duyệt
                             </button>
                             <button
                                 className="btn btn-sm"
@@ -119,7 +119,7 @@ export const BookingManagementPage: React.FC = () => {
                                     gap: '0.25rem'
                                 }}
                             >
-                                <X size={14} /> Reject
+                                <X size={14} /> Từ chối
                             </button>
                         </>
                     )}
@@ -132,8 +132,8 @@ export const BookingManagementPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Booking Management</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Review and manage room reservation requests</p>
+                    <h1>Quản lý Cấp phép sử dụng phòng</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Xem xét và quản lý các yêu cầu mượn/đổi/trả phòng</p>
                 </div>
             </div>
 
@@ -145,7 +145,7 @@ export const BookingManagementPage: React.FC = () => {
                     columns={columns}
                     data={bookings}
                     isLoading={loading}
-                    emptyMessage="No bookings found."
+                    emptyMessage="Không có yêu cầu nào."
                 />
 
                 {!loading && total > 0 && (
@@ -161,12 +161,12 @@ export const BookingManagementPage: React.FC = () => {
 
             <ConfirmModal
                 isOpen={!!rejectId}
-                title="Reject Booking"
-                message="Are you sure you want to reject this booking request?"
+                title="Từ chối Yêu cầu"
+                message="Bạn có chắc chắn muốn từ chối yêu cầu này không?"
                 onConfirm={handleConfirmReject}
                 onCancel={() => setRejectId(null)}
                 isDanger
-                confirmText="Reject"
+                confirmText="Từ chối"
             />
         </div>
     )

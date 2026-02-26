@@ -33,7 +33,7 @@ const ClassStudentsPage: React.FC = () => {
             setClassInfo(classDetails);
             setStudents(studentsData);
         } catch (err: any) {
-            setError('Failed to load class information');
+            setError('Tải thông tin lớp học thất bại');
         } finally {
             setLoading(false);
         }
@@ -47,11 +47,11 @@ const ClassStudentsPage: React.FC = () => {
         setError(null);
         try {
             await classService.importStudents(id, file);
-            setSuccess('Students imported successfully!');
+            setSuccess('Import sinh viên thành công!');
             loadData(id);
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to import students');
+            setError(err.response?.data?.message || 'Import sinh viên thất bại');
         } finally {
             setImporting(false);
             e.target.value = ''; // Reset input
@@ -68,11 +68,11 @@ const ClassStudentsPage: React.FC = () => {
     };
 
     const columns: Column<EnrolledStudent>[] = [
-        { header: 'Full Name', accessor: 'fullName' },
+        { header: 'Họ và tên', accessor: 'fullName' },
         { header: 'Email', accessor: 'email' },
-        { header: 'Student Code', accessor: 'studentCode' },
+        { header: 'Mã sinh viên', accessor: 'studentCode' },
         {
-            header: 'Status',
+            header: 'Trạng thái',
             accessor: (item: EnrolledStudent) => (
                 <span className={`badge ${getStatusBadgeClass(item.status)}`}>
                     {item.status}
@@ -99,7 +99,7 @@ const ClassStudentsPage: React.FC = () => {
                         <ArrowLeft size={16} />
                     </button>
                     <div>
-                        <h2>{classInfo?.classCode} - Student List</h2>
+                        <h2>{classInfo?.classCode} - Danh sách Sinh viên</h2>
                         <small className="text-muted">{classInfo?.subjectName}</small>
                     </div>
                 </div>
@@ -111,11 +111,11 @@ const ClassStudentsPage: React.FC = () => {
                         style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                     >
                         <Upload size={16} style={{ transform: 'rotate(180deg)' }} />
-                        Download Template
+                        Tải mẫu Import
                     </button>
                     <label className={`btn btn-primary btn-sm ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <Upload size={16} />
-                        {importing ? 'Importing...' : 'Import Students'}
+                        {importing ? 'Đang tải lên...' : 'Import Sinh viên'}
                         <input type="file" accept=".xlsx, .xls" hidden onChange={handleImport} disabled={importing} />
                     </label>
                 </div>
@@ -128,7 +128,7 @@ const ClassStudentsPage: React.FC = () => {
                 <DataTable
                     columns={columns}
                     data={students}
-                    emptyMessage="No students enrolled in this class yet. Use the Import button to add them."
+                    emptyMessage="Chưa có sinh viên nào trong lớp này. Hãy dùng nút Import để thêm sinh viên."
                 />
             </div>
         </div>

@@ -142,7 +142,7 @@ public class ClassService : IClassService
     {
         var workbook = new XLWorkbook();
         var worksheet = workbook.AddWorksheet("Students");
-        worksheet.Cell(1, 1).Value = "Student Email or Code";
+        worksheet.Cell(1, 1).Value = "Email hoặc Mã Sinh viên";
         
         // Add some styling to header
         var header = worksheet.Range("A1");

@@ -25,17 +25,17 @@ export const AdminClassesPage: React.FC = () => {
             const data = await classService.getAllClasses();
             setClasses(data);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load classes');
+            setError(err.response?.data?.message || 'Tải danh sách lớp học thất bại');
         } finally {
             setLoading(false);
         }
     };
 
     const columns: Column<ClassResponse>[] = [
-        { header: 'Class Code', accessor: 'classCode' },
-        { header: 'Subject', accessor: 'subjectName' },
+        { header: 'Mã lớp', accessor: 'classCode' },
+        { header: 'Môn học', accessor: 'subjectName' },
         {
-            header: 'Actions',
+            header: 'Hành động',
             accessor: 'id',
             render: (row) => (
                 <button
@@ -44,7 +44,7 @@ export const AdminClassesPage: React.FC = () => {
                     style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                     <Users size={16} />
-                    Manage Students
+                    Quản lý Sinh viên
                 </button>
             )
         }
@@ -59,22 +59,22 @@ export const AdminClassesPage: React.FC = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>Manage Classes</h1>
-                    <p className="subtitle">View and manage all classes</p>
+                    <h1>Quản lý Lớp học</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Xem và quản lý tất cả các lớp học</p>
                 </div>
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {successMsg && <Alert type="success" message={successMsg} onClose={() => setSuccessMsg('')} />}
 
-            <div className="card">
-                <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <div style={{ position: 'relative', width: '300px' }}>
                         <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="Search classes..."
+                            placeholder="Tìm kiếm lớp học..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ paddingLeft: '2.5rem', width: '100%' }}
@@ -87,11 +87,11 @@ export const AdminClassesPage: React.FC = () => {
                             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
                             <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
-                            Download Template
+                            Tải mẫu Import
                         </button>
                         <label className={`btn btn-primary ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Upload size={18} />
-                            {importing ? 'Importing...' : 'Import Students'}
+                            {importing ? 'Đang tải lên...' : 'Import Sinh viên'}
                             <input
                                 type="file"
                                 accept=".xlsx, .xls"
@@ -106,11 +106,11 @@ export const AdminClassesPage: React.FC = () => {
                                     setSuccessMsg('')
                                     try {
                                         const resp = await classService.importStudentsToClasses(file)
-                                        setSuccessMsg(resp.message || 'Students imported successfully')
+                                        setSuccessMsg(resp.message || 'Import sinh viên thành công')
                                         // Reload not strictly necessary since students are in sub-pages, but doing it for consistency
                                         loadClasses()
                                     } catch (err: any) {
-                                        setError(err.response?.data?.message || 'Failed to import students')
+                                        setError(err.response?.data?.message || 'Import sinh viên thất bại')
                                     } finally {
                                         setImporting(false)
                                         e.target.value = ''
@@ -127,7 +127,7 @@ export const AdminClassesPage: React.FC = () => {
                     <DataTable
                         columns={columns}
                         data={filteredClasses}
-                        emptyMessage="No classes found."
+                        emptyMessage="Không có lớp học nào."
                     />
                 )}
             </div>

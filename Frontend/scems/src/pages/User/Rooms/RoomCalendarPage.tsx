@@ -120,7 +120,7 @@ export const RoomCalendarPage: React.FC = () => {
             const bookingData = await bookingService.getRoomSchedule(id, start.toISOString(), end.toISOString())
             setBookings(bookingData)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load data')
+            setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
         } finally {
             setLoading(false)
         }
@@ -171,7 +171,7 @@ export const RoomCalendarPage: React.FC = () => {
                 })
             } else {
                 if (!originalRoomId) {
-                    setError("Please select the original room you want to change from.")
+                    setError("Vui lòng chọn phòng ban đầu bạn muốn đổi.")
                     setSubmitting(false)
                     return
                 }
@@ -184,12 +184,12 @@ export const RoomCalendarPage: React.FC = () => {
                 })
             }
 
-            setSuccessMsg(bookingType === 'new' ? 'Booking request sent!' : 'Room change request sent!')
+            setSuccessMsg(bookingType === 'new' ? 'Đã gửi yêu cầu mượn phòng!' : 'Đã gửi yêu cầu đổi phòng!')
             setModalOpen(false)
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to book slot')
+            setError(err.response?.data?.message || 'Gửi yêu cầu thất bại')
         } finally {
             setSubmitting(false)
         }
@@ -221,7 +221,7 @@ export const RoomCalendarPage: React.FC = () => {
                 <table className="glass-table calendar-table compact-grid">
                     <thead>
                         <tr>
-                            <th className="calendar-time-col">Time</th>
+                            <th className="calendar-time-col">Thời gian</th>
                             {days.map(d => (
                                 <th key={d.toISOString()} style={{ textAlign: 'center', minWidth: '120px' }}>
                                     <div style={{ fontWeight: 600 }}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
@@ -296,14 +296,14 @@ export const RoomCalendarPage: React.FC = () => {
                                     let cellContent
 
                                     if (isApproved) {
-                                        let label = "BOOKED"
+                                        let label = "ĐÃ ĐẶT"
                                         let className = "slot-booked"
 
                                         if (isMyClass) {
-                                            label = "MY CLASS"
+                                            label = "LỚP CỦA TÔI"
                                             className = "slot-my-class"
                                         } else if (isMyBooking) {
-                                            label = "MY BOOKING"
+                                            label = "YÊU CẦU CỦA TÔI"
                                             className = "slot-my-booking"
                                         }
 
@@ -313,17 +313,17 @@ export const RoomCalendarPage: React.FC = () => {
                                                 onMouseEnter={(e) => {
                                                     const isClass = isSystemBooking;
                                                     const lines = isClass ? [
-                                                        { label: 'Subject', value: approved.reason?.split(': ')[1]?.split(' (')[0] || 'N/A' },
-                                                        { label: 'Class', value: approved.reason?.split('(')[1]?.split(')')[0] || 'N/A' },
-                                                        { label: 'Lecturer', value: approved.requestedByName || 'N/A' },
-                                                        { label: 'Time', value: `${formatLocalTime(approved.timeSlot)} - ${formatLocalTime(approved.endTime || new Date())}` }
+                                                        { label: 'Môn học', value: approved.reason?.split(': ')[1]?.split(' (')[0] || 'N/A' },
+                                                        { label: 'Lớp', value: approved.reason?.split('(')[1]?.split(')')[0] || 'N/A' },
+                                                        { label: 'Giảng viên', value: approved.requestedByName || 'N/A' },
+                                                        { label: 'Thời gian', value: `${formatLocalTime(approved.timeSlot)} - ${formatLocalTime(approved.endTime || new Date())}` }
                                                     ] : [
-                                                        { label: 'By', value: getTeacherId(approved.requestedByName || '', approved.requestedByAccount?.email) },
-                                                        { label: 'Reason', value: approved.reason || 'No reason provided' }
+                                                        { label: 'Bởi', value: getTeacherId(approved.requestedByName || '', approved.requestedByAccount?.email) },
+                                                        { label: 'Lý do', value: approved.reason || 'Không có lý do' }
                                                     ];
 
                                                     setHoveredTooltip({
-                                                        title: isClass ? 'Schedule' : 'Booking',
+                                                        title: isClass ? 'Lịch học' : 'Yêu cầu mượn phòng',
                                                         icon: isClass ? <CalendarIcon size={12} /> : <Clock size={12} />,
                                                         lines: lines,
                                                         targetRect: e.currentTarget.getBoundingClientRect()
@@ -346,7 +346,7 @@ export const RoomCalendarPage: React.FC = () => {
                                                     onClick={() => handleBookClick(d, h)}
                                                     style={{ position: 'relative' }}
                                                 >
-                                                    Book
+                                                    Đặt
                                                     {pendingCount > 0 && (
                                                         <span className="req-badge">
                                                             {pendingCount}
@@ -360,9 +360,9 @@ export const RoomCalendarPage: React.FC = () => {
                                         cellContent = (
                                             <div className="slot-pending">
                                                 <span className="slot-pending-text">
-                                                    {pendingCount} Request{pendingCount > 1 ? 's' : ''}
+                                                    {pendingCount} Yêu cầu
                                                 </span>
-                                                <div style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 700, marginTop: '2px' }}>✓ SENT</div>
+                                                <div style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 700, marginTop: '2px' }}>✓ ĐÃ GỬI</div>
                                             </div>
                                         )
                                     } else if (isEnded) {
@@ -407,7 +407,7 @@ export const RoomCalendarPage: React.FC = () => {
                         <ArrowLeft size={18} />
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                        <h1 style={{ fontSize: '1.25rem', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{room?.roomName || 'Room'}</h1>
+                        <h1 style={{ fontSize: '1.25rem', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{room?.roomName || 'Phòng'}</h1>
                         <span style={{
                             background: 'rgba(255,255,255,0.1)',
                             padding: '2px 8px',
@@ -486,7 +486,7 @@ export const RoomCalendarPage: React.FC = () => {
                             background: 'rgba(255,255,255,0.02)'
                         }}>
                             <div>
-                                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Confirm Booking</h3>
+                                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Xác nhận Đặt phòng</h3>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{room?.roomName} ({room?.roomCode})</p>
                             </div>
                             <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>
@@ -518,7 +518,7 @@ export const RoomCalendarPage: React.FC = () => {
                                             transition: 'all 0.2s'
                                         }}
                                     >
-                                        New Booking
+                                        Mượn phòng mới
                                     </button>
                                     <button
                                         onClick={() => setBookingType('change')}
@@ -535,7 +535,7 @@ export const RoomCalendarPage: React.FC = () => {
                                             transition: 'all 0.2s'
                                         }}
                                     >
-                                        Room Change
+                                        Đổi phòng
                                     </button>
                                 </div>
                             )}
@@ -552,7 +552,7 @@ export const RoomCalendarPage: React.FC = () => {
                                         <Clock size={18} />
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Time Slot</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Khung giờ</div>
                                         <div style={{ fontSize: '1rem', fontWeight: 600 }}>
                                             {selectedSlot.date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                                             <span style={{ margin: '0 0.5rem', opacity: 0.3 }}>|</span>
@@ -567,7 +567,7 @@ export const RoomCalendarPage: React.FC = () => {
                                         <MapPin size={18} />
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Location</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Địa điểm</div>
                                         <div style={{ fontSize: '0.95rem' }}>{room?.roomName} ({room?.roomCode})</div>
                                     </div>
                                 </div>
@@ -575,13 +575,13 @@ export const RoomCalendarPage: React.FC = () => {
 
                             {bookingType === 'change' && (
                                 <div className="form-group">
-                                    <label className="form-label">Original Room (Current Class)</label>
+                                    <label className="form-label">Phòng ban đầu (Lớp hiện tại)</label>
                                     <select
                                         className="form-select"
                                         value={originalRoomId}
                                         onChange={(e) => setOriginalRoomId(e.target.value)}
                                     >
-                                        <option value="">Select current room...</option>
+                                        <option value="">Chọn phòng hiện tại...</option>
                                         {allRooms.map(r => (
                                             <option key={r.id} value={r.roomCode}>{r.roomName} ({r.roomCode})</option>
                                         ))}
@@ -590,13 +590,13 @@ export const RoomCalendarPage: React.FC = () => {
                             )}
 
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Note {bookingType === 'change' ? 'for Change' : '(Optional)'}</label>
+                                <label className="form-label">Ghi chú {bookingType === 'change' ? '(Đổi phòng)' : '(Không bắt buộc)'}</label>
                                 <textarea
                                     className="form-textarea"
                                     value={reason}
                                     onChange={e => setReason(e.target.value)}
                                     rows={3}
-                                    placeholder={bookingType === 'change' ? "Why do you need to change rooms?" : "Enter specific requirements or reason..."}
+                                    placeholder={bookingType === 'change' ? "Tại sao bạn cần đổi phòng?" : "Nhập yêu cầu cụ thể hoặc lý do..."}
                                     style={{ resize: 'none' }}
                                 />
                             </div>
@@ -611,10 +611,10 @@ export const RoomCalendarPage: React.FC = () => {
                             gap: '1rem'
                         }}>
                             <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={submitting}>
-                                Cancel
+                                Hủy
                             </Button>
                             <Button variant="primary" onClick={handleConfirmBook} disabled={submitting}>
-                                {submitting ? <><Loading /> Processing</> : (bookingType === 'new' ? 'Confirm Booking' : 'Request Change')}
+                                {submitting ? <><Loading /> Đang xử lý</> : (bookingType === 'new' ? 'Xác nhận Đặt phòng' : 'Yêu cầu Đổi phòng')}
                             </Button>
                         </div>
                     </div>

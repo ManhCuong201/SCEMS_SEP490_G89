@@ -41,7 +41,7 @@ export const RoomsListPage: React.FC = () => {
       setRooms(filtered)
       setTotal(result.total)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load rooms')
+      setError(err.response?.data?.message || 'Tải danh sách phòng thất bại')
     } finally {
       setLoading(false)
     }
@@ -78,10 +78,10 @@ export const RoomsListPage: React.FC = () => {
     if (deleteId) {
       try {
         await roomService.deleteRoom(deleteId)
-        setSuccess('Room deleted')
+        setSuccess('Đã xóa phòng')
         loadRooms()
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to delete')
+        setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
         setDeleteId(null)
       }
@@ -93,21 +93,21 @@ export const RoomsListPage: React.FC = () => {
     try {
       const statusValue = newStatus === 'Available' ? 0 : newStatus === 'Hidden' ? 1 : 2
       await roomService.updateStatus(id, statusValue)
-      setSuccess('Status updated')
+      setSuccess('Đã cập nhật trạng thái')
       loadRooms()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update')
+      setError(err.response?.data?.message || 'Cập nhật thất bại')
     }
   }
 
   const columns: Column<Room>[] = [
-    { header: 'Code', accessor: 'roomCode', width: '100px' },
-    { header: 'Name', accessor: 'roomName' },
-    { header: 'Dept', accessor: (item) => <span className="badge badge-secondary" style={{ background: 'var(--slate-100)', color: 'var(--slate-700)' }}>{item.departmentCode || 'N/A'}</span> },
-    { header: 'Capacity', accessor: 'capacity', width: '90px' },
-    { header: 'Equipment', accessor: 'equipmentCount', width: '100px' },
+    { header: 'Mã phòng', accessor: 'roomCode', width: '100px' },
+    { header: 'Tên phòng', accessor: 'roomName' },
+    { header: 'Tòa nhà', accessor: (item) => <span className="badge badge-secondary" style={{ background: 'var(--slate-100)', color: 'var(--slate-700)' }}>{item.departmentCode || 'N/A'}</span> },
+    { header: 'Sức chứa', accessor: 'capacity', width: '90px' },
+    { header: 'Thiết bị', accessor: 'equipmentCount', width: '100px' },
     {
-      header: 'Status',
+      header: 'Trạng thái',
       accessor: (room) => (
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <select
@@ -124,31 +124,31 @@ export const RoomsListPage: React.FC = () => {
               borderColor: 'transparent'
             }}
           >
-            <option value="Available">Available</option>
-            <option value="Hidden">Hidden</option>
-            <option value="Disabled">Disabled</option>
+            <option value="Available">Khả dụng</option>
+            <option value="Hidden">Ẩn</option>
+            <option value="Disabled">Đã khóa</option>
           </select>
           {room.pendingRequestsCount > 0 && (
             <span className="badge badge-warning">
-              {room.pendingRequestsCount} Waiting
+              {room.pendingRequestsCount} Đang chờ
             </span>
           )}
         </span>
       )
     },
     {
-      header: 'Created',
+      header: 'Ngày tạo',
       accessor: (room) => new Date(room.createdAt).toLocaleDateString()
     },
     {
-      header: 'Actions',
+      header: 'Hành động',
       accessor: (room) => (
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Link
             to={`/admin/rooms/${room.id}`}
             className="btn btn-secondary"
             style={{ padding: '0.4rem', height: 'auto' }}
-            title="View Details"
+            title="Xem chi tiết"
           >
             <Eye size={16} />
           </Link>
@@ -156,7 +156,7 @@ export const RoomsListPage: React.FC = () => {
             to={`/admin/rooms/${room.id}/edit`}
             className="btn btn-secondary"
             style={{ padding: '0.4rem', height: 'auto' }}
-            title="Edit Room"
+            title="Chỉnh sửa"
           >
             <Edit size={16} />
           </Link>
@@ -164,7 +164,7 @@ export const RoomsListPage: React.FC = () => {
             className="btn btn-danger"
             onClick={(e) => handleDeleteClick(room.id, e)}
             style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
-            title="Delete Room"
+            title="Xóa"
           >
             <Trash2 size={16} />
           </button>
@@ -177,31 +177,31 @@ export const RoomsListPage: React.FC = () => {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1>Rooms</h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage meeting rooms and spaces</p>
+          <h1>Phòng</h1>
+          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Quản lý phòng họp và không gian</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <label className="btn btn-secondary" style={{ cursor: 'pointer', gap: '0.5rem' }}>
             <Upload size={16} />
-            Import Excel
+            Nhập Excel
             <input type="file" accept=".xlsx" style={{ display: 'none' }} onChange={async (e) => {
               const file = e.target.files?.[0]
               if (!file) return
               try {
                 const { count } = await roomService.import(file)
-                setSuccess(`Imported ${count} rooms`)
+                setSuccess(`Đã nhập ${count} phòng`)
                 loadRooms()
               } catch (err: any) {
-                setError(err.response?.data?.message || 'Import failed')
+                setError(err.response?.data?.message || 'Import thất bại')
               }
               e.target.value = ''
             }} />
           </label>
           <button className="btn btn-secondary" onClick={() => roomService.downloadTemplate()} style={{ gap: '0.5rem' }}>
             <FileDown size={16} />
-            Template
+            Biểu mẫu
           </button>
-          <Link to="/admin/rooms/create" className="btn btn-primary">+ New Room</Link>
+          <Link to="/admin/rooms/create" className="btn btn-primary">+ Thêm Phòng</Link>
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export const RoomsListPage: React.FC = () => {
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
-            <SearchBar placeholder="Search rooms..." onSearch={setSearch} />
+            <SearchBar placeholder="Tìm kiếm phòng..." onSearch={setSearch} />
           </div>
           <select
             className="form-input"
@@ -219,10 +219,10 @@ export const RoomsListPage: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{ width: '150px' }}
           >
-            <option value="">All Status</option>
-            <option value="Available">Available</option>
-            <option value="Hidden">Hidden</option>
-            <option value="Disabled">Disabled</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="Available">Khả dụng</option>
+            <option value="Hidden">Ẩn</option>
+            <option value="Disabled">Đã khóa</option>
           </select>
           <select
             className="form-input"
@@ -230,7 +230,7 @@ export const RoomsListPage: React.FC = () => {
             onChange={(e) => setDepartmentFilter(e.target.value)}
             style={{ width: '200px' }}
           >
-            <option value="">All Departments</option>
+            <option value="">Tất cả tòa nhà</option>
             {departments.map(d => (
               <option key={d.id} value={d.id}>{d.departmentName}</option>
             ))}
@@ -241,11 +241,11 @@ export const RoomsListPage: React.FC = () => {
             onChange={(e) => setSortBy(e.target.value)}
             style={{ width: '150px' }}
           >
-            <option value="recent">Sort: Recent</option>
-            <option value="code">Sort: Code</option>
-            <option value="name">Sort: Name</option>
-            <option value="capacity">Sort: Capacity</option>
-            <option value="department">Sort: Dept</option>
+            <option value="recent">Sắp xếp: Mới nhất</option>
+            <option value="code">Sắp xếp: Mã phòng</option>
+            <option value="name">Sắp xếp: Tên phòng</option>
+            <option value="capacity">Sắp xếp: Sức chứa</option>
+            <option value="department">Sắp xếp: Tòa nhà</option>
           </select>
         </div>
 
@@ -253,7 +253,7 @@ export const RoomsListPage: React.FC = () => {
           columns={columns}
           data={rooms}
           isLoading={loading}
-          emptyMessage="No rooms found matching your search."
+          emptyMessage="Không tìm thấy phòng nào phù hợp với tìm kiếm."
         />
 
         {!loading && total > 0 && (
@@ -269,12 +269,12 @@ export const RoomsListPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!deleteId}
-        title="Delete Room"
-        message="Are you sure you want to delete this room? This action cannot be undone."
+        title="Xóa phòng"
+        message="Bạn có chắc chắn muốn xóa phòng này không? Hành động này không thể hoàn tác."
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteId(null)}
         isDanger
-        confirmText="Delete"
+        confirmText="Xóa"
       />
     </div>
   )

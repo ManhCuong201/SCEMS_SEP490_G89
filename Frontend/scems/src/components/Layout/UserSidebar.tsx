@@ -27,19 +27,19 @@ export const UserSidebar: React.FC = () => {
             letterSpacing: '0.05em',
             marginBottom: '1rem'
           }}>
-            Menu
+            Danh mục
           </p>
-          <NavLink href="/dashboard" label="Daily Schedule" icon={<LayoutGrid size={20} />} active={isActive('/dashboard')} />
-          <NavLink href="/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/rooms')} />
+          <NavLink href="/dashboard" label="Lịch trình hôm nay" icon={<LayoutGrid size={20} />} active={isActive('/dashboard')} />
+          <NavLink href="/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/rooms')} />
           {user?.role === 'Lecturer' && (
-            <NavLink href="/teacher/classes" label="My Classes" icon={<Users size={20} />} active={isActive('/teacher/classes')} />
+            <NavLink href="/teacher/classes" label="Lớp học của tôi" icon={<Users size={20} />} active={isActive('/teacher/classes')} />
           )}
           {(user?.role === 'Lecturer' || user?.role === 'Student') && (
-            <NavLink href="/schedule" label="Class schedule" icon={<Calendar size={20} />} active={isActive('/schedule')} />
+            <NavLink href="/schedule" label="Lịch học" icon={<Calendar size={20} />} active={isActive('/schedule')} />
           )}
-          <NavLink href="/my-bookings" label="My Bookings" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} />
+          <NavLink href="/my-bookings" label="Yêu cầu đặt phòng" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} />
           {(user?.role === 'Lecturer' || user?.role === 'Student') && (
-            <NavLink href="/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/issue-reports')} />
+            <NavLink href="/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/issue-reports')} />
           )}
         </div>
       </nav>
@@ -62,14 +62,27 @@ const NavLink: React.FC<{ href: string; label: string; icon: React.ReactNode; ac
       alignItems: 'center',
       gap: '0.75rem',
       padding: '0.75rem 1rem',
-      marginBottom: '0.5rem',
+      marginBottom: '0.25rem',
       borderRadius: 'var(--radius-md)',
       backgroundColor: active ? 'var(--color-primary)' : 'transparent',
-      color: active ? 'white' : 'var(--slate-400)',
+      color: active ? 'white' : 'var(--slate-500)',
       fontWeight: active ? 600 : 500,
+      fontSize: '0.925rem',
       textDecoration: 'none',
       transition: 'all 0.2s ease',
       boxShadow: active ? '0 4px 6px -1px rgba(79, 70, 229, 0.3)' : 'none'
+    }}
+    onMouseEnter={(e) => {
+      if (!active) {
+        e.currentTarget.style.backgroundColor = 'var(--primary-50)';
+        e.currentTarget.style.color = 'var(--primary-600)';
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (!active) {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = 'var(--slate-500)';
+      }
     }}
   >
     {icon}

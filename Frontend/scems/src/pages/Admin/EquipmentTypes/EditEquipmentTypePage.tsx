@@ -26,7 +26,7 @@ export const EditEquipmentTypePage: React.FC = () => {
           description: type.description
         })
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load')
+        setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
       } finally {
         setLoading(false)
       }
@@ -48,7 +48,7 @@ export const EditEquipmentTypePage: React.FC = () => {
       await equipmentTypeService.updateEquipmentType(id!, form)
       navigate('/admin/equipment-types')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save')
+      setError(err.response?.data?.message || 'Lưu thất bại')
     } finally {
       setSaving(false)
     }
@@ -58,29 +58,29 @@ export const EditEquipmentTypePage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Edit Equipment Type</h1>
+      <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Chỉnh sửa Loại Thiết bị</h1>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <div className="card" style={{ maxWidth: '500px' }}>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Name</label>
+            <label className="form-label">Tên</label>
             <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} disabled={saving} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Code</label>
+            <label className="form-label">Mã</label>
             <input type="text" name="code" className="form-input" value={form.code} onChange={handleChange} disabled={saving} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Description</label>
+            <label className="form-label">Mô tả</label>
             <textarea name="description" className="form-textarea" value={form.description} onChange={handleChange} disabled={saving} />
           </div>
 
           <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment-types')} disabled={saving}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment-types')} disabled={saving}>Hủy</button>
           </div>
         </form>
       </div>

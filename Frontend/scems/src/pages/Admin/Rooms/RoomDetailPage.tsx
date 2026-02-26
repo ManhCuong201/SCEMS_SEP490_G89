@@ -21,7 +21,7 @@ export const RoomDetailPage: React.FC = () => {
         const data = await roomService.getRoomById(id!)
         setRoom(data)
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load')
+        setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
       } finally {
         setLoading(false)
       }
@@ -39,7 +39,7 @@ export const RoomDetailPage: React.FC = () => {
         await roomService.deleteRoom(deleteId)
         navigate('/admin/rooms')
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to delete')
+        setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
         setDeleteId(null)
       }
@@ -79,14 +79,14 @@ export const RoomDetailPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Link to={`/admin/rooms/${id}/edit`} className="btn btn-secondary" style={{ gap: '0.5rem' }}>
-            <Edit size={18} /> Edit
+            <Edit size={18} /> Chỉnh sửa
           </Link>
           <button
             className="btn btn-danger"
             onClick={handleDeleteClick}
             style={{ gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
           >
-            <Trash2 size={18} /> Delete
+            <Trash2 size={18} /> Xóa
           </button>
         </div>
       </div>
@@ -97,7 +97,7 @@ export const RoomDetailPage: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Department Name (Code)
+              Tên tòa nhà (Mã)
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
               {room.departmentName} ({room.departmentCode || 'N/A'})
@@ -106,25 +106,25 @@ export const RoomDetailPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Capacity
+              Sức chứa
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
-              {room.capacity} People
+              {room.capacity} Người
             </div>
           </div>
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Equipment Count
+              Số lượng thiết bị
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
-              {room.equipmentCount} Items
+              {room.equipmentCount} Thiết bị
             </div>
           </div>
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Status
+              Trạng thái
             </label>
             <span
               className="badge"
@@ -142,7 +142,7 @@ export const RoomDetailPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Created At
+              Ngày tạo
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
               {new Date(room.createdAt).toLocaleDateString()}
@@ -151,7 +151,7 @@ export const RoomDetailPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Last Updated
+              Cập nhật lần cuối
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
               {new Date(room.updatedAt).toLocaleDateString()}
@@ -162,12 +162,12 @@ export const RoomDetailPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!deleteId}
-        title="Delete Room"
-        message={`Are you sure you want to delete "${room.roomName}"? This action cannot be undone.`}
+        title="Xóa phòng"
+        message={`Bạn có chắc chắn muốn xóa "${room.roomName}"? Hành động này không thể hoàn tác.`}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteId(null)}
         isDanger
-        confirmText="Delete Room"
+        confirmText="Xóa phòng"
       />
     </div>
   )

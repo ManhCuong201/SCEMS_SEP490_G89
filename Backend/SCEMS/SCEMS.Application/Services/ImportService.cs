@@ -319,11 +319,11 @@ public class ImportService : IImportService
         var worksheet = workbook.Worksheets.Add("Account Template");
 
         // Headers
-        worksheet.Cell(1, 1).Value = "Full Name";
+        worksheet.Cell(1, 1).Value = "Họ và tên";
         worksheet.Cell(1, 2).Value = "Email";
-        worksheet.Cell(1, 3).Value = "Student Code";
-        worksheet.Cell(1, 4).Value = "Password";
-        worksheet.Cell(1, 5).Value = "Role";
+        worksheet.Cell(1, 3).Value = "Mã sinh viên/Giảng viên";
+        worksheet.Cell(1, 4).Value = "Mật khẩu";
+        worksheet.Cell(1, 5).Value = "Vai trò (Admin/Lecturer/Student/Staff)";
 
         // Style
         var header = worksheet.Range("A1:E1");
@@ -331,8 +331,8 @@ public class ImportService : IImportService
         header.Style.Fill.BackgroundColor = XLColor.LightGray;
 
         // Sample data
-        worksheet.Cell(2, 1).Value = "John Doe";
-        worksheet.Cell(2, 2).Value = "john@example.com";
+        worksheet.Cell(2, 1).Value = "Nguyễn Văn A";
+        worksheet.Cell(2, 2).Value = "nguyenvana@example.com";
         worksheet.Cell(2, 3).Value = "HE123456";
         worksheet.Cell(2, 4).Value = "User123!";
         worksheet.Cell(2, 5).Value = "Student";
@@ -351,15 +351,15 @@ public class ImportService : IImportService
         var worksheet = workbook.Worksheets.Add("Teaching Schedule Template");
 
         // Headers
-        worksheet.Cell(1, 1).Value = "Subject";
-        worksheet.Cell(1, 2).Value = "Class Code";
-        worksheet.Cell(1, 3).Value = "Room Name";
-        worksheet.Cell(1, 4).Value = "From Date";
-        worksheet.Cell(1, 5).Value = "To Date";
-        worksheet.Cell(1, 6).Value = "Days of Week (Mon,Wed OR 2,4)";
-        worksheet.Cell(1, 7).Value = "Slot Type (Old/New)";
-        worksheet.Cell(1, 8).Value = "Slot Number (CSV/Range)";
-        worksheet.Cell(1, 9).Value = "Lecturer Code";
+        worksheet.Cell(1, 1).Value = "Môn học";
+        worksheet.Cell(1, 2).Value = "Mã lớp";
+        worksheet.Cell(1, 3).Value = "Tên phòng";
+        worksheet.Cell(1, 4).Value = "Từ ngày";
+        worksheet.Cell(1, 5).Value = "Đến ngày";
+        worksheet.Cell(1, 6).Value = "Các ngày trong tuần (VD: Mon,Wed HOẶC 2,4)";
+        worksheet.Cell(1, 7).Value = "Loại slot (Old/New)";
+        worksheet.Cell(1, 8).Value = "Số slot (Phẩy/Khoảng)";
+        worksheet.Cell(1, 9).Value = "Mã GV hoặc Email GV";
 
         // Style
         var header = worksheet.Range("A1:I1");
@@ -476,8 +476,8 @@ public class ImportService : IImportService
         var worksheet = workbook.Worksheets.Add("Student Class Template");
 
         // Headers
-        worksheet.Cell(1, 1).Value = "Class Code";
-        worksheet.Cell(1, 2).Value = "Student Code (or Email/Prefix)";
+        worksheet.Cell(1, 1).Value = "Mã lớp";
+        worksheet.Cell(1, 2).Value = "Mã sinh viên (hoặc Email/Tiền tố)";
 
         // Style
         var header = worksheet.Range("A1:B1");

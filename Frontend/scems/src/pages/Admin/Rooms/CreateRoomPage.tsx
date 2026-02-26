@@ -70,7 +70,7 @@ export const CreateRoomPage: React.FC = () => {
       await roomService.createRoom(form)
       navigate('/admin/rooms')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create')
+      setError(err.response?.data?.message || 'Thêm phòng thất bại')
     } finally {
       setLoading(false)
     }
@@ -78,28 +78,28 @@ export const CreateRoomPage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 style={{ marginBottom: '1.5rem' }}>Create Room</h1>
+      <h1 style={{ marginBottom: '1.5rem' }}>Thêm phòng mới</h1>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <div className="glass-panel" style={{ maxWidth: '600px', padding: '2rem' }}>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Room Code *</label>
-            <input type="text" name="roomCode" className="form-input" value={form.roomCode} onChange={handleChange} required disabled={loading} placeholder="e.g. A201" />
+            <label className="form-label">Mã phòng *</label>
+            <input type="text" name="roomCode" className="form-input" value={form.roomCode} onChange={handleChange} required disabled={loading} placeholder="Ví dụ: A201" />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Room Name *</label>
-            <input type="text" name="roomName" className="form-input" value={form.roomName} onChange={handleChange} required disabled={loading} placeholder="e.g. Computer Lab 01" />
+            <label className="form-label">Tên phòng *</label>
+            <input type="text" name="roomName" className="form-input" value={form.roomName} onChange={handleChange} required disabled={loading} placeholder="Ví dụ: Phòng máy thực hành 01" />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Capacity *</label>
+            <label className="form-label">Sức chứa *</label>
             <input type="number" name="capacity" className="form-input" value={form.capacity} onChange={handleChange} min="1" required disabled={loading} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Room Type</label>
+            <label className="form-label">Loại phòng</label>
             <select
               name="roomTypeId"
               className="form-input"
@@ -107,7 +107,7 @@ export const CreateRoomPage: React.FC = () => {
               onChange={handleChange}
               disabled={loading}
             >
-              <option value="">-- Select Type --</option>
+              <option value="">-- Chọn Loại phòng --</option>
               {roomTypes.map(type => (
                 <option key={type.id} value={type.id}>
                   {type.name}
@@ -117,7 +117,7 @@ export const CreateRoomPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Department / Building *</label>
+            <label className="form-label">Tòa nhà *</label>
             <select
               name="departmentId"
               className="form-input"
@@ -126,7 +126,7 @@ export const CreateRoomPage: React.FC = () => {
               disabled={loading}
               required
             >
-              <option value="">-- Select Department --</option>
+              <option value="">-- Chọn Tòa nhà --</option>
               {departments.map(dept => (
                 <option key={dept.id} value={dept.id}>
                   {dept.departmentName} ({dept.departmentCode})
@@ -136,8 +136,8 @@ export const CreateRoomPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Creating...' : 'Create Room'}</button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/rooms')} disabled={loading}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Đang thêm...' : 'Thêm phòng'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/rooms')} disabled={loading}>Hủy</button>
           </div>
         </form>
       </div>

@@ -20,7 +20,7 @@ export function DataTable<T extends { id: string | number }>({
     columns,
     data,
     isLoading,
-    emptyMessage = 'No data found',
+    emptyMessage = 'Không tìm thấy dữ liệu',
     onRowClick
 }: DataTableProps<T>) {
     if (isLoading) {

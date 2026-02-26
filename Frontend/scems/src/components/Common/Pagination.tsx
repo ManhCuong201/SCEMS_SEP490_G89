@@ -57,14 +57,14 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div style={{ marginTop: '1.5rem' }}>
       <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-        Showing {startItem} to {endItem} of {total} results
+        Hiển thị từ {startItem} đến {endItem} trong tổng số {total} kết quả
       </p>
       <div className="pagination">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
-          ← Previous
+          ← Trước
         </button>
 
         {getPageNumbers().map((page, index) => (
@@ -83,7 +83,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
-          Next →
+          Sau →
         </button>
       </div>
     </div>

@@ -29,7 +29,7 @@ export const AccountsListPage: React.FC = () => {
       setAccounts(result.items)
       setTotal(result.total)
     } catch (err: any) {
-      setError('Failed to load accounts')
+      setError('Tải danh sách tài khoản thất bại')
     } finally {
       setLoading(false)
     }
@@ -52,10 +52,10 @@ export const AccountsListPage: React.FC = () => {
     if (deleteId) {
       try {
         await accountService.deleteAccount(deleteId)
-        setSuccess('Account deleted')
+        setSuccess('Đã xóa tài khoản')
         loadAccounts()
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to delete')
+        setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
         setDeleteId(null)
       }
@@ -66,20 +66,20 @@ export const AccountsListPage: React.FC = () => {
     try {
       const statusValue = parseInt(newStatus)
       await accountService.updateStatus(id, statusValue)
-      setSuccess('Status updated')
+      setSuccess('Đã cập nhật trạng thái')
       loadAccounts()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update status')
+      setError(err.response?.data?.message || 'Cập nhật trạng thái thất bại')
     }
   }
 
   const columns: Column<Account>[] = [
-    { header: 'Name', accessor: 'fullName' },
+    { header: 'Tên', accessor: 'fullName' },
     { header: 'Email', accessor: 'email' },
-    { header: 'Phone', accessor: 'phone' },
-    { header: 'Role', accessor: 'role' },
+    { header: 'Điện thoại', accessor: 'phone' },
+    { header: 'Vai trò', accessor: 'role' },
     {
-      header: 'Status',
+      header: 'Trạng thái',
       accessor: (account) => (
         <select
           value={account.status}
@@ -96,20 +96,20 @@ export const AccountsListPage: React.FC = () => {
           }}
           disabled={account.id === currentUser?.id}
         >
-          <option value={AccountStatus.Active}>Active</option>
-          <option value={AccountStatus.Blocked}>Blocked</option>
+          <option value={AccountStatus.Active}>Hoạt động</option>
+          <option value={AccountStatus.Blocked}>Đã khóa</option>
         </select>
       )
     },
     {
-      header: 'Actions',
+      header: 'Hành động',
       accessor: (account) => (
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Link
             to={`/admin/accounts/${account.id}`}
             className="btn btn-secondary"
             style={{ padding: '0.4rem', height: 'auto' }}
-            title="View Details"
+            title="Xem chi tiết"
           >
             <Eye size={16} />
           </Link>
@@ -119,7 +119,7 @@ export const AccountsListPage: React.FC = () => {
                 to={`/admin/accounts/${account.id}/edit`}
                 className="btn btn-secondary"
                 style={{ padding: '0.4rem', height: 'auto' }}
-                title="Edit Account"
+                title="Chỉnh sửa"
               >
                 <Edit size={16} />
               </Link>
@@ -127,7 +127,7 @@ export const AccountsListPage: React.FC = () => {
                 className="btn btn-danger"
                 onClick={(e) => handleDeleteClick(account.id, e)}
                 style={{ padding: '0.4rem', height: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', border: 'none' }}
-                title="Delete Account"
+                title="Xóa"
               >
                 <Trash2 size={16} />
               </button>
@@ -148,13 +148,13 @@ export const AccountsListPage: React.FC = () => {
 
     try {
       const result = await accountService.importAccounts(file)
-      setSuccess(`Successfully imported ${result.successCount} accounts. ${result.failureCount} failed.`)
+      setSuccess(`Đã nhập thành công ${result.successCount} tài khoản. ${result.failureCount} thất bại.`)
       if (result.errors.length > 0) {
-        setError(`Import partially failed: ${result.errors.slice(0, 3).join(', ')}${result.errors.length > 3 ? '...' : ''}`)
+        setError(`Import thất bại một phần: ${result.errors.slice(0, 3).join(', ')}${result.errors.length > 3 ? '...' : ''}`)
       }
       loadAccounts()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to import accounts')
+      setError(err.response?.data?.message || 'Nhập tài khoản thất bại')
     } finally {
       setLoading(false)
       // Reset input
@@ -166,20 +166,20 @@ export const AccountsListPage: React.FC = () => {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1>Accounts</h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage system users and administrators</p>
+          <h1>Tài khoản</h1>
+          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Quản lý người dùng và quản trị viên hệ thống</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-secondary" onClick={() => accountService.downloadTemplate()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FileDown size={16} />
-            Template
+            Biểu mẫu
           </button>
           <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Upload size={16} />
-            Import Excel
+            Nhập Excel
             <input type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleImport} disabled={loading} />
           </label>
-          <Link to="/admin/accounts/create" className="btn btn-primary">+ New Account</Link>
+          <Link to="/admin/accounts/create" className="btn btn-primary">+ Tạo Tài khoản</Link>
         </div>
       </div>
 
@@ -192,7 +192,7 @@ export const AccountsListPage: React.FC = () => {
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
             <input
               type="text"
-              placeholder="Search by name, email, or student code..."
+              placeholder="Tìm kiếm theo tên, email hoặc mã sinh viên..."
               className="form-input"
               style={{ paddingLeft: '2.5rem', width: '100%' }}
               value={search}
@@ -207,13 +207,13 @@ export const AccountsListPage: React.FC = () => {
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
             >
-              <option value="">All Roles</option>
+              <option value="">Tất cả vai trò</option>
               <option value="Admin">Admin</option>
-              <option value="BookingStaff">Booking Staff</option>
-              <option value="AssetStaff">Asset Staff</option>
-              <option value="Guard">Guard</option>
-              <option value="Lecturer">Lecturer</option>
-              <option value="Student">Student</option>
+              <option value="BookingStaff">Nhân viên Đặt phòng</option>
+              <option value="AssetStaff">Nhân viên Tài sản</option>
+              <option value="Guard">Bảo vệ</option>
+              <option value="Lecturer">Giảng viên</option>
+              <option value="Student">Sinh viên</option>
             </select>
           </div>
         </div>
@@ -222,7 +222,7 @@ export const AccountsListPage: React.FC = () => {
           columns={columns}
           data={accounts}
           isLoading={loading}
-          emptyMessage="No accounts found."
+          emptyMessage="Không tìm thấy tài khoản nào."
         />
 
         {!loading && total > 0 && (
@@ -238,12 +238,12 @@ export const AccountsListPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!deleteId}
-        title="Delete Account"
-        message="Are you sure you want to delete this account? This action cannot be undone."
+        title="Xóa tài khoản"
+        message="Bạn có chắc chắn muốn xóa tài khoản này không? Hành động này không thể hoàn tác."
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteId(null)}
         isDanger
-        confirmText="Delete"
+        confirmText="Xóa"
       />
     </div>
   )

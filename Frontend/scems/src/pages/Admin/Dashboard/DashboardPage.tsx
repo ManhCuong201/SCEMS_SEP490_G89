@@ -108,7 +108,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: color, fontWeight: 600 }}>
-        View Details
+        Xem chi tiết
         <div style={{
           background: `${color}20`,
           borderRadius: '50%',
@@ -127,9 +127,9 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="page-container">
       <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <h1>Dashboard</h1>
+        <h1>Bảng điều khiển</h1>
         <p style={{ color: 'var(--color-text-secondary)', margin: '8px 0 0 0' }}>
-          Welcome to SCEMS Admin Panel
+          Chào mừng đến với Trang quản trị SCEMS
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export const DashboardPage: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
           {(user?.role === 'Admin') && (
             <StatCard
-              title="Total Accounts"
+              title="Tổng số tài khoản"
               value={stats.totalAccounts}
               href="/admin/accounts"
               icon={<Users size={48} />}
@@ -149,14 +149,14 @@ export const DashboardPage: React.FC = () => {
           {(user?.role === 'Admin' || user?.role === 'AssetStaff') && (
             <>
               <StatCard
-                title="Total Rooms"
+                title="Tổng số phòng"
                 value={stats.totalRooms}
                 href="/admin/rooms"
                 icon={<Home size={48} />}
                 color="var(--color-success)"
               />
               <StatCard
-                title="Equipment Types"
+                title="Loại thiết bị"
                 value={stats.totalEquipmentTypes}
                 href="/admin/equipment-types"
                 icon={<Layers size={48} />}
@@ -167,28 +167,28 @@ export const DashboardPage: React.FC = () => {
           {(user?.role === 'BookingStaff') && (
             <>
               <StatCard
-                title="Pending Requests"
+                title="Yêu cầu đang chờ"
                 value={stats.pendingBookings}
                 href="/admin/booking-board"
                 icon={<Clock size={48} />}
                 color="var(--color-warning)"
               />
               <StatCard
-                title="Approved Today"
+                title="Đã duyệt hôm nay"
                 value={stats.approvedToday}
                 href="/admin/bookings"
                 icon={<CheckCircle size={48} />}
                 color="var(--color-success)"
               />
               <StatCard
-                title="Manage Classes"
+                title="Quản lý Lớp học"
                 value={0} // Just a link
                 href="/teacher/classes"
                 icon={<Users size={48} />}
                 color="var(--primary-400)"
               />
               <StatCard
-                title="Manage Schedules"
+                title="Quản lý Lịch trình"
                 value={0}
                 href="/schedule"
                 icon={<BookOpen size={48} />}
@@ -199,14 +199,14 @@ export const DashboardPage: React.FC = () => {
           {(user?.role === 'Guard') && (
             <>
               <StatCard
-                title="Security Checks"
+                title="Kiểm tra an ninh"
                 value={0}
                 href="/admin/security-checks"
                 icon={<ShieldCheck size={48} />}
                 color="var(--color-success)"
               />
               <StatCard
-                title="Issue Reports"
+                title="Báo cáo sự cố"
                 value={0}
                 href="/admin/issue-reports"
                 icon={<AlertTriangle size={48} />}

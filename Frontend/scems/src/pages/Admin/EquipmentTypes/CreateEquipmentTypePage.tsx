@@ -33,7 +33,7 @@ export const CreateEquipmentTypePage: React.FC = () => {
       await equipmentTypeService.createEquipmentType(form)
       navigate('/admin/equipment-types')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create')
+      setError(err.response?.data?.message || 'Thêm thất bại')
     } finally {
       setLoading(false)
     }
@@ -41,29 +41,29 @@ export const CreateEquipmentTypePage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Create Equipment Type</h1>
+      <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Thêm Loại Thiết bị</h1>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <div className="card" style={{ maxWidth: '500px' }}>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Name *</label>
+            <label className="form-label">Tên *</label>
             <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} required disabled={loading} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Code (Optional)</label>
-            <input type="text" name="code" className="form-input" value={form.code} onChange={handleChange} disabled={loading} placeholder="Auto-generated if left empty" />
+            <label className="form-label">Mã (Tùy chọn)</label>
+            <input type="text" name="code" className="form-input" value={form.code} onChange={handleChange} disabled={loading} placeholder="Tự động tạo nếu để trống" />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Description</label>
+            <label className="form-label">Mô tả</label>
             <textarea name="description" className="form-textarea" value={form.description} onChange={handleChange} disabled={loading} />
           </div>
 
           <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Creating...' : 'Create'}</button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment-types')} disabled={loading}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Đang thêm...' : 'Thêm'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/equipment-types')} disabled={loading}>Hủy</button>
           </div>
         </form>
       </div>

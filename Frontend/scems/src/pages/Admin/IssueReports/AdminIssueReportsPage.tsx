@@ -16,6 +16,16 @@ export const AdminIssueReportsPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<IssueReportStatus | ''>('');
     const [searchQuery, setSearchQuery] = useState('');
 
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'Open': return 'Mở';
+            case 'InProgress': return 'Đang xử lý';
+            case 'Resolved': return 'Đã giải quyết';
+            case 'Closed': return 'Đã đóng';
+            default: return status;
+        }
+    };
+
     const fetchReports = async () => {
         try {
             const data = await issueReportService.getIssueReports(
@@ -47,12 +57,12 @@ export const AdminIssueReportsPage: React.FC = () => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h5">Manage Issue Reports</Typography>
+                <Typography variant="h5">Quản lý báo cáo sự cố</Typography>
             </Box>
 
             <Box display="flex" gap={2} mb={3}>
                 <TextField
-                    label="Search rooms, equipment, description"
+                    label="Tìm kiếm phòng, thiết bị, mô tả"
                     variant="outlined"
                     size="small"
                     value={searchQuery}
@@ -66,9 +76,9 @@ export const AdminIssueReportsPage: React.FC = () => {
                         value={statusFilter}
                         onChange={(e: any) => setStatusFilter(e.target.value as IssueReportStatus | '')}
                     >
-                        <MenuItem value=""><em>All Statuses</em></MenuItem>
+                        <MenuItem value=""><em>Tất cả trạng thái</em></MenuItem>
                         {Object.values(IssueReportStatus).map(status => (
-                            <MenuItem key={status} value={status}>{status}</MenuItem>
+                            <MenuItem key={status} value={status}>{getStatusLabel(status)}</MenuItem>
                         ))}
                     </Select>
                 </FormControl>
@@ -78,12 +88,12 @@ export const AdminIssueReportsPage: React.FC = () => {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Reporter</TableCell>
-                            <TableCell>Room</TableCell>
-                            <TableCell>Equipment</TableCell>
-                            <TableCell width="30%">Description</TableCell>
-                            <TableCell>Status Actions</TableCell>
+                            <TableCell>Ngày báo cáo</TableCell>
+                            <TableCell>Người báo cáo</TableCell>
+                            <TableCell>Phòng</TableCell>
+                            <TableCell>Thiết bị</TableCell>
+                            <TableCell width="30%">Mô tả</TableCell>
+                            <TableCell>Trạng thái / Hành động</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -105,10 +115,10 @@ export const AdminIssueReportsPage: React.FC = () => {
                                                         r.status === IssueReportStatus.Resolved ? '#e8f5e9' : 'transparent'
                                             }}
                                         >
-                                            <MenuItem value={IssueReportStatus.Open}>Open</MenuItem>
-                                            <MenuItem value={IssueReportStatus.InProgress}>In Progress</MenuItem>
-                                            <MenuItem value={IssueReportStatus.Resolved}>Resolved</MenuItem>
-                                            <MenuItem value={IssueReportStatus.Closed}>Closed</MenuItem>
+                                            <MenuItem value={IssueReportStatus.Open}>Mở</MenuItem>
+                                            <MenuItem value={IssueReportStatus.InProgress}>Đang xử lý</MenuItem>
+                                            <MenuItem value={IssueReportStatus.Resolved}>Đã giải quyết</MenuItem>
+                                            <MenuItem value={IssueReportStatus.Closed}>Đã đóng</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </TableCell>
