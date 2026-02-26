@@ -61,6 +61,7 @@ export const Sidebar: React.FC = () => {
             <>
               <NavLink href="/admin/accounts" label="Accounts" icon={<Users size={20} />} active={isActive('/admin/accounts')} />
               <NavLink href="/admin/rooms" label="Rooms" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
+              <NavLink href="/admin/departments" label="Departments" icon={<Users size={20} />} active={isActive('/admin/departments')} />
               <NavLink href="/admin/room-types" label="Room Categories" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
               <NavLink href="/admin/equipment-types" label="Equipment Types" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />
               <NavLink href="/admin/issue-reports" label="Issue Reports" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />

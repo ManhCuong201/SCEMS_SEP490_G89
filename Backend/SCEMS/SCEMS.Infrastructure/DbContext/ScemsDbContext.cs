@@ -14,6 +14,7 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Booking> Bookings { get; set; } = null!;
     public DbSet<IssueReport> IssueReports { get; set; } = null!;
     public DbSet<RoomType> RoomTypes { get; set; } = null!;
+    public DbSet<Department> Departments { get; set; } = null!;
 
     // New Entities
     public DbSet<Teaching_Schedule> TeachingSchedules { get; set; } = null!;
@@ -44,6 +45,12 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
             .WithMany(rt => rt.Rooms)
             .HasForeignKey(r => r.RoomTypeId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Room>()
+            .HasOne(r => r.Department)
+            .WithMany(d => d.Rooms)
+            .HasForeignKey(r => r.DepartmentId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<ClassStudent>()
             .HasOne(cs => cs.Class)

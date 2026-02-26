@@ -14,6 +14,9 @@ public class RoomResponseDto
     public int EquipmentCount { get; set; }
     public Guid? RoomTypeId { get; set; }
     public string? RoomTypeName { get; set; }
+    public string? DepartmentName { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public string? DepartmentCode { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

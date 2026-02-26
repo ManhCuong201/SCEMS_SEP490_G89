@@ -2,41 +2,63 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { roomService } from '../../../services/room.service'
 import { roomTypeService } from '../../../services/roomType.service'
+import { departmentService } from '../../../services/department.service'
 import { Alert } from '../../../components/Common/Alert'
-import { RoomType } from '../../../types/api'
+import { RoomType, Department } from '../../../types/api'
 
 export const CreateRoomPage: React.FC = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
 
   const [form, setForm] = useState({
     roomCode: '',
     roomName: '',
     building: '',
     capacity: 20,
-    roomTypeId: ''
+    roomTypeId: '',
+    departmentId: ''
   })
 
   useEffect(() => {
-    const loadTypes = async () => {
+    const loadData = async () => {
       try {
-        const types = await roomTypeService.getAll()
+        const [types, depts] = await Promise.all([
+          roomTypeService.getAll(),
+          departmentService.getAll()
+        ])
         setRoomTypes(types)
-        if (types.length > 0) {
-          setForm(prev => ({ ...prev, roomTypeId: types[0].id }))
+        setDepartments(depts)
+        if (types.length > 0 || depts.length > 0) {
+          setForm(prev => ({
+            ...prev,
+            roomTypeId: types.length > 0 ? types[0].id : '',
+            departmentId: depts.length > 0 ? depts[0].id : '',
+            building: depts.length > 0 ? depts[0].departmentName : ''
+          }))
         }
       } catch (err) {
-        console.error("Failed to load room types")
+        console.error("Failed to load dependency data")
       }
     }
-    loadTypes()
+    loadData()
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: name === 'capacity' ? parseInt(value) : value }))
+
+    if (name === 'departmentId') {
+      const selectedDept = departments.find(d => d.id === value);
+      setForm(prev => ({
+        ...prev,
+        departmentId: value,
+        building: selectedDept ? selectedDept.departmentName : ''
+      }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: name === 'capacity' ? parseInt(value) : value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,11 +94,6 @@ export const CreateRoomPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Building</label>
-            <input type="text" name="building" className="form-input" value={form.building} onChange={handleChange} disabled={loading} placeholder="e.g. Building A" />
-          </div>
-
-          <div className="form-group">
             <label className="form-label">Capacity *</label>
             <input type="number" name="capacity" className="form-input" value={form.capacity} onChange={handleChange} min="1" required disabled={loading} />
           </div>
@@ -94,6 +111,25 @@ export const CreateRoomPage: React.FC = () => {
               {roomTypes.map(type => (
                 <option key={type.id} value={type.id}>
                   {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Department / Building *</label>
+            <select
+              name="departmentId"
+              className="form-input"
+              value={form.departmentId}
+              onChange={handleChange}
+              disabled={loading}
+              required
+            >
+              <option value="">-- Select Department --</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.departmentName} ({dept.departmentCode})
                 </option>
               ))}
             </select>

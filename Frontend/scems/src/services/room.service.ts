@@ -2,9 +2,9 @@ import api from './api'
 import { Room, CreateRoomRequest, UpdateRoomRequest, PaginatedResponse } from '../types/api'
 
 export const roomService = {
-  async getRooms(pageIndex: number = 1, pageSize: number = 10, search?: string): Promise<PaginatedResponse<Room>> {
+  async getRooms(pageIndex: number = 1, pageSize: number = 10, search?: string, sortBy?: string, departmentId?: string): Promise<PaginatedResponse<Room>> {
     const { data } = await api.get<PaginatedResponse<Room>>('/admin/rooms', {
-      params: { pageIndex, pageSize, search }
+      params: { pageIndex, pageSize, search, sortBy, departmentId }
     })
     return data
   },

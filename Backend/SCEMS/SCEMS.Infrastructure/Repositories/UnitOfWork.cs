@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
     private IClassRepository? _classRepository;
     private IClassStudentRepository? _classStudentRepository;
     private IGenericRepository<RoomType>? _roomTypeRepository;
+    private IDepartmentRepository? _departmentRepository;
     public UnitOfWork(ScemsDbContext context)
     {
         _context = context;
@@ -88,6 +89,11 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<RoomType> RoomTypes
     {
         get { return _roomTypeRepository ??= new GenericRepository<RoomType>(_context); }
+    }
+
+    public IDepartmentRepository Departments
+    {
+        get { return _departmentRepository ??= new DepartmentRepository(_context); }
     }
 
     public IGenericRepository<RoomEquipmentHistory> RoomEquipmentHistories

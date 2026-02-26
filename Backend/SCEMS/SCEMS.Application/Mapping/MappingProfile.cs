@@ -6,6 +6,7 @@ using SCEMS.Application.DTOs.Equipment;
 using SCEMS.Application.DTOs.Booking;
 using SCEMS.Application.DTOs.Schedule;
 using SCEMS.Application.DTOs.Class;
+using SCEMS.Application.DTOs.Department;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Entities;
 
@@ -17,7 +18,9 @@ public class MappingProfile : Profile
     {
         CreateMap<Account, AccountResponseDto>();
         CreateMap<Room, RoomResponseDto>()
-            .ForMember(dest => dest.RoomTypeName, opt => opt.MapFrom(src => src.RoomType != null ? src.RoomType.Name : "N/A"));
+            .ForMember(dest => dest.RoomTypeName, opt => opt.MapFrom(src => src.RoomType != null ? src.RoomType.Name : "N/A"))
+            .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.DepartmentName : "N/A"))
+            .ForMember(dest => dest.DepartmentCode, opt => opt.MapFrom(src => src.Department != null ? src.Department.DepartmentCode : "N/A"));
         CreateMap<EquipmentType, EquipmentTypeResponseDto>();
         CreateMap<Equipment, EquipmentResponseDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
@@ -53,5 +56,9 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
         CreateMap<SCEMS.Application.DTOs.IssueReport.CreateIssueReportDto, IssueReport>();
+
+        CreateMap<Department, DepartmentDto>().ReverseMap();
+        CreateMap<CreateDepartmentDto, Department>();
+        CreateMap<UpdateDepartmentDto, Department>();
     }
 }

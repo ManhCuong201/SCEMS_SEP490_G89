@@ -47,7 +47,7 @@ export function DataTable<T extends { id: string | number }>({
     }
 
     return (
-        <div className="table-wrapper glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="table-wrapper glass-panel" style={{ padding: 0, overflowX: 'auto' }}>
             <table className="glass-table">
                 <thead>
                     <tr>

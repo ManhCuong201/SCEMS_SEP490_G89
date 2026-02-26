@@ -20,4 +20,5 @@ public class CreateRoomDto
     public int Capacity { get; set; }
 
     public Guid? RoomTypeId { get; set; }
+    public Guid? DepartmentId { get; set; }
 }

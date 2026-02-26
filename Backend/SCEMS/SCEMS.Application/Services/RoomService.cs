@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Room;
+using SCEMS.Application.DTOs.Department;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Entities;
 using SCEMS.Domain.Enums;
@@ -26,12 +27,18 @@ public class RoomService : IRoomService
         IQueryable<Room> query = _unitOfWork.Rooms.GetAll()
         .Include(r => r.Bookings)
         .Include(r => r.Equipment)
-        .Include(r => r.RoomType);
+        .Include(r => r.RoomType)
+        .Include(r => r.Department);
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
             var search = @params.Search.ToLowerInvariant();
             query = query.Where(r => r.RoomCode.ToLower().Contains(search) || r.RoomName.ToLower().Contains(search));
+        }
+
+        if (@params.DepartmentId.HasValue)
+        {
+            query = query.Where(r => r.DepartmentId == @params.DepartmentId.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(@params.SortBy))
@@ -41,6 +48,7 @@ public class RoomService : IRoomService
                 "code" => query.OrderBy(r => r.RoomCode),
                 "name" => query.OrderBy(r => r.RoomName),
                 "capacity" => query.OrderBy(r => r.Capacity),
+                "department" => query.OrderBy(r => r.Department != null ? r.Department.DepartmentCode : ""),
                 "recent" => query.OrderByDescending(r => r.CreatedAt),
                 _ => query.OrderBy(r => r.RoomCode)
             };
@@ -67,6 +75,10 @@ public class RoomService : IRoomService
             PendingRequestsCount = r.Bookings.Count(b => b.Status == BookingStatus.Pending),
             RoomTypeId = r.RoomTypeId,
             RoomTypeName = r.RoomType?.Name ?? "N/A",
+            Building = r.Building ?? "N/A",
+            DepartmentId = r.DepartmentId,
+            DepartmentName = r.Department?.DepartmentName ?? "N/A",
+            DepartmentCode = r.Department?.DepartmentCode ?? "N/A",
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         }).ToList();
@@ -86,6 +98,7 @@ public class RoomService : IRoomService
             .Include(r => r.Bookings)
             .Include(r => r.Equipment)
             .Include(r => r.RoomType)
+            .Include(r => r.Department)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (room == null)
@@ -109,7 +122,9 @@ public class RoomService : IRoomService
             RoomCode = dto.RoomCode,
             RoomName = dto.RoomName,
             Capacity = dto.Capacity,
-            RoomTypeId = dto.RoomTypeId
+            Building = dto.Building,
+            RoomTypeId = dto.RoomTypeId,
+            DepartmentId = dto.DepartmentId
         };
 
         await _unitOfWork.Rooms.AddAsync(room);
@@ -134,8 +149,10 @@ public class RoomService : IRoomService
 
         room.RoomCode = dto.RoomCode;
         room.RoomName = dto.RoomName;
+        room.Building = dto.Building;
         room.Capacity = dto.Capacity;
         room.RoomTypeId = dto.RoomTypeId;
+        room.DepartmentId = dto.DepartmentId;
 
         _unitOfWork.Rooms.Update(room);
         await _unitOfWork.SaveChangesAsync();
@@ -192,6 +209,7 @@ public class RoomService : IRoomService
                 var capacityStr = row.Cell(3).GetValue<string>();
                 var statusStr = row.Cell(4).GetValue<string>();
                 var roomTypeCode = row.Cell(5).GetValue<string>();
+                var deptCode = row.Cell(6).GetValue<string>();
 
                 if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
                     continue;
@@ -222,6 +240,17 @@ public class RoomService : IRoomService
                     if (type != null)
                     {
                         room.RoomTypeId = type.Id;
+                    }
+                }
+
+                // Set Department if provided
+                if (!string.IsNullOrWhiteSpace(deptCode))
+                {
+                    var dept = await _unitOfWork.Departments.GetAll()
+                        .FirstOrDefaultAsync(d => d.DepartmentCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase));
+                    if (dept != null)
+                    {
+                        room.DepartmentId = dept.Id;
                     }
                 }
 

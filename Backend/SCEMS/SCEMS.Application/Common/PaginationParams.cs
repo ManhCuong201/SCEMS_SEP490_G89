@@ -8,4 +8,5 @@ public class PaginationParams
     public string? SortBy { get; set; }
     public string? Status { get; set; }
     public Guid? RoomId { get; set; }
+    public Guid? DepartmentId { get; set; }
 }

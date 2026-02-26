@@ -4,7 +4,7 @@ import { roomService } from '../../../services/room.service'
 import { Room } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
-import { Edit, Trash2, ArrowLeft, Calendar } from 'lucide-react'
+import { Edit, Trash2, ArrowLeft } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
 export const RoomDetailPage: React.FC = () => {
@@ -97,10 +97,10 @@ export const RoomDetailPage: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
           <div>
             <label style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Building
+              Department Name (Code)
             </label>
             <div style={{ fontSize: '1.25rem', fontWeight: 500 }}>
-              {room.building}
+              {room.departmentName} ({room.departmentCode || 'N/A'})
             </div>
           </div>
 
@@ -132,7 +132,8 @@ export const RoomDetailPage: React.FC = () => {
                 backgroundColor: getStatusBg(room.status),
                 color: getStatusColor(room.status),
                 fontSize: '0.9rem',
-                padding: '0.35em 0.8em'
+                padding: '0.35em 0.8em',
+                display: 'inline-block'
               }}
             >
               {room.status}

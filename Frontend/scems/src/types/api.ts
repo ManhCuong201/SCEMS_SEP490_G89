@@ -57,8 +57,18 @@ export interface Room {
   equipmentCount: number
   pendingRequestsCount: number
   status: string
+  departmentId?: string
+  departmentName?: string
+  departmentCode?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface Department {
+  id: string
+  departmentCode: string
+  departmentName: string
+  description?: string
 }
 
 export interface CreateRoomRequest {
@@ -66,6 +76,7 @@ export interface CreateRoomRequest {
   roomName: string
   capacity: number
   roomTypeId?: string
+  departmentId?: string
 }
 
 export interface UpdateRoomRequest {
@@ -73,6 +84,7 @@ export interface UpdateRoomRequest {
   roomName: string
   capacity: number
   roomTypeId?: string
+  departmentId?: string
 }
 
 export interface EquipmentType {

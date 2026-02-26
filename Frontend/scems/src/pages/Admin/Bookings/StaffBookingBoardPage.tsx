@@ -69,6 +69,7 @@ export const StaffBookingBoardPage: React.FC = () => {
         try {
             await bookingService.updateStatus(id, status)
             setSuccessMsg(`Booking ${status.toLowerCase()} successfully`)
+            setModalOpen(false)
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {

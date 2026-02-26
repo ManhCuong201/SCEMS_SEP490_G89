@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { roomService } from '../../../services/room.service'
 import { roomTypeService } from '../../../services/roomType.service'
+import { departmentService } from '../../../services/department.service'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
-import { RoomType } from '../../../types/api'
+import { RoomType, Department } from '../../../types/api'
 
 export const EditRoomPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -13,28 +14,33 @@ export const EditRoomPage: React.FC = () => {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [form, setForm] = useState({
     roomCode: '',
     roomName: '',
     building: '',
     capacity: 20,
-    roomTypeId: ''
+    roomTypeId: '',
+    departmentId: ''
   })
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [room, types] = await Promise.all([
+        const [room, types, depts] = await Promise.all([
           roomService.getRoomById(id!),
-          roomTypeService.getAll()
+          roomTypeService.getAll(),
+          departmentService.getAll()
         ])
         setRoomTypes(types)
+        setDepartments(depts)
         setForm({
           roomCode: room.roomCode,
           roomName: room.roomName,
           building: room.building || '',
           capacity: room.capacity,
-          roomTypeId: room.roomTypeId || (types.length > 0 ? types[0].id : '')
+          roomTypeId: room.roomTypeId || (types.length > 0 ? types[0].id : ''),
+          departmentId: room.departmentId || (depts.length > 0 ? depts[0].id : '')
         })
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load')
@@ -47,7 +53,17 @@ export const EditRoomPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: name === 'capacity' ? parseInt(value) : value }))
+
+    if (name === 'departmentId') {
+      const selectedDept = departments.find(d => d.id === value);
+      setForm(prev => ({
+        ...prev,
+        departmentId: value,
+        building: selectedDept ? selectedDept.departmentName : prev.building
+      }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: name === 'capacity' ? parseInt(value) : value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,11 +101,6 @@ export const EditRoomPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Building</label>
-            <input type="text" name="building" className="form-input" value={form.building} onChange={handleChange} disabled={saving} />
-          </div>
-
-          <div className="form-group">
             <label className="form-label">Capacity</label>
             <input type="number" name="capacity" className="form-input" value={form.capacity} onChange={handleChange} min="1" disabled={saving} />
           </div>
@@ -107,6 +118,25 @@ export const EditRoomPage: React.FC = () => {
               {roomTypes.map(type => (
                 <option key={type.id} value={type.id}>
                   {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Department / Building</label>
+            <select
+              name="departmentId"
+              className="form-input"
+              value={form.departmentId}
+              onChange={handleChange}
+              disabled={saving}
+              required
+            >
+              <option value="">-- Select Department --</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.departmentName} ({dept.departmentCode})
                 </option>
               ))}
             </select>

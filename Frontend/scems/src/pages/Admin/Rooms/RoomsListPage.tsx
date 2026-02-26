@@ -18,13 +18,22 @@ export const RoomsListPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
   const [statusFilter, setStatusFilter] = useState('')
+  const [departmentFilter, setDepartmentFilter] = useState('')
+  const [sortBy, setSortBy] = useState('recent')
+  const [departments, setDepartments] = useState<any[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const loadRooms = async () => {
     setLoading(true)
     setError('')
     try {
-      const result = await roomService.getRooms(currentPage, 10, search || undefined)
+      const result = await roomService.getRooms(
+        currentPage,
+        10,
+        search || undefined,
+        sortBy || undefined,
+        departmentFilter || undefined
+      )
       let filtered = result.items
       if (statusFilter) {
         filtered = result.items.filter(r => r.status === statusFilter)
@@ -38,13 +47,27 @@ export const RoomsListPage: React.FC = () => {
     }
   }
 
+  const loadDepartments = async () => {
+    try {
+      const { departmentService } = await import('../../../services/department.service');
+      const data = await departmentService.getAll();
+      setDepartments(data);
+    } catch (err) {
+      console.error("Failed to load departments for filter");
+    }
+  }
+
+  useEffect(() => {
+    loadDepartments();
+  }, [])
+
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, statusFilter])
+  }, [search, statusFilter, departmentFilter, sortBy])
 
   useEffect(() => {
     loadRooms()
-  }, [currentPage, search, statusFilter])
+  }, [currentPage, search, statusFilter, departmentFilter, sortBy])
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -80,8 +103,7 @@ export const RoomsListPage: React.FC = () => {
   const columns: Column<Room>[] = [
     { header: 'Code', accessor: 'roomCode', width: '100px' },
     { header: 'Name', accessor: 'roomName' },
-    { header: 'Building', accessor: 'building' },
-    { header: 'Type', accessor: (item) => <span className="badge badge-secondary">{item.roomTypeName || 'N/A'}</span> },
+    { header: 'Dept', accessor: (item) => <span className="badge badge-secondary" style={{ background: 'var(--slate-100)', color: 'var(--slate-700)' }}>{item.departmentCode || 'N/A'}</span> },
     { header: 'Capacity', accessor: 'capacity', width: '90px' },
     { header: 'Equipment', accessor: 'equipmentCount', width: '100px' },
     {
@@ -201,6 +223,29 @@ export const RoomsListPage: React.FC = () => {
             <option value="Available">Available</option>
             <option value="Hidden">Hidden</option>
             <option value="Disabled">Disabled</option>
+          </select>
+          <select
+            className="form-input"
+            value={departmentFilter}
+            onChange={(e) => setDepartmentFilter(e.target.value)}
+            style={{ width: '200px' }}
+          >
+            <option value="">All Departments</option>
+            {departments.map(d => (
+              <option key={d.id} value={d.id}>{d.departmentName}</option>
+            ))}
+          </select>
+          <select
+            className="form-input"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{ width: '150px' }}
+          >
+            <option value="recent">Sort: Recent</option>
+            <option value="code">Sort: Code</option>
+            <option value="name">Sort: Name</option>
+            <option value="capacity">Sort: Capacity</option>
+            <option value="department">Sort: Dept</option>
           </select>
         </div>
 
