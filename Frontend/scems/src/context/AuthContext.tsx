@@ -5,6 +5,7 @@ import { authService } from '../services/auth.service'
 interface AuthContextType {
   isAuthenticated: boolean
   user: Account | null
+  token: string | null
   login: (email: string, password: string) => Promise<void>
   googleLogin: (token: string) => Promise<void>
   logout: () => void
@@ -35,7 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, googleLogin, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token: localStorage.getItem('token'), login, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )

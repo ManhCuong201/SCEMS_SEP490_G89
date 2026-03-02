@@ -14,11 +14,13 @@ public class ImportService : IImportService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly INotificationService _notificationService;
 
-    public ImportService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher)
+    public ImportService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
+        _notificationService = notificationService;
     }
 
     public async Task<ImportResultDto> ImportAccountsAsync(Stream fileStream)
@@ -220,6 +222,18 @@ public class ImportService : IImportService
         }
 
         await _unitOfWork.SaveChangesAsync();
+        
+        if (result.SuccessCount > 0)
+        {
+            var msg = $"Đã nhập thành công {result.SuccessCount} lịch giảng dạy mới.";
+            await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Nhập lịch giảng dạy", msg);
+            await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Kết quả nhập lịch giảng dạy", msg);
+            await _notificationService.SendToRoleAsync(AccountRole.Lecturer, "Cập nhật lịch giảng dạy", "Có lịch giảng dạy mới được cập nhật. Vui lòng kiểm tra lịch của bạn.");
+            await _notificationService.SendToRoleAsync(AccountRole.Guard, "Cập nhật phòng học", "Có lịch sử dụng phòng mới được hệ thống cập nhật.");
+            await _notificationService.SendToRoleAsync(AccountRole.AssetStaff, "Yêu cầu chuẩn bị thiết bị", "Lịch học mới đã được cập nhật. Vui lòng chuẩn bị trang thiết bị cho các phòng.");
+            await _notificationService.SendToRoleAsync(AccountRole.Student, "Cập nhật lịch học", "Lịch học mới đã được cập nhật. Vui lòng xem thời khóa biểu của bạn.");
+        }
+
         return result;
     }
 

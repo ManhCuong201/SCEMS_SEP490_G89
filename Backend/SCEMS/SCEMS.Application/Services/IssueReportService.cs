@@ -13,11 +13,13 @@ public class IssueReportService : IIssueReportService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly INotificationService _notificationService;
 
-    public IssueReportService(IUnitOfWork unitOfWork, IMapper mapper)
+    public IssueReportService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _notificationService = notificationService;
     }
 
     public async Task<PaginatedResult<IssueReportResponseDto>> GetReportsAsync(PaginationParams @params, Guid? userId = null, IssueReportStatus? status = null)
@@ -92,6 +94,20 @@ public class IssueReportService : IIssueReportService
         await _unitOfWork.IssueReports.AddAsync(report);
         await _unitOfWork.SaveChangesAsync();
 
+        var reporter = await _unitOfWork.Accounts.GetByIdAsync(userId);
+        var targetContext = dto.RoomId.HasValue ? $"phòng {dto.RoomId}" : $"thiết bị {dto.EquipmentId}";
+        if (dto.RoomId.HasValue) 
+        {
+            var room = await _unitOfWork.Rooms.GetByIdAsync(dto.RoomId.Value);
+            if (room != null) targetContext = $"phòng {room.RoomName}";
+        }
+
+        var msg = $"Báo cáo sự cố mới về {targetContext} từ {reporter?.FullName ?? "người dùng"}. Nội dung: {dto.Description}";
+
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Sự cố mới", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Báo cáo sự cố mới", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Báo cáo sự cố mới", msg);
+
         return await GetReportByIdAsync(report.Id) ?? throw new InvalidOperationException("Failed to retrieve created report.");
     }
 
@@ -103,6 +119,13 @@ public class IssueReportService : IIssueReportService
         report.Status = status;
         _unitOfWork.IssueReports.Update(report);
         await _unitOfWork.SaveChangesAsync();
+
+        var msg = $"Trạng thái sự cố số {id} đã được cập nhật thành: {status}";
+        
+        // Notify the person who created it
+        await _notificationService.SendNotificationAsync(report.CreatedBy, "Cập nhật trạng thái sự cố", msg);
+        
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Cập nhật sự cố", msg);
 
         return await GetReportByIdAsync(id);
     }

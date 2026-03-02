@@ -5,8 +5,10 @@ import { DataTable, Column } from '../../components/Common/DataTable';
 import { Loading } from '../../components/Common/Loading';
 import { Alert } from '../../components/Common/Alert';
 import { ArrowLeft, Upload } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const ClassStudentsPage: React.FC = () => {
+    const { user } = useAuth();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [students, setStudents] = useState<EnrolledStudent[]>([]);
@@ -105,19 +107,23 @@ const ClassStudentsPage: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => classService.downloadTemplate()}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                    >
-                        <Upload size={16} style={{ transform: 'rotate(180deg)' }} />
-                        Tải mẫu Import
-                    </button>
-                    <label className={`btn btn-primary btn-sm ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Upload size={16} />
-                        {importing ? 'Đang tải lên...' : 'Import Sinh viên'}
-                        <input type="file" accept=".xlsx, .xls" hidden onChange={handleImport} disabled={importing} />
-                    </label>
+                    {user?.role === 'BookingStaff' && (
+                        <>
+                            <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => classService.downloadTemplate()}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            >
+                                <Upload size={16} style={{ transform: 'rotate(180deg)' }} />
+                                Tải mẫu Import
+                            </button>
+                            <label className={`btn btn-primary btn-sm ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <Upload size={16} />
+                                {importing ? 'Đang tải lên...' : 'Import Sinh viên'}
+                                <input type="file" accept=".xlsx, .xls" hidden onChange={handleImport} disabled={importing} />
+                            </label>
+                        </>
+                    )}
                 </div>
             </div>
 

@@ -11,6 +11,8 @@ using SCEMS.Api.Middleware;
 using SCEMS.Api.Services;
 using SCEMS.Application.Common;
 using SCEMS.Application.Common.Interfaces;
+using SCEMS.Api.Hubs;
+using SCEMS.Application.Services.Interfaces;
 
 using System.Text.Json.Serialization;
 
@@ -49,6 +51,19 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 
@@ -57,9 +72,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policyBuilder =>
     {
-        policyBuilder.AllowAnyOrigin()
+        policyBuilder.WithOrigins("http://localhost:5173")
                      .AllowAnyMethod()
-                     .AllowAnyHeader();
+                     .AllowAnyHeader()
+                     .AllowCredentials();
     });
 });
 
@@ -69,6 +85,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddInfrastructureServices(connectionString);
 builder.Services.AddScoped<IJwtService, JwtService>();
 
+// Register SignalR and Notification Dispatcher
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationDispatcher, SignalRNotificationDispatcher>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -76,7 +96,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
@@ -86,6 +105,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -116,6 +136,10 @@ using (var scope = app.Services.CreateScope())
         dbContext.Accounts.Update(existingAdmin);
         dbContext.SaveChanges();
     }
+
+    // Call FPT Data Seeder
+    var solutionBasePath = Directory.GetParent(builder.Environment.ContentRootPath)?.FullName ?? "";
+    await SCEMS.Infrastructure.Data.FptDataSeeder.SeedAsync(dbContext, solutionBasePath, passwordHasher.HashPassword);
 }
 
 

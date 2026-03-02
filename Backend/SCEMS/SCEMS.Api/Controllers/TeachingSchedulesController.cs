@@ -44,7 +44,7 @@ public class TeachingSchedulesController : ControllerBase
         return Ok(schedules);
     }
 
-    [Authorize(Roles = "Lecturer,Admin,BookingStaff")]
+    [Authorize(Roles = "BookingStaff")]
     [HttpGet("template")]
     public async Task<IActionResult> DownloadTemplate()
     {
@@ -52,7 +52,7 @@ public class TeachingSchedulesController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TeachingSchedule_Template.xlsx");
     }
 
-    [Authorize(Roles = "Lecturer,Admin,BookingStaff")]
+    [Authorize(Roles = "BookingStaff")]
     [HttpPost("import")]
     public async Task<IActionResult> ImportSchedule(IFormFile file)
     {

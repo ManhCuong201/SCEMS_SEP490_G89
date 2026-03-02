@@ -3,7 +3,6 @@ import {
     Calendar as CalendarIcon,
     ChevronLeft,
     ChevronRight,
-    Upload,
     Search,
     BookOpen,
     MapPin,
@@ -27,7 +26,6 @@ export const SchedulePage: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [schedules, setSchedules] = useState<ScheduleResponse[]>([])
     const [loading, setLoading] = useState(false)
-    const [importing, setImporting] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [classSearch, setClassSearch] = useState('')
 
@@ -165,45 +163,6 @@ export const SchedulePage: React.FC = () => {
                                     style={{ padding: '0.4rem 0.75rem' }}
                                 />
                             </div>
-                        </div>
-                    )}
-                    {(user?.role === 'Lecturer' || user?.role === 'Admin') && (
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => scheduleService.downloadTemplate()}
-                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            >
-                                <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
-                                Tải mẫu Import
-                            </button>
-                            <label className={`btn btn-primary ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Upload size={18} />
-                                {importing ? 'Đang tải lên...' : 'Import Lịch học'}
-                                <input
-                                    type="file"
-                                    accept=".xlsx, .xls"
-                                    style={{ display: 'none' }}
-                                    disabled={importing}
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0]
-                                        if (!file) return
-
-                                        setImporting(true)
-                                        setMessage(null)
-                                        try {
-                                            const resp = await scheduleService.importSchedule(file)
-                                            setMessage({ type: 'success', text: resp.message })
-                                            fetchSchedule()
-                                        } catch (error: any) {
-                                            setMessage({ type: 'error', text: error.response?.data?.message || 'Import thất bại' })
-                                        } finally {
-                                            setImporting(false)
-                                            e.target.value = ''
-                                        }
-                                    }}
-                                />
-                            </label>
                         </div>
                     )}
                 </div>

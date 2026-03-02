@@ -50,7 +50,9 @@ export const StaffBookingBoardPage: React.FC = () => {
                 bookingService.getBookingsByDay(selectedDate)
             ])
 
-            setRooms(roomsData.items)
+            // Sort rooms alphabetically by roomName
+            const sortedRooms = roomsData.items.sort((a, b) => a.roomName.localeCompare(b.roomName))
+            setRooms(sortedRooms)
             setRoomTypes(typesData)
             setSchedules(schedulesData)
             setBookings(bookingsData)
@@ -229,7 +231,11 @@ export const StaffBookingBoardPage: React.FC = () => {
                                     <div className="room-name-staff">{room.roomName}</div>
                                     <div className="room-code-staff">{room.roomCode}</div>
                                 </div>
-                                {timeSlotsArray.map(slot => getSlotContent(room, slot.hour))}
+                                {timeSlotsArray.map(slot => (
+                                    <React.Fragment key={`${room.id}-${slot.hour}`}>
+                                        {getSlotContent(room, slot.hour)}
+                                    </React.Fragment>
+                                ))}
                             </React.Fragment>
                         ))}
                     </div>

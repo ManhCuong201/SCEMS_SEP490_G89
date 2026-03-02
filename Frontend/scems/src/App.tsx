@@ -2,7 +2,9 @@ import React from 'react'
 import './styles/alerts.css'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { NotificationProvider } from './context/NotificationContext'
 import { PrivateRoute } from './components/Common/PrivateRoute'
+import { Toaster } from 'react-hot-toast'
 import { AdminLayout } from './components/Layout/AdminLayout'
 import { LoginPage } from './pages/Auth/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -158,7 +160,10 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppContent />
+        <NotificationProvider>
+          <Toaster position="top-right" />
+          <AppContent />
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   )

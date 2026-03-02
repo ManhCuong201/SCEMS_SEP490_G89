@@ -100,7 +100,9 @@ export const DailySchedulerPage: React.FC = () => {
                 bookingService.getBookingsByDay(selectedDate)
             ])
 
-            setRooms(roomsData.items)
+            // Sort rooms alphabetically by roomName
+            const sortedRooms = roomsData.items.sort((a, b) => a.roomName.localeCompare(b.roomName))
+            setRooms(sortedRooms)
             setRoomTypes(typesData)
             setSchedules(schedulesData)
             setBookings(bookingsData)
@@ -391,7 +393,11 @@ export const DailySchedulerPage: React.FC = () => {
                                     <div style={{ fontWeight: 900, fontSize: '0.65rem', color: '#0f172a', marginBottom: '0.05rem', lineHeight: 1.1 }}>{room.roomName}</div>
                                     <div style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 800 }}>{room.roomCode}</div>
                                 </div>
-                                {timeSlotsArray.map(slot => getSlotContent(room, slot.hour))}
+                                {timeSlotsArray.map(slot => (
+                                    <React.Fragment key={`${room.id}-${slot.hour}`}>
+                                        {getSlotContent(room, slot.hour)}
+                                    </React.Fragment>
+                                ))}
                             </React.Fragment>
                         ))}
                     </div>

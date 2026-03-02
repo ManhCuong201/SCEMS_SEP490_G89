@@ -19,4 +19,10 @@
     <ProjectReference Include="..\SCEMS.Domain\SCEMS.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\SeedData\fpt_campus_data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

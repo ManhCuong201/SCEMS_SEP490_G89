@@ -94,7 +94,7 @@ public class ClassesController : ControllerBase
     }
 
     [HttpGet("download-template")]
-    [Authorize(Roles = "Lecturer,Admin,BookingStaff")]
+    [Authorize(Roles = "BookingStaff")]
     public async Task<IActionResult> DownloadTemplate()
     {
         var stream = await _classService.GetStudentImportTemplateAsync();
@@ -102,7 +102,7 @@ public class ClassesController : ControllerBase
     }
 
     [HttpPost("{id}/import-students")]
-    [Authorize(Roles = "Lecturer,Admin,BookingStaff")]
+    [Authorize(Roles = "BookingStaff")]
     public async Task<IActionResult> ImportStudents(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("Please upload a valid Excel file.");
@@ -112,7 +112,7 @@ public class ClassesController : ControllerBase
     }
 
     [HttpGet("bulk-download-template")]
-    [Authorize(Roles = "Admin,BookingStaff")]
+    [Authorize(Roles = "BookingStaff")]
     public async Task<IActionResult> DownloadBulkTemplate()
     {
         var stream = await _importService.GetStudentClassTemplateStreamAsync();
@@ -120,7 +120,7 @@ public class ClassesController : ControllerBase
     }
 
     [HttpPost("bulk-import-students")]
-    [Authorize(Roles = "Admin,BookingStaff")]
+    [Authorize(Roles = "BookingStaff")]
     public async Task<IActionResult> BulkImportStudents(IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest(new { message = "Please upload a valid Excel file." });

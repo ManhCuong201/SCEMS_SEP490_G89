@@ -5,8 +5,10 @@ import { Loading } from '../../../components/Common/Loading';
 import { Alert } from '../../../components/Common/Alert';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, Upload } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 export const AdminClassesPage: React.FC = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [classes, setClasses] = useState<ClassResponse[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,43 +83,46 @@ export const AdminClassesPage: React.FC = () => {
                         />
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => classService.downloadBulkTemplate()}
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
-                            Tải mẫu Import
-                        </button>
-                        <label className={`btn btn-primary ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Upload size={18} />
-                            {importing ? 'Đang tải lên...' : 'Import Sinh viên'}
-                            <input
-                                type="file"
-                                accept=".xlsx, .xls"
-                                style={{ display: 'none' }}
-                                disabled={importing}
-                                onChange={async (e) => {
-                                    const file = e.target.files?.[0]
-                                    if (!file) return
+                        {user?.role === 'BookingStaff' && (
+                            <>
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => classService.downloadBulkTemplate()}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
+                                    Tải mẫu Import
+                                </button>
+                                <label className={`btn btn-primary ${importing ? 'disabled' : ''}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Upload size={18} />
+                                    {importing ? 'Đang tải lên...' : 'Import Sinh viên'}
+                                    <input
+                                        type="file"
+                                        accept=".xlsx, .xls"
+                                        style={{ display: 'none' }}
+                                        disabled={importing}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0]
+                                            if (!file) return
 
-                                    setImporting(true)
-                                    setError('')
-                                    setSuccessMsg('')
-                                    try {
-                                        const resp = await classService.importStudentsToClasses(file)
-                                        setSuccessMsg(resp.message || 'Import sinh viên thành công')
-                                        // Reload not strictly necessary since students are in sub-pages, but doing it for consistency
-                                        loadClasses()
-                                    } catch (err: any) {
-                                        setError(err.response?.data?.message || 'Import sinh viên thất bại')
-                                    } finally {
-                                        setImporting(false)
-                                        e.target.value = ''
-                                    }
-                                }}
-                            />
-                        </label>
+                                            setImporting(true)
+                                            setError('')
+                                            setSuccessMsg('')
+                                            try {
+                                                const resp = await classService.importStudentsToClasses(file)
+                                                setSuccessMsg(resp.message || 'Import sinh viên thành công')
+                                                loadClasses()
+                                            } catch (err: any) {
+                                                setError(err.response?.data?.message || 'Import sinh viên thất bại')
+                                            } finally {
+                                                setImporting(false)
+                                                e.target.value = ''
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            </>
+                        )}
                     </div>
                 </div>
 

@@ -4,9 +4,11 @@ import { ScheduleResponse } from '../../../types/api';
 import { Loading } from '../../../components/Common/Loading';
 import { Alert } from '../../../components/Common/Alert';
 import { Calendar as CalendarIcon, ArrowLeft, ArrowRight, Download, Users, Clock, MapPin } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 import '../../../styles/scheduler.css';
 
 export const AdminSchedulesPage: React.FC = () => {
+    const { user } = useAuth();
     const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -118,20 +120,24 @@ export const AdminSchedulesPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-outline btn-sm" onClick={handleDownloadTemplate} title="Tải mẫu Import">
-                            <Download size={18} style={{ marginRight: '0.5rem' }} /> Mẫu Import
-                        </button>
-                        <div style={{ position: 'relative', overflow: 'hidden' }}>
-                            <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> Import Lịch học
-                            </button>
-                            <input
-                                type="file"
-                                onChange={handleImport}
-                                accept=".xlsx,.xls"
-                                style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-                            />
-                        </div>
+                        {user?.role === 'BookingStaff' && (
+                            <>
+                                <button className="btn btn-outline btn-sm" onClick={handleDownloadTemplate} title="Tải mẫu Import">
+                                    <Download size={18} style={{ marginRight: '0.5rem' }} /> Mẫu Import
+                                </button>
+                                <div style={{ position: 'relative', overflow: 'hidden' }}>
+                                    <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <CalendarIcon size={18} /> Import Lịch học
+                                    </button>
+                                    <input
+                                        type="file"
+                                        onChange={handleImport}
+                                        accept=".xlsx,.xls"
+                                        style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                     <div className="week-navigation" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>

@@ -15,11 +15,13 @@ public class EquipmentService : IEquipmentService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly INotificationService _notificationService;
 
-    public EquipmentService(IUnitOfWork unitOfWork, IMapper mapper)
+    public EquipmentService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _notificationService = notificationService;
     }
 
     public async Task<PaginatedEquipmentDto> GetEquipmentAsync(PaginationParams @params)
@@ -118,6 +120,13 @@ public class EquipmentService : IEquipmentService
         
         await _unitOfWork.SaveChangesAsync();
 
+        var room = await _unitOfWork.Rooms.GetByIdAsync(equipment.RoomId);
+        var msg = $"Trang thiết bị mới '{equipment.Name}' đã được thêm vào phòng {room?.RoomName}.";
+        
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thêm mới thiết bị", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị được thêm mới", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị được thêm mới", msg);
+
         return _mapper.Map<EquipmentResponseDto>(equipment);
     }
 
@@ -152,6 +161,13 @@ public class EquipmentService : IEquipmentService
         _unitOfWork.Equipment.Update(equipment);
         await _unitOfWork.SaveChangesAsync();
 
+        var room = await _unitOfWork.Rooms.GetByIdAsync(equipment.RoomId);
+        var msg = $"Trang thiết bị '{equipment.Name}' trong phòng {room?.RoomName} đã được cập nhật. Trạng thái: {equipment.Status}";
+        
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thiết bị được cập nhật", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị được cập nhật", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị được cập nhật", msg);
+
         // Refresh 
         equipment = await _unitOfWork.Equipment.GetAll()
             .Include(e => e.Room)
@@ -166,8 +182,16 @@ public class EquipmentService : IEquipmentService
         var equipment = await _unitOfWork.Equipment.GetByIdAsync(id);
         if (equipment == null) return false;
 
+        var room = await _unitOfWork.Rooms.GetByIdAsync(equipment.RoomId);
+        var msg = $"Trang thiết bị '{equipment.Name}' đã bị gỡ bỏ khỏi phòng {room?.RoomName}.";
+
         _unitOfWork.Equipment.Delete(equipment);
         await _unitOfWork.SaveChangesAsync();
+
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thiết bị bị gỡ bỏ", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị bị gỡ bỏ", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị bị gỡ bỏ", msg);
+
         return true;
     }
 

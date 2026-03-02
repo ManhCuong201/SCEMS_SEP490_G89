@@ -29,6 +29,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IIssueReportService, IssueReportService>();
         services.AddScoped<IRoomCheckService, RoomCheckService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

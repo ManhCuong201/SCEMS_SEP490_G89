@@ -60,6 +60,7 @@ export const LoginPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ten@vidu.com"
+              autoComplete="username"
               required
               disabled={loading}
               autoFocus
@@ -75,6 +76,7 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Nhập mật khẩu của bạn"
+                autoComplete="current-password"
                 required
                 disabled={loading}
                 style={{ paddingRight: '2.75rem' }}

@@ -15,12 +15,14 @@ public class BookingService : IBookingService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly BookingSettings _bookingSettings;
+    private readonly INotificationService _notificationService;
 
-    public BookingService(IUnitOfWork unitOfWork, IMapper mapper, IOptions<BookingSettings> bookingSettings)
+    public BookingService(IUnitOfWork unitOfWork, IMapper mapper, IOptions<BookingSettings> bookingSettings, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _bookingSettings = bookingSettings.Value;
+        _notificationService = notificationService;
     }
 
     public async Task<PaginatedResult<BookingResponseDto>> GetBookingsAsync(PaginationParams @params, Guid? userId = null)
@@ -181,7 +183,9 @@ public class BookingService : IBookingService
 
     public async Task<BookingResponseDto?> UpdateStatusAsync(Guid id, BookingStatus status)
     {
-        var booking = await _unitOfWork.Bookings.GetByIdAsync(id);
+        var booking = await _unitOfWork.Bookings.GetAll()
+            .Include(b => b.Room)
+            .FirstOrDefaultAsync(b => b.Id == id);
         if (booking == null) return null;
 
         booking.Status = status;
@@ -222,6 +226,22 @@ public class BookingService : IBookingService
                              schedule.StartTime = booking.TimeSlot.TimeOfDay;
                              schedule.EndTime = booking.TimeSlot.AddHours(booking.Duration).TimeOfDay;
                              _unitOfWork.TeachingSchedules.Update(schedule);
+
+                             // Notify students in the class
+                             if (!string.IsNullOrEmpty(schedule.ClassCode))
+                             {
+                                 var studentIds = await _unitOfWork.ClassStudents.GetAll()
+                                     .Where(cs => cs.Class != null && cs.Class.ClassCode == schedule.ClassCode && cs.StudentId.HasValue)
+                                     .Select(cs => cs.StudentId.Value)
+                                     .ToListAsync();
+
+                                 foreach (var studentId in studentIds)
+                                 {
+                                     await _notificationService.SendNotificationAsync(studentId, 
+                                         "Thay đổi lịch học", 
+                                         $"Lịch học môn {schedule.Subject} đã được đổi sang phòng {booking.Room?.RoomName} lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.");
+                                 }
+                             }
                          }
                      }
                  }
@@ -230,6 +250,34 @@ public class BookingService : IBookingService
 
         _unitOfWork.Bookings.Update(booking);
         await _unitOfWork.SaveChangesAsync();
+
+        // --- NOTIFICATIONS ---
+        var isChangeRequest = !string.IsNullOrEmpty(booking.Reason) && (booking.Reason.Contains("[Room Change Request]") || booking.Reason.Contains("[Schedule Change Request]"));
+        var requestTypeStr = isChangeRequest ? "Yêu cầu đổi phòng/lịch" : "Yêu cầu đặt phòng";
+        var statusStr = status == BookingStatus.Approved ? "được phê duyệt" : "bị từ chối";
+
+        // Result Notification to Requester
+        await _notificationService.SendNotificationAsync(booking.RequestedBy, 
+            $"Kết quả: {requestTypeStr}", 
+            $"{requestTypeStr} cho phòng {booking.Room?.RoomName} vào {booking.TimeSlot:dd/MM/yyyy} đã {statusStr}.");
+
+        // Audit Log for Admin
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, 
+            $"Nhật ký hệ thống: {requestTypeStr}", 
+            $"{requestTypeStr} của tài khoản ID {booking.RequestedBy} cho phòng {booking.Room?.RoomName} đã {statusStr}.");
+
+        if (status == BookingStatus.Approved)
+        {
+            // Security Notification
+            await _notificationService.SendToRoleAsync(AccountRole.Guard, 
+                "Lịch trình phòng mới được phê duyệt", 
+                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.");
+
+            // Asset Staff Notification
+            await _notificationService.SendToRoleAsync(AccountRole.AssetStaff, 
+                "Yêu cầu chuẩn bị thiết bị", 
+                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}. Vui lòng kiểm tra và chuẩn bị thiết bị nếu cần.");
+        }
 
         return _mapper.Map<BookingResponseDto>(booking);
     }
