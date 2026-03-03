@@ -11,6 +11,8 @@ import { Loading } from '../../../components/Common/Loading'
 import { X, Calendar as CalendarIcon, Clock, Filter, MapPin, Search, Users, Info, ArrowRight, MessageSquare } from 'lucide-react'
 import '../../../styles/scheduler.css'
 import { useAuth } from '../../../context/AuthContext'
+import { departmentService } from '../../../services/department.service'
+import { Department } from '../../../types/api'
 
 /* --- Portal Tooltip Component --- */
 interface PortalTooltipProps {
@@ -74,6 +76,8 @@ export const DailySchedulerPage: React.FC = () => {
     const [selectedType, setSelectedType] = useState('')
     const [availableOnly, setAvailableOnly] = useState(false)
     const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
+    const [departments, setDepartments] = useState<Department[]>([])
+    const [selectedDepartment, setSelectedDepartment] = useState('')
 
     const [modalOpen, setModalOpen] = useState(false)
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
@@ -88,13 +92,17 @@ export const DailySchedulerPage: React.FC = () => {
         configService.getBookingSettings()
             .then(setBookingSettings)
             .catch(err => console.error("Failed to load booking settings", err))
+
+        departmentService.getAll()
+            .then(setDepartments)
+            .catch(err => console.error("Failed to load departments", err))
     }, [])
 
     const loadData = async () => {
         setLoading(true)
         try {
             const [roomsData, typesData, schedulesData, bookingsData] = await Promise.all([
-                roomService.getRooms(1, 100, search || undefined),
+                roomService.getRooms(1, 100, search || undefined, undefined, selectedDepartment || undefined),
                 roomTypeService.getAll(),
                 scheduleService.getSchedulesByDay(selectedDate),
                 bookingService.getBookingsByDay(selectedDate)
@@ -115,7 +123,7 @@ export const DailySchedulerPage: React.FC = () => {
 
     useEffect(() => {
         loadData()
-    }, [selectedDate, search, selectedType])
+    }, [selectedDate, search, selectedType, selectedDepartment])
 
     const handleBookClick = (room: Room, hour: number, alreadyRequested: boolean) => {
         if (alreadyRequested) return
@@ -358,6 +366,19 @@ export const DailySchedulerPage: React.FC = () => {
                         <option value="">Tất cả loại phòng</option>
                         {roomTypes.map(t => (
                             <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-group" style={{ width: '120px', marginBottom: 0 }}>
+                    <select
+                        className="form-input"
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                    >
+                        <option value="">Tất cả tòa nhà</option>
+                        {departments.map(d => (
+                            <option key={d.id} value={d.id}>{d.departmentName}</option>
                         ))}
                     </select>
                 </div>

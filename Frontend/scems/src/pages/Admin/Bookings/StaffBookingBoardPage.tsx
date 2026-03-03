@@ -10,6 +10,8 @@ import { Loading } from '../../../components/Common/Loading'
 import { X, Calendar as CalendarIcon, Clock, Filter, MapPin, Search, Users, Info, Check, MessageSquare } from 'lucide-react'
 import '../../../styles/scheduler.css'
 import { useAuth } from '../../../context/AuthContext'
+import { departmentService } from '../../../services/department.service'
+import { Department } from '../../../types/api'
 
 export const StaffBookingBoardPage: React.FC = () => {
     const { user } = useAuth()
@@ -39,16 +41,21 @@ export const StaffBookingBoardPage: React.FC = () => {
     const [search, setSearch] = useState('')
     const [selectedType, setSelectedType] = useState('')
     const [activeTab, setActiveTab] = useState<'all' | 'pending'>('pending')
+    const [departments, setDepartments] = useState<Department[]>([])
+    const [selectedDepartment, setSelectedDepartment] = useState('')
 
     const loadData = async () => {
         setLoading(true)
         try {
-            const [roomsData, typesData, schedulesData, bookingsData] = await Promise.all([
-                roomService.getRooms(1, 100, search || undefined),
+            const [roomsData, typesData, schedulesData, bookingsData, deptsData] = await Promise.all([
+                roomService.getRooms(1, 100, search || undefined, undefined, selectedDepartment || undefined),
                 roomTypeService.getAll(),
                 scheduleService.getSchedulesByDay(selectedDate),
-                bookingService.getBookingsByDay(selectedDate)
+                bookingService.getBookingsByDay(selectedDate),
+                departmentService.getAll()
             ])
+
+            setDepartments(deptsData)
 
             // Sort rooms alphabetically by roomName
             const sortedRooms = roomsData.items.sort((a, b) => a.roomName.localeCompare(b.roomName))
@@ -65,7 +72,7 @@ export const StaffBookingBoardPage: React.FC = () => {
 
     useEffect(() => {
         loadData()
-    }, [selectedDate, search, selectedType])
+    }, [selectedDate, search, selectedType, selectedDepartment])
 
     const handleUpdateStatus = async (id: string, status: BookingStatus) => {
         try {
@@ -212,6 +219,19 @@ export const StaffBookingBoardPage: React.FC = () => {
                         ))}
                     </select>
                 </div>
+
+                <div className="form-group" style={{ width: '150px', marginBottom: 0 }}>
+                    <select
+                        className="form-input"
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                    >
+                        <option value="">Tất cả tòa nhà</option>
+                        {departments.map(d => (
+                            <option key={d.id} value={d.id}>{d.departmentName}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -242,101 +262,103 @@ export const StaffBookingBoardPage: React.FC = () => {
                 )}
             </div>
             {/* Manage Modal */}
-            {modalOpen && selectedSlotRoom && (
-                createPortal(
-                    <div className="modal-overlay">
-                        <div className="modal-panel-premium" style={{ maxWidth: '500px' }}>
-                            <div className="modal-header-premium">
-                                <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Clock size={18} /> Quản lý Khung giờ: {selectedSlotHour}:00 - {selectedSlotHour! + 1}:00
-                                </h3>
-                                <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-                            <div className="modal-body-premium" style={{ paddingTop: '1.5rem' }}>
-                                <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
-                                    <strong>Phòng:</strong> {selectedSlotRoom.roomName} ({selectedSlotRoom.roomCode})
+            {
+                modalOpen && selectedSlotRoom && (
+                    createPortal(
+                        <div className="modal-overlay">
+                            <div className="modal-panel-premium" style={{ maxWidth: '500px' }}>
+                                <div className="modal-header-premium">
+                                    <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Clock size={18} /> Quản lý Khung giờ: {selectedSlotHour}:00 - {selectedSlotHour! + 1}:00
+                                    </h3>
+                                    <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+                                        <X size={20} />
+                                    </button>
                                 </div>
+                                <div className="modal-body-premium" style={{ paddingTop: '1.5rem' }}>
+                                    <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
+                                        <strong>Phòng:</strong> {selectedSlotRoom.roomName} ({selectedSlotRoom.roomCode})
+                                    </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {slotBookings.map(booking => (
-                                        <div key={booking.id} style={{
-                                            background: '#f8fafc',
-                                            padding: '1rem',
-                                            borderRadius: '8px',
-                                            border: booking.status === 'Pending' ? '1px solid #fb923c' : '1px solid #e2e8f0',
-                                            position: 'relative'
-                                        }}>
-                                            {booking.status === 'Pending' && (
-                                                <div style={{ position: 'absolute', top: '-8px', right: '10px', background: '#fb923c', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                                                    {booking.reason?.includes('Reschedule original class') ? 'YÊU CẦU ĐỔI LỊCH' : 'ĐANG CHỜ DUYỆT'}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {slotBookings.map(booking => (
+                                            <div key={booking.id} style={{
+                                                background: '#f8fafc',
+                                                padding: '1rem',
+                                                borderRadius: '8px',
+                                                border: booking.status === 'Pending' ? '1px solid #fb923c' : '1px solid #e2e8f0',
+                                                position: 'relative'
+                                            }}>
+                                                {booking.status === 'Pending' && (
+                                                    <div style={{ position: 'absolute', top: '-8px', right: '10px', background: '#fb923c', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                        {booking.reason?.includes('Reschedule original class') ? 'YÊU CẦU ĐỔI LỊCH' : 'ĐANG CHỜ DUYỆT'}
+                                                    </div>
+                                                )}
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                                                    <div style={{ color: '#64748b', fontWeight: 600 }}>Người yêu cầu:</div>
+                                                    <div style={{ fontWeight: 700 }}>{booking.requestedByName || booking.requestedByAccount?.fullName}</div>
+
+                                                    <div style={{ color: '#64748b', fontWeight: 600 }}>Thời lượng:</div>
+                                                    <div>{booking.duration} Giờ</div>
+
+                                                    <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do:</div>
+                                                    <div style={{ fontStyle: 'italic', color: '#334155' }}>"{booking.reason || 'Không có lý do'}"</div>
                                                 </div>
-                                            )}
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.9rem' }}>
-                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Người yêu cầu:</div>
-                                                <div style={{ fontWeight: 700 }}>{booking.requestedByName || booking.requestedByAccount?.fullName}</div>
 
-                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Thời lượng:</div>
-                                                <div>{booking.duration} Giờ</div>
+                                                {booking.reason?.includes('Reschedule original class') && (
+                                                    <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '4px', fontSize: '0.8rem', color: '#b91c1c' }}>
+                                                        <strong>⚠️ Cảnh báo:</strong> Việc phê duyệt yêu cầu này sẽ chuyển vĩnh viễn lịch học sang thời gian và phòng mới này.
+                                                    </div>
+                                                )}
 
-                                                <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do:</div>
-                                                <div style={{ fontStyle: 'italic', color: '#334155' }}>"{booking.reason || 'Không có lý do'}"</div>
+                                                {booking.status === 'Pending' && (
+                                                    <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                        <button
+                                                            onClick={() => handleUpdateStatus(booking.id, BookingStatus.Rejected)}
+                                                            style={{
+                                                                padding: '0.5rem 1rem',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #fca5a5',
+                                                                background: '#fef2f2',
+                                                                color: '#b91c1c',
+                                                                cursor: 'pointer',
+                                                                fontWeight: 600
+                                                            }}
+                                                        >
+                                                            Từ chối
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleUpdateStatus(booking.id, BookingStatus.Approved)}
+                                                            style={{
+                                                                padding: '0.5rem 1rem',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #86efac',
+                                                                background: '#f0fdf4',
+                                                                color: '#15803d',
+                                                                cursor: 'pointer',
+                                                                fontWeight: 600
+                                                            }}
+                                                        >
+                                                            Duyệt
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {booking.status === 'Approved' && (
+                                                    <div style={{ marginTop: '1rem', color: '#166534', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Check size={14} /> Yêu cầu này đã được phê duyệt.
+                                                    </div>
+                                                )}
                                             </div>
-
-                                            {booking.reason?.includes('Reschedule original class') && (
-                                                <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '4px', fontSize: '0.8rem', color: '#b91c1c' }}>
-                                                    <strong>⚠️ Cảnh báo:</strong> Việc phê duyệt yêu cầu này sẽ chuyển vĩnh viễn lịch học sang thời gian và phòng mới này.
-                                                </div>
-                                            )}
-
-                                            {booking.status === 'Pending' && (
-                                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                    <button
-                                                        onClick={() => handleUpdateStatus(booking.id, BookingStatus.Rejected)}
-                                                        style={{
-                                                            padding: '0.5rem 1rem',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid #fca5a5',
-                                                            background: '#fef2f2',
-                                                            color: '#b91c1c',
-                                                            cursor: 'pointer',
-                                                            fontWeight: 600
-                                                        }}
-                                                    >
-                                                        Từ chối
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleUpdateStatus(booking.id, BookingStatus.Approved)}
-                                                        style={{
-                                                            padding: '0.5rem 1rem',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid #86efac',
-                                                            background: '#f0fdf4',
-                                                            color: '#15803d',
-                                                            cursor: 'pointer',
-                                                            fontWeight: 600
-                                                        }}
-                                                    >
-                                                        Duyệt
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {booking.status === 'Approved' && (
-                                                <div style={{ marginTop: '1rem', color: '#166534', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Check size={14} /> Yêu cầu này đã được phê duyệt.
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>,
-                    document.body
+                        </div>,
+                        document.body
+                    )
                 )
-            )}
-        </div>
+            }
+        </div >
     )
 }
