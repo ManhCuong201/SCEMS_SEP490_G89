@@ -6,6 +6,7 @@ import { equipmentTypeService } from '../../../services/equipment-type.service'
 import { bookingService } from '../../../services/booking.service'
 import { Loading } from '../../../components/Common/Loading'
 import { useAuth } from '../../../context/AuthContext'
+import api from '../../../services/api'
 
 import { ArrowRight, Box, Home, Users, Layers, Calendar, Clock, CheckCircle, BookOpen, ShieldCheck, AlertTriangle } from 'lucide-react'
 
@@ -24,25 +25,20 @@ export const DashboardPage: React.FC = () => {
     const loadStats = async () => {
       try {
         setLoading(true)
-        const [accounts, rooms, types, bookingsResponse] = await Promise.all([
+        const [accounts, rooms, types, pendingRes, approvedTodayRes] = await Promise.all([
           accountService.getAccounts(1, 1),
           roomService.getRooms(1, 1),
           equipmentTypeService.getEquipmentTypes(1, 1),
-          bookingService.getBookings(1, 1000) // Fetch enough to count for MVP
+          api.get(`/booking?pageIndex=1&pageSize=1&status=Pending`),
+          api.get(`/booking?pageIndex=1&pageSize=1&status=Approved&date=${new Date().toISOString().split('T')[0]}`)
         ])
-
-        const pending = bookingsResponse.items.filter(b => b.status === 'Pending').length
-        const todayStr = new Date().toISOString().split('T')[0]
-        const approvedToday = bookingsResponse.items.filter(b =>
-          b.status === 'Approved' && b.updatedAt && b.updatedAt.startsWith(todayStr)
-        ).length // Simplistic check, ideally backend provides this
 
         setStats({
           totalAccounts: accounts.total,
           totalRooms: rooms.total,
           totalEquipmentTypes: types.total,
-          pendingBookings: pending,
-          approvedToday: approvedToday
+          pendingBookings: pendingRes.data.total,
+          approvedToday: approvedTodayRes.data.total
         })
       } catch (err) {
         console.error("Failed to load dashboard stats", err)

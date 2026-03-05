@@ -28,6 +28,17 @@ public class NotificationsController : ControllerBase
         return Ok(notifications);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetNotifications([FromQuery] int count = 50)
+    {
+        var uid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(uid, out var userId))
+            return Unauthorized();
+
+        var notifications = await _notificationService.GetUserNotificationsAsync(userId, count);
+        return Ok(notifications);
+    }
+
     [HttpPut("{id}/read")]
     public async Task<IActionResult> MarkAsRead(string id)
     {

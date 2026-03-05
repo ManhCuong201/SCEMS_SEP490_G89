@@ -99,70 +99,103 @@ public class BookingService : IBookingService
         return booking != null ? _mapper.Map<BookingResponseDto>(booking) : null;
     }
 
-    public async Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId)
+    public async Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId, bool skipDurationCheck = false)
     {
         // 1. Validation: Constraints
-        // Start Time from Settings
-        if (dto.TimeSlot.Hour < _bookingSettings.StartHour || dto.TimeSlot.Hour >= _bookingSettings.EndHour)
+        var errors = new List<string>();
+
+        // Past Time Check (allowing actions if the slot ends in the future)
+        var endTime = dto.TimeSlot.AddHours(dto.Duration);
+        if (endTime < DateTime.Now)
         {
-            throw new InvalidOperationException($"Booking start time must be between {_bookingSettings.StartHour}:00 and {_bookingSettings.EndHour}:00.");
+            errors.Add("Không thể mượn hoặc đổi phòng vào thời gian đã qua.");
+        }
+
+        // Start Time from Settings
+        var startHour = dto.TimeSlot.Hour;
+        var endHour = dto.TimeSlot.AddHours(dto.Duration).Hour;
+        if (startHour < _bookingSettings.StartHour || startHour >= _bookingSettings.EndHour || (endHour > _bookingSettings.EndHour && dto.TimeSlot.AddHours(dto.Duration).Minute > 0))
+        {
+            errors.Add($"Thời gian mượn phòng phải trong khoảng từ {_bookingSettings.StartHour}:00 đến {_bookingSettings.EndHour}:00.");
         }
         
-        // Duration check (assuming Duration is in hours)
-        var expectedDurationHours = _bookingSettings.SlotDurationMinutes / 60;
-        if (dto.Duration != expectedDurationHours)
+        // Duration check — skipped for room/schedule change requests which carry class-block durations
+        if (!skipDurationCheck)
         {
-             throw new InvalidOperationException($"Booking duration must be exactly {expectedDurationHours} hour(s).");
+            var expectedDurationHours = _bookingSettings.SlotDurationMinutes / 60;
+            if (dto.Duration != expectedDurationHours)
+            {
+                 errors.Add($"Thời lượng mượn phòng phải chính xác là {expectedDurationHours} giờ.");
+            }
         }
 
         // 2. Validation: Room exists
         var room = await _unitOfWork.Rooms.GetByIdAsync(dto.RoomId);
         if (room == null)
-            throw new InvalidOperationException("Room not found.");
+        {
+            errors.Add("Không tìm thấy phòng.");
+        }
+        else if (room.Status != RoomStatus.Available)
+        {
+            errors.Add("Phòng hiện không khả dụng để mượn.");
+        }
 
-        if (room.Status != RoomStatus.Available)
-            throw new InvalidOperationException("Room is not available for booking.");
-
-        // 3. Validation: Overlaps with other bookings
+        // 3. Validation: Overlaps
         var newStart = dto.TimeSlot;
         var newEnd = dto.TimeSlot.AddHours(dto.Duration);
-
-        var conflictingBooking = _unitOfWork.Bookings.GetAll()
-            .Where(b => b.RoomId == dto.RoomId && b.Status != BookingStatus.Rejected)
-            .ToList()
-            .Where(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart)
-            .Any();
-            
-        // 4. Validation: Overlaps with Teaching Schedule
-        // Check if there is any class in the same room on the same date that overlaps in time.
-        // Booking TimeSlot is DateTime. Teaching_Schedule uses Date + StartTime + EndTime.
-        
         var date = newStart.Date;
         var reqStartTime = newStart.TimeOfDay;
         var reqEndTime = newEnd.TimeOfDay;
 
-        // Note: This query may need client-side evaluation if DB doesn't support time comparison directly on some providers,
-        // but recent EF Core + MySQL providers handle TimeSpan comparisons well.
-        var hasClass = _unitOfWork.TeachingSchedules.GetAll()
-             .Where(ts => ts.RoomId == dto.RoomId && ts.Date == date)
-             .ToList() // Fetch schedules for the day to memory to safely compare times if provider has issues, or optimize by projecting.
-             .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
-
-        if (hasClass)
+        if (room != null)
         {
-             throw new InvalidOperationException("Room is occupied by a class at this time.");
+            // Check conflicts in Bookings (other approved or pending bookings for same room)
+            var conflictingBooking = _unitOfWork.Bookings.GetAll()
+                .Where(b => b.RoomId == dto.RoomId && b.Status != BookingStatus.Rejected)
+                .ToList()
+                .Any(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart);
+
+            if (conflictingBooking)
+            {
+                errors.Add("Phòng này đã có người khác mượn hoặc đang chờ duyệt trong thời gian này.");
+            }
+                
+            // Check conflicts in Teaching Schedule for the room
+            var hasClass = _unitOfWork.TeachingSchedules.GetAll()
+                 .Where(ts => ts.RoomId == dto.RoomId && ts.Date == date)
+                 .ToList()
+                 .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+
+            if (hasClass)
+            {
+                 errors.Add("Phòng này đã được xếp lịch dạy lớp khác vào thời gian này.");
+            }
         }
 
-        if (conflictingBooking)
-        {
-             var acceptedBooking = _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == dto.RoomId && b.Status == BookingStatus.Approved)
-                .ToList()
-                .Where(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart)
-                .Any();
+        // 5. Check Lecturer/User Conflict (User cannot be in two places at once)
+        var userHasClass = _unitOfWork.TeachingSchedules.GetAll()
+            .Where(ts => ts.LecturerId == userId.ToString() && ts.Date == date)
+            .ToList()
+            .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
 
-             if (acceptedBooking)
-                 throw new InvalidOperationException("This slot is already booked.");
+        if (userHasClass)
+        {
+            errors.Add("Bạn đã có lịch dạy lớp khác vào thời gian này.");
+        }
+
+        var userHasBooking = _unitOfWork.Bookings.GetAll()
+            .Where(b => b.RequestedBy == userId && b.Status == BookingStatus.Approved)
+            .ToList()
+            .Any(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart);
+
+        if (userHasBooking)
+        {
+            errors.Add("Bạn đã có một yêu cầu mượn phòng khác được phê duyệt vào thời gian này.");
+        }
+
+        if (errors.Any())
+        {
+            throw new InvalidOperationException(string.Join("|", errors));
         }
 
         var booking = new Booking
@@ -347,14 +380,40 @@ public class BookingService : IBookingService
         var startOfDay = date.Date;
         var endOfDay = startOfDay.AddDays(1);
 
+        // 1. Fetch bookings targeting THIS day
         var bookings = await _unitOfWork.Bookings.GetAll()
             .Include(b => b.Room)
             .Include(b => b.RequestedByAccount)
             .Where(b => b.TimeSlot >= startOfDay && b.TimeSlot < endOfDay && b.Status != BookingStatus.Rejected)
-            .OrderBy(b => b.TimeSlot)
             .ToListAsync();
 
-        return _mapper.Map<List<BookingResponseDto>>(bookings);
+        // 2. Fetch "Outgoing" change requests: Pending bookings that might target OTHER days
+        // but were initiated from classes on THIS day.
+        // We find these by checking if any pending booking's reason contains a ScheduleId 
+        // belonging to a class on THIS day.
+        
+        var schedulesToday = await _unitOfWork.TeachingSchedules.GetAll()
+            .Where(ts => ts.Date == startOfDay)
+            .Select(ts => ts.Id.ToString())
+            .ToListAsync();
+
+        if (schedulesToday.Any())
+        {
+            var outgoingRequests = await _unitOfWork.Bookings.GetAll()
+                .Include(b => b.Room)
+                .Include(b => b.RequestedByAccount)
+                .Where(b => b.Status == BookingStatus.Pending && !string.IsNullOrEmpty(b.Reason))
+                .ToListAsync();
+
+            var relevantOutgoing = outgoingRequests
+                .Where(b => schedulesToday.Any(sid => b.Reason!.Contains(sid)))
+                .Where(b => !bookings.Any(existing => existing.Id == b.Id)) // Avoid duplicates
+                .ToList();
+
+            bookings.AddRange(relevantOutgoing);
+        }
+
+        return _mapper.Map<List<BookingResponseDto>>(bookings.OrderBy(b => b.TimeSlot).ToList());
     }
 
     public async Task<BookingResponseDto> CreateRoomChangeRequestAsync(CreateRoomChangeRequestDto dto, Guid userId)
@@ -373,7 +432,7 @@ public class BookingService : IBookingService
             Reason = $"[Room Change Request] From {dto.OriginalRoomId} to {dto.NewRoomId}. Reason: {dto.Reason}"
         };
 
-        return await CreateBookingAsync(bookingDto, userId);
+        return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true);
     }
 
     public async Task<BookingResponseDto> CreateScheduleChangeRequestAsync(CreateScheduleChangeRequestDto dto, Guid userId)
@@ -397,10 +456,10 @@ public class BookingService : IBookingService
             RoomId = dto.NewRoomId,
             TimeSlot = newStart,
             Duration = durationHrs,
-            Reason = $"[Schedule Change Request] ScheduleId: {dto.ScheduleId}. Reason: {dto.Reason}"
+            Reason = dto.Reason.StartsWith("[Schedule Change Request]") ? dto.Reason : $"[Schedule Change Request] ScheduleId: {dto.ScheduleId}. Reason: {dto.Reason}"
         };
 
         // Create the booking request using existing overlapping logic
-        return await CreateBookingAsync(bookingDto, userId);
+        return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true);
     }
 }

@@ -20,6 +20,7 @@ interface NotificationContextProps {
     markAsRead: (id: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
     fetchNotifications: () => Promise<void>;
+    fetchAllNotifications: (count?: number) => Promise<any>;
 }
 
 const NotificationContext = createContext<NotificationContextProps | undefined>(undefined);
@@ -45,6 +46,24 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             }
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
+        }
+    };
+
+    const fetchAllNotifications = async (count: number = 50) => {
+        if (!token) return;
+        try {
+            const res = await fetch(`${API_URL}/notifications?count=${count}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+                return data;
+            }
+        } catch (error) {
+            console.error('Failed to fetch all notifications:', error);
         }
     };
 
@@ -101,13 +120,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const markAsRead = async (id: string) => {
         if (!token) return;
         try {
-            await fetch(`${API_URL}/api/notifications/${id}/read`, {
+            const res = await fetch(`${API_URL}/notifications/${id}/read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            setNotifications(prev => prev.filter(n => n.id !== id));
+            if (res.ok) {
+                setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+            }
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
         }
@@ -116,20 +137,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const markAllAsRead = async () => {
         if (!token) return;
         try {
-            await fetch(`${API_URL}/api/notifications/read-all`, {
+            const res = await fetch(`${API_URL}/notifications/read-all`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            setNotifications([]);
+            if (res.ok) {
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            }
         } catch (error) {
             console.error('Failed to mark all notifications as read:', error);
         }
     };
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications, fetchAllNotifications } as any}>
             {children}
         </NotificationContext.Provider>
     );

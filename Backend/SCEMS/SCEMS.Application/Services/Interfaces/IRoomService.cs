@@ -1,5 +1,6 @@
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Room;
+using SCEMS.Application.DTOs.Import;
 
 namespace SCEMS.Application.Services.Interfaces;
 
@@ -11,6 +12,6 @@ public interface IRoomService
     Task<RoomResponseDto?> UpdateRoomAsync(Guid id, UpdateRoomDto dto);
     Task<bool> DeleteRoomAsync(Guid id);
     Task<bool> UpdateStatusAsync(Guid id, int status);
-    Task<int> ImportRoomAsync(Stream stream);
+    Task<ImportResultDto> ImportRoomAsync(Stream stream);
     Task<Stream> GetTemplateStreamAsync();
 }

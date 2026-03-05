@@ -176,6 +176,7 @@ export const RoomCalendarPage: React.FC = () => {
                     return
                 }
                 await bookingService.createRoomChangeRequest({
+                    scheduleId: '00000000-0000-0000-0000-000000000000', // Placeholder as this page doesn't track specific schedule yet
                     newRoomId: id,
                     originalRoomId: originalRoomId,
                     timeSlot: isoLocal,

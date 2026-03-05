@@ -36,8 +36,8 @@ export const UserIssueReportsPage: React.FC = () => {
 
     const fetchDropdowns = async () => {
         try {
-            const roomsData = await roomService.getRooms(1, 1000);
-            setRooms(roomsData.items);
+            const roomsData = await roomService.getAllRoomsBatched();
+            setRooms(roomsData);
         } catch (error) {
             console.error('Failed to fetch dropdowns', error);
         }
@@ -47,8 +47,11 @@ export const UserIssueReportsPage: React.FC = () => {
         const fetchEquip = async () => {
             if (roomId) {
                 try {
-                    const eqData = await equipmentService.getAll(1, 1000, undefined, undefined, undefined, roomId);
-                    setEquipments(eqData.items);
+                    // Filter equipment by room if needed, but for dropdown we might still want all if not too many
+                    // Or keep filtered but use batched if matching count is high
+                    const eqData = await equipmentService.getAllEquipmentsBatched();
+                    const filtered = eqData.filter(e => e.roomId === roomId);
+                    setEquipments(filtered);
                 } catch (err) {
                     setEquipments([]);
                 }

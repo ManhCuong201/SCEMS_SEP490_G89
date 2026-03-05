@@ -54,6 +54,16 @@ public class NotificationService : INotificationService
     {
         return await _unitOfWork.Notifications.GetAll()
             .Where(n => n.RecipientId == userId && !n.IsRead)
+            .OrderByDescending(n => n.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Notification>> GetUserNotificationsAsync(Guid userId, int count = 50)
+    {
+        return await _unitOfWork.Notifications.GetAll()
+            .Where(n => n.RecipientId == userId)
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(count)
             .ToListAsync();
     }
 

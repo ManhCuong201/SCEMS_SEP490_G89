@@ -149,6 +149,7 @@ export interface CreateBookingRequest {
 }
 
 export interface CreateRoomChangeRequest {
+  scheduleId: string
   originalRoomId: string
   newRoomId: string
   timeSlot: string
@@ -170,6 +171,7 @@ export interface ScheduleResponse {
   subject: string;
   classCode: string;
   lecturerName: string;
+  lecturerId?: string;
   date: string;
   slot: number;
   startTime: string;

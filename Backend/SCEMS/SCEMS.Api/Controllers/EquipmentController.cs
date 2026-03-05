@@ -97,8 +97,8 @@ public class EquipmentController : ControllerBase
         using var stream = file.OpenReadStream();
         try
         {
-            var count = await _equipmentService.ImportEquipmentAsync(stream);
-            return Ok(new { count });
+            var result = await _equipmentService.ImportEquipmentAsync(stream);
+            return Ok(result);
         }
         catch (Exception ex)
         {

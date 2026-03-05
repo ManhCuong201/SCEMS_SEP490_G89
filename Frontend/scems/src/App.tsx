@@ -46,6 +46,7 @@ import { DailySchedulerPage } from './pages/User/Dashboard/DailySchedulerPage'
 import { AdminIssueReportsPage } from './pages/Admin/IssueReports/AdminIssueReportsPage'
 import { UserIssueReportsPage } from './pages/User/IssueReports/UserIssueReportsPage'
 import { SecurityDashboardPage } from './pages/Admin/Dashboard/SecurityDashboardPage'
+import NotificationsPage from './pages/Notifications/NotificationsPage'
 
 const HomeRedirect = () => {
   const { user } = useAuth()
@@ -147,6 +148,13 @@ const AppContent: React.FC = () => {
         <PrivateRoute>
           <UserLayout>
             <UserIssueReportsPage />
+          </UserLayout>
+        </PrivateRoute>
+      } />
+      <Route path="/notifications" element={
+        <PrivateRoute>
+          <UserLayout>
+            <NotificationsPage />
           </UserLayout>
         </PrivateRoute>
       } />

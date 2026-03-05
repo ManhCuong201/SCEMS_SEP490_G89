@@ -85,6 +85,12 @@ export const DailySchedulerPage: React.FC = () => {
     const [reason, setReason] = useState('')
     const [duration, setDuration] = useState(1)
     const [submitting, setSubmitting] = useState(false)
+    const [modalError, setModalError] = useState<string | React.ReactNode>('')
+    const [modalSuccess, setModalSuccess] = useState('')
+
+    const [isChangeRequest, setIsChangeRequest] = useState(false)
+    const [selectedSchedule, setSelectedSchedule] = useState<ScheduleResponse | null>(null)
+    const [newRoomId, setNewRoomId] = useState('')
 
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
 
@@ -101,15 +107,24 @@ export const DailySchedulerPage: React.FC = () => {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [roomsData, typesData, schedulesData, bookingsData] = await Promise.all([
-                roomService.getRooms(1, 100, search || undefined, undefined, selectedDepartment || undefined),
+            const allRooms = await roomService.getAllRoomsBatched(undefined, 50, undefined, selectedDepartment || undefined)
+            const [typesData, schedulesData, bookingsData] = await Promise.all([
                 roomTypeService.getAll(),
                 scheduleService.getSchedulesByDay(selectedDate),
                 bookingService.getBookingsByDay(selectedDate)
             ])
 
+            // Apply existing filters manually to the full list
+            let filtered = allRooms;
+            if (search) {
+                const s = search.toLowerCase();
+                filtered = filtered.filter(r => r.roomName.toLowerCase().includes(s) || (r.roomCode && r.roomCode.toLowerCase().includes(s)));
+            }
+            if (selectedDepartment) {
+                filtered = filtered.filter(r => r.departmentId === selectedDepartment);
+            }
             // Sort rooms alphabetically by roomName
-            const sortedRooms = roomsData.items.sort((a, b) => a.roomName.localeCompare(b.roomName))
+            const sortedRooms = filtered.sort((a, b) => a.roomName.localeCompare(b.roomName))
             setRooms(sortedRooms)
             setRoomTypes(typesData)
             setSchedules(schedulesData)
@@ -125,14 +140,32 @@ export const DailySchedulerPage: React.FC = () => {
         loadData()
     }, [selectedDate, search, selectedType, selectedDepartment])
 
-    const handleBookClick = (room: Room, hour: number, alreadyRequested: boolean) => {
+    const handleBookClick = (room: Room, hour: number, alreadyRequested: boolean, classSchedule?: ScheduleResponse) => {
         if (alreadyRequested) return
-        setSelectedRoom(room)
-        setSelectedSlot({ date: selectedDate, hour })
 
-        // Ensure initial duration is valid for the new slot
-        const maxForSlot = 23 - hour;
-        setDuration(Math.min(1, maxForSlot)); // Default to 1 or max if 1 is too much
+        setModalError('')
+        setModalSuccess('')
+
+        if (classSchedule) {
+            setIsChangeRequest(true)
+            const [sh] = (classSchedule.startTime || "0:0").split(':').map(Number)
+            const [eh] = (classSchedule.endTime || "0:0").split(':').map(Number)
+            const dur = eh - sh
+
+            const sDate = classSchedule.date.split('T')[0]
+            setSelectedSlot({ date: sDate, hour: sh })
+            setSelectedRoom(room)
+            setSelectedSchedule(classSchedule)
+            setNewRoomId('')
+            setReason('')
+            setDuration(dur > 0 ? dur : 1)
+        } else {
+            setIsChangeRequest(false)
+            setSelectedSchedule(null)
+            setSelectedRoom(room)
+            setSelectedSlot({ date: selectedDate, hour })
+            setDuration(1)
+        }
 
         setModalOpen(true)
         setReason('')
@@ -141,25 +174,73 @@ export const DailySchedulerPage: React.FC = () => {
     const handleConfirmBook = async () => {
         if (!selectedSlot || !selectedRoom || !bookingSettings) return
         setSubmitting(true)
+        setModalError('')
+        setModalSuccess('')
+
         try {
-            const slotDate = new Date(selectedSlot.date)
-            slotDate.setHours(selectedSlot.hour, 0, 0, 0)
-            const isoLocal = slotDate.toLocaleString('sv-SE').replace(' ', 'T')
+            // Use local date parsing to avoid UTC shift
+            const [y, m, d] = selectedSlot.date.split('-').map(Number)
+            const slotDate = new Date(y, m - 1, d, selectedSlot.hour, 0, 0)
 
-            await bookingService.createBooking({
-                roomId: selectedRoom.id,
-                timeSlot: isoLocal,
-                duration: duration,
-                reason: reason
-            })
+            // Check if slot end is in the past
+            const slotEndTime = new Date(y, m - 1, d, selectedSlot.hour + duration, 0, 0)
 
-            setSuccessMsg('Đã gửi yêu cầu mượn phòng!')
-            setModalOpen(false)
-            setDuration(1) // Reset
+            const now = new Date()
+            if (slotEndTime < now) {
+                setModalError('Không thể đặt hoặc đổi phòng vào thời gian đã qua.')
+                setSubmitting(false)
+                return
+            }
+
+            // Format as YYYY-MM-DDTHH:mm:ss for backend
+            const pad = (n: number) => n.toString().padStart(2, '0')
+            const isoLocal = `${y}-${pad(m)}-${pad(d)}T${pad(selectedSlot.hour)}:00:00`
+
+            if (isChangeRequest && selectedSchedule) {
+                if (!newRoomId) {
+                    setModalError('Vui lòng chọn phòng mới')
+                    setSubmitting(false)
+                    return
+                }
+
+                await bookingService.createRoomChangeRequest({
+                    scheduleId: selectedSchedule.id,
+                    originalRoomId: selectedRoom.id,
+                    newRoomId: newRoomId,
+                    timeSlot: isoLocal,
+                    duration: duration,
+                    reason: `[Room Change Request] Original: [Room: ${selectedRoom.roomCode}, Date: ${new Date(selectedSchedule.date).toLocaleDateString('vi-VN')}, Slot: ${selectedSchedule.slot}]. Reason: ${reason}`
+                })
+                setModalSuccess('Đã gửi yêu cầu đổi phòng!')
+            } else {
+                await bookingService.createBooking({
+                    roomId: selectedRoom.id,
+                    timeSlot: isoLocal,
+                    duration: duration,
+                    reason: reason
+                })
+                setModalSuccess('Đã gửi yêu cầu mượn phòng!')
+            }
+
             loadData()
-            setTimeout(() => setSuccessMsg(''), 3000)
+            setTimeout(() => {
+                setModalOpen(false)
+                setModalSuccess('')
+            }, 2000)
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Gửi yêu cầu thất bại')
+            const msg = err.response?.data?.message || 'Gửi yêu cầu thất bại';
+            if (msg.includes('|')) {
+                const errorList = msg.split('|').filter((m: string) => m.trim() !== '');
+                setModalError(
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', textAlign: 'left' }}>
+                        {errorList.map((m: string, i: number) => (
+                            <li key={i}>{m}</li>
+                        ))}
+                    </ul>
+                );
+            } else {
+                setModalError(msg);
+            }
         } finally {
             setSubmitting(false)
         }
@@ -205,10 +286,15 @@ export const DailySchedulerPage: React.FC = () => {
             return sTotalStart < (hour + 1) && sTotalEnd > hour
         })
 
+        const isPast = new Date() > slotEnd
+
         if (classInSlot) {
+            const isMyClass = classInSlot.lecturerId?.toLowerCase() === user?.id?.toLowerCase() || (classInSlot as any).lecturerEmail?.toLowerCase() === user?.email?.toLowerCase()
+
             return (
                 <div
-                    className="scheduler-cell slot-class"
+                    className={`scheduler-cell slot-class ${isMyClass ? 'my-class' : ''} ${isPast ? 'slot-past' : ''}`}
+                    onClick={() => !isPast && isMyClass && handleBookClick(room, hour, false, classInSlot)}
                     onMouseEnter={(e) => setHoveredTooltip({
                         title: 'Lịch học',
                         icon: <CalendarIcon size={12} />,
@@ -216,7 +302,8 @@ export const DailySchedulerPage: React.FC = () => {
                             { label: 'Môn học', value: classInSlot.subject },
                             { label: 'Lớp', value: classInSlot.classCode },
                             { label: 'Giảng viên', value: getTeacherId(classInSlot.lecturerName, (classInSlot as any).lecturerEmail) },
-                            { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` }
+                            { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` },
+                            isMyClass ? { label: 'Hành động', value: 'Nhấn để đổi phòng' } : { label: 'Trạng thái', value: 'Đang bận' }
                         ],
                         targetRect: e.currentTarget.getBoundingClientRect()
                     })}
@@ -255,7 +342,6 @@ export const DailySchedulerPage: React.FC = () => {
             )
         }
 
-        const isPast = new Date() > slotStart
         if (isPast) {
             return <div className="scheduler-cell" style={{ background: 'rgba(0,0,0,0.01)', opacity: 0.2 }}></div>
         }
@@ -295,6 +381,8 @@ export const DailySchedulerPage: React.FC = () => {
 
     // Filter rooms logic: A room is "available" if at least one slot is NOT a class and NOT a booked session.
     const filteredRooms = rooms.filter(room => {
+        if (selectedType && room.roomTypeId !== selectedType) return false;
+
         if (!availableOnly) return true;
 
         // Check if ANY of the 16 slots is available (not a class, not approved booking)
@@ -432,7 +520,7 @@ export const DailySchedulerPage: React.FC = () => {
                     <div className="modal-panel-premium">
                         <div className="modal-header-premium">
                             <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> Yêu cầu Mượn phòng
+                                <CalendarIcon size={18} /> {isChangeRequest ? 'Yêu cầu Đổi phòng' : 'Yêu cầu Mượn phòng'}
                             </h3>
                             <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
                                 <X size={20} />
@@ -446,9 +534,20 @@ export const DailySchedulerPage: React.FC = () => {
                             return (
                                 <>
                                     <div className="modal-room-card">
+                                        {modalError && (
+                                            <div style={{ marginBottom: '1rem' }}>
+                                                <Alert type="error" message={modalError} onClose={() => setModalError('')} />
+                                            </div>
+                                        )}
+                                        {modalSuccess && (
+                                            <div style={{ marginBottom: '1rem' }}>
+                                                <Alert type="success" message={modalSuccess} onClose={() => setModalSuccess('')} />
+                                            </div>
+                                        )}
+
                                         <div className="modal-info-row">
                                             <MapPin size={14} style={{ color: '#0f172a' }} />
-                                            <span>Phòng: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
+                                            <span>Phòng hiện tại: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
                                         </div>
                                         <div className="modal-info-row">
                                             <Clock size={14} style={{ color: '#0f172a' }} />
@@ -456,12 +555,32 @@ export const DailySchedulerPage: React.FC = () => {
                                         </div>
                                         <div className="modal-info-row">
                                             <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                            <span>Ngày: <strong>{new Date(selectedSlot.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</strong></span>
+                                            <span>Ngày: <strong>{new Date(selectedSlot.date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
                                         </div>
                                     </div>
 
                                     <div className="modal-body-premium">
                                         <div className="modal-input-group">
+                                            {isChangeRequest && (
+                                                <>
+                                                    <label className="modal-label-premium">
+                                                        <MapPin size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                                        Chọn phòng mới
+                                                    </label>
+                                                    <select
+                                                        className="form-input"
+                                                        style={{ width: '100%', marginBottom: '1rem' }}
+                                                        value={newRoomId}
+                                                        onChange={(e) => setNewRoomId(e.target.value)}
+                                                    >
+                                                        <option value="">-- Chọn phòng --</option>
+                                                        {rooms.filter(r => r.id !== selectedRoom.id).map(r => (
+                                                            <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>
+                                                        ))}
+                                                    </select>
+                                                </>
+                                            )}
+
                                             <label className="modal-label-premium">
                                                 <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
                                                 Thời lượng (Giờ)

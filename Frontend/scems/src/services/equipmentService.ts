@@ -62,5 +62,27 @@ export const equipmentService = {
     getHistory: async (id: string): Promise<EquipmentHistory[]> => {
         const response = await api.get<EquipmentHistory[]>(`/admin/equipment/${id}/history`);
         return response.data;
+    },
+
+    getAllEquipmentsBatched: async (pageSize: number = 50): Promise<Equipment[]> => {
+        let allItems: Equipment[] = [];
+        let pageIndex = 1;
+
+        try {
+            // First page
+            const firstPage = await equipmentService.getAll(pageIndex, pageSize);
+            allItems = [...firstPage.items];
+            const totalPages = Math.ceil(firstPage.total / pageSize);
+
+            // Sequential fetch
+            for (let p = 2; p <= totalPages; p++) {
+                const response = await equipmentService.getAll(p, pageSize);
+                allItems = [...allItems, ...response.items];
+            }
+            return allItems;
+        } catch (error) {
+            console.error('Error fetching equipment in batches:', error);
+            throw error;
+        }
     }
 };

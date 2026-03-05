@@ -2,7 +2,7 @@ import React from 'react'
 
 interface AlertProps {
   type: 'success' | 'error' | 'warning' | 'info'
-  message: string
+  message: string | React.ReactNode
   onClose?: () => void
 }
 

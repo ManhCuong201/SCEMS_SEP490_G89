@@ -39,6 +39,9 @@ export const SchedulePage: React.FC = () => {
     const [newSlot, setNewSlot] = useState(1)
     const [changeReason, setChangeReason] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    const [modalError, setModalError] = useState<string | React.ReactNode>('')
+    const [modalSuccess, setModalSuccess] = useState('')
+    const [roomSearch, setRoomSearch] = useState('')
 
     const startDate = startOfWeek(currentDate, { weekStartsOn: 1 })
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i))
@@ -49,7 +52,7 @@ export const SchedulePage: React.FC = () => {
     useEffect(() => {
         fetchSchedule()
         if (user?.role === 'Lecturer' || user?.role === 'Admin') {
-            roomService.getRooms(1, 100).then(res => setRooms(res.items)).catch(console.error)
+            roomService.getAllRoomsBatched(undefined, 50).then(setRooms).catch(console.error)
         }
     }, [currentDate, classSearch, user?.role])
 
@@ -109,18 +112,49 @@ export const SchedulePage: React.FC = () => {
 
     const handleScheduleClick = (schedule: ScheduleResponse) => {
         if (user?.role !== 'Lecturer') return;
+
+        // Prevent changing past schedules
+        const sDate = parseISO(schedule.date);
+        // Allow if the slot hasn't ended yet
+        const [eh] = schedule.endTime.split(':').map(Number);
+        const slotEndTime = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate(), eh, 30, 0); // Approx slot end
+        if (slotEndTime < new Date()) {
+            setMessage({ type: 'error', text: 'Không thể đổi lịch cho ca học đã qua.' });
+            setTimeout(() => setMessage(null), 3000);
+            return;
+        }
+
         setSelectedSchedule(schedule);
         setNewRoomId(schedule.roomId);
+        setModalError('');
+        setModalSuccess('');
+        setModalError('');
+        setModalSuccess('');
+        setRoomSearch('');
         setNewDate(schedule.date.split('T')[0]);
         setSlotType('New');
-        setNewSlot(1);
+        setNewSlot(schedule.slot || 1);
         setChangeReason('');
         setChangeModalOpen(true);
     }
 
     const handleConfirmScheduleChange = async () => {
         if (!selectedSchedule) return;
+
+        // Frontend validation: Check if new slot is in the past
+        const [y, m, d] = newDate.split('-').map(Number);
+        const targetSlotEndHour = slotType === 'New' ? (newSlot === 1 ? 10 : newSlot === 2 ? 12 : newSlot === 3 ? 15 : newSlot === 4 ? 18 : newSlot === 5 ? 20 : 22) : (newSlot + 8); // End hour approx
+        const targetEndTime = new Date(y, m - 1, d, targetSlotEndHour, 30, 0);
+
+        if (targetEndTime < new Date()) {
+            setModalError('Không thể đổi lịch sang thời gian đã qua.');
+            setSubmitting(false);
+            return;
+        }
+
         setSubmitting(true);
+        setModalError('');
+        setModalSuccess('');
         try {
             const request: CreateScheduleChangeRequest = {
                 scheduleId: selectedSchedule.id,
@@ -128,15 +162,30 @@ export const SchedulePage: React.FC = () => {
                 newDate,
                 slotType,
                 newSlot,
-                reason: changeReason
+                reason: `[Schedule Change Request] Original: [Room: ${selectedSchedule.roomName}, Date: ${new Date(selectedSchedule.date).toLocaleDateString('vi-VN')}, Slot: ${selectedSchedule.slot}]. Reason: ${changeReason}`
             };
             await bookingService.createScheduleChangeRequest(request);
-            setMessage({ type: 'success', text: 'Đã gửi yêu cầu đổi lịch học!' });
-            setChangeModalOpen(false);
+            setModalSuccess('Đã gửi yêu cầu đổi lịch học!');
             fetchSchedule();
-            setTimeout(() => setMessage(null), 3000);
+            setTimeout(() => {
+                setChangeModalOpen(false);
+                setModalSuccess('');
+            }, 2000);
         } catch (err: any) {
-            setMessage({ type: 'error', text: err.response?.data?.message || 'Gửi yêu cầu đổi lịch học thất bại' });
+            const msg = err.response?.data?.message || 'Gửi yêu cầu đổi lịch học thất bại';
+            if (msg.includes('|')) {
+                const errorList = msg.split('|').filter((m: string) => m.trim() !== '');
+                setModalError(
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Phát hiện xung đột:</div>
+                        <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+                            {errorList.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                        </ul>
+                    </div>
+                );
+            } else {
+                setModalError(msg);
+            }
         } finally {
             setSubmitting(false);
         }
@@ -238,44 +287,51 @@ export const SchedulePage: React.FC = () => {
                                                 padding: '2px',
                                                 verticalAlign: 'top'
                                             }}>
-                                                {daySchedules.map((s, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className={`compact-schedule-card ${user?.role === 'Lecturer' ? 'clickable-card' : ''}`}
-                                                        onClick={() => handleScheduleClick(s)}
-                                                        style={{
-                                                            padding: '6px',
-                                                            borderRadius: '4px',
-                                                            marginBottom: '2px',
-                                                            cursor: user?.role === 'Lecturer' ? 'pointer' : 'default',
-                                                            border: user?.role === 'Lecturer' ? '1px solid transparent' : 'none',
-                                                            transition: 'border-color 0.2s',
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            if (user?.role === 'Lecturer') e.currentTarget.style.borderColor = 'var(--color-primary-light)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            if (user?.role === 'Lecturer') e.currentTarget.style.borderColor = 'transparent';
-                                                        }}
-                                                        title={user?.role === 'Lecturer' ? "Nhấn để yêu cầu đổi lịch học" : s.subject}
-                                                    >
-                                                        <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                            {s.subject}
+                                                {daySchedules.map((s, idx) => {
+                                                    const sDateObj = parseISO(s.date);
+                                                    const [sh] = s.startTime.split(':').map(Number);
+                                                    const isPast = new Date(sDateObj.getFullYear(), sDateObj.getMonth(), sDateObj.getDate(), sh + 1, 30, 0) < new Date();
+
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={`compact-schedule-card ${user?.role === 'Lecturer' && !isPast ? 'clickable-card' : ''} ${isPast ? 'slot-past' : ''}`}
+                                                            onClick={() => !isPast && handleScheduleClick(s)}
+                                                            style={{
+                                                                padding: '6px',
+                                                                borderRadius: '4px',
+                                                                marginBottom: '2px',
+                                                                cursor: (user?.role === 'Lecturer' && !isPast) ? 'pointer' : 'default',
+                                                                border: (user?.role === 'Lecturer' && !isPast) ? '1px solid transparent' : 'none',
+                                                                transition: 'border-color 0.2s',
+                                                                opacity: isPast ? 0.5 : 1
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                if (user?.role === 'Lecturer' && !isPast) e.currentTarget.style.borderColor = 'var(--color-primary-light)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                if (user?.role === 'Lecturer' && !isPast) e.currentTarget.style.borderColor = 'transparent';
+                                                            }}
+                                                            title={isPast ? "Ca học này đã qua" : (user?.role === 'Lecturer' ? "Nhấn để yêu cầu đổi lịch học" : s.subject)}
+                                                        >
+                                                            <div style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '2px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                {s.subject}
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
+                                                                <MapPin size={10} /> {s.roomName || 'Chưa có'}
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
+                                                                <Clock size={10} /> {s.startTime} - {s.endTime}
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
+                                                                <BookOpen size={10} /> {s.classCode}
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem', marginTop: '1px' }}>
+                                                                <UserIcon size={10} /> {s.lecturerName}
+                                                            </div>
                                                         </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-                                                            <MapPin size={10} /> {s.roomName || 'Chưa có'}
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-                                                            <Clock size={10} /> {s.startTime} - {s.endTime}
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-                                                            <BookOpen size={10} /> {s.classCode}
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-muted)', fontSize: '0.65rem', marginTop: '1px' }}>
-                                                            <UserIcon size={10} /> {s.lecturerName}
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    )
+                                                })}
                                             </td>
                                         )
                                     })}
@@ -299,13 +355,27 @@ export const SchedulePage: React.FC = () => {
                         </div>
 
                         <div className="modal-room-card">
+                            {modalError && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div className="alert alert-error" style={{ fontSize: '0.85rem', padding: '0.75rem' }}>
+                                        {modalError}
+                                    </div>
+                                </div>
+                            )}
+                            {modalSuccess && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div className="alert alert-success" style={{ fontSize: '0.85rem', padding: '0.75rem' }}>
+                                        {modalSuccess}
+                                    </div>
+                                </div>
+                            )}
                             <div className="modal-info-row">
                                 <MapPin size={14} style={{ color: '#0f172a' }} />
-                                <span>Phòng ban đầu: <strong>{selectedSchedule.roomName}</strong></span>
+                                <span>Phòng ban đầu: <strong>{selectedSchedule.roomName || 'Đang cập nhật...'}</strong></span>
                             </div>
                             <div className="modal-info-row">
                                 <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                <span>Thời gian ban đầu: <strong>{new Date(selectedSchedule.date).toLocaleDateString()} ({selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
+                                <span>Thời gian ban đầu: <strong>{new Date(selectedSchedule.date).toLocaleDateString('vi-VN')} (Ca {selectedSchedule.slot}: {selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
                             </div>
                             <div className="modal-info-row">
                                 <Info size={14} style={{ color: '#0f172a' }} />
@@ -316,13 +386,33 @@ export const SchedulePage: React.FC = () => {
                         <div className="modal-body-premium">
                             <div className="modal-input-group">
                                 <label className="modal-label-premium">Phòng mới</label>
+                                <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Tìm nhanh phòng..."
+                                        value={roomSearch}
+                                        onChange={(e) => setRoomSearch(e.target.value)}
+                                        style={{ width: '100%', paddingLeft: '2rem', fontSize: '0.85rem' }}
+                                    />
+                                    <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                                </div>
                                 <select
                                     className="form-input"
                                     style={{ width: '100%', marginBottom: '1rem' }}
                                     value={newRoomId}
                                     onChange={e => setNewRoomId(e.target.value)}
                                 >
-                                    {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName}</option>)}
+                                    {rooms.some(r => r.id === selectedSchedule.roomId) ? null : (
+                                        <option value={selectedSchedule.roomId}>{selectedSchedule.roomName} (Hiện tại)</option>
+                                    )}
+                                    {rooms
+                                        .filter(r =>
+                                            r.roomName.toLowerCase().includes(roomSearch.toLowerCase()) ||
+                                            (r.roomCode && r.roomCode.toLowerCase().includes(roomSearch.toLowerCase()))
+                                        )
+                                        .map(r => <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>)
+                                    }
                                 </select>
 
                                 <label className="modal-label-premium">Ngày mới</label>

@@ -4,8 +4,9 @@ import { Booking, BookingStatus } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Pagination } from '../../../components/Common/Pagination'
 import { DataTable, Column } from '../../../components/Common/DataTable'
-import { Check, X } from 'lucide-react'
+import { Check, X, ArrowRight, MapPin, Calendar, Clock, BookOpen } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
+import { parseChangeRequest, cleanDisplayReason } from '../../../helpers/booking.helper'
 
 export const BookingManagementPage: React.FC = () => {
     const [bookings, setBookings] = useState<Booking[]>([])
@@ -45,7 +46,7 @@ export const BookingManagementPage: React.FC = () => {
     }
 
     const handleRejectClick = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation() // Prevent row click if needed
+        e.stopPropagation()
         setRejectId(id)
     }
 
@@ -72,15 +73,144 @@ export const BookingManagementPage: React.FC = () => {
         }
     }
 
+    const getSlotFromHour = (hour: number, type: string) => {
+        if (type === 'ScheduleChange') {
+            if (hour === 7) return "1";
+            if (hour === 10) return "2";
+            if (hour === 12) return "3";
+            if (hour === 15) return "4";
+            if (hour === 18) return "5";
+            if (hour === 20) return "6";
+        }
+        const slot = hour - 6;
+        return slot > 0 ? slot.toString() : "1";
+    };
+
     const columns: Column<Booking>[] = [
-        { header: 'Phòng', accessor: (b) => b.room?.roomName || 'Không xác định' },
-        { header: 'Người yêu cầu', accessor: (b) => b.requestedByAccount?.fullName || 'Không xác định' },
-        { header: 'Khung giờ', accessor: (b) => new Date(b.timeSlot).toLocaleString() },
-        { header: 'Thời lượng', accessor: (b) => `${b.duration}h`, width: '100px' },
-        { header: 'Lý do', accessor: (b) => b.reason || '-' },
+        {
+            header: 'Phòng & Mục tiêu (TO)',
+            accessor: (b: Booking) => {
+                const change = parseChangeRequest(b);
+                const isRoomChanged = change.isChangeRequest && change.originalRoomName &&
+                    change.originalRoomName !== (b.room?.roomCode || b.room?.roomName);
+
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {isRoomChanged ? (
+                                <>
+                                    <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '2px', opacity: 0.7, fontSize: '0.85rem' }}>
+                                        <MapPin size={12} /> {change.originalRoomName}
+                                    </div>
+                                    <ArrowRight size={12} style={{ color: 'var(--text-muted)' }} />
+                                    <div style={{ fontWeight: 700, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                        <MapPin size={14} /> {b.room?.roomName || 'Không xác định'}
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <MapPin size={14} style={{ color: 'var(--color-primary)' }} />
+                                    <span style={{ fontWeight: 700 }}>{b.room?.roomName || 'Không xác định'}</span>
+                                </div>
+                            )}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b.room?.roomCode}</div>
+                    </div>
+                );
+            }
+        },
+        { header: 'Người yêu cầu', accessor: (b: Booking) => b.requestedByAccount?.fullName || 'Không xác định' },
+        {
+            header: 'Thời gian Đổi (FROM -> TO)',
+            accessor: (b: Booking) => {
+                const change = parseChangeRequest(b);
+                const newDate = new Date(b.timeSlot).toLocaleDateString('vi-VN');
+                const isDateChanged = change.isChangeRequest && change.originalDate && change.originalDate !== newDate;
+
+                const newSlot = getSlotFromHour(new Date(b.timeSlot).getHours(), change.type);
+                const isSlotChanged = change.isChangeRequest && change.originalSlot && change.originalSlot !== newSlot;
+
+                const color = change.type === 'ScheduleChange' ? '#ec4899' : (change.type === 'RoomChange' ? '#8b5cf6' : 'var(--text-muted)');
+                const bg = change.type === 'ScheduleChange' ? 'rgba(236, 72, 153, 0.1)' : (change.type === 'RoomChange' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(148, 163, 184, 0.1)');
+
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            color: color,
+                            backgroundColor: bg,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            width: 'fit-content',
+                            textTransform: 'uppercase'
+                        }}>
+                            {change.type === 'ScheduleChange' ? 'Đổi lịch' : (change.type === 'RoomChange' ? 'Đổi phòng' : 'Mượn phòng')}
+                        </span>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.85rem' }}>
+                            {/* Date Comparison */}
+                            {isDateChanged ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>{change.originalDate}</span>
+                                    <ArrowRight size={12} />
+                                    <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{newDate}</span>
+                                </div>
+                            ) : (
+                                <div style={{ color: 'var(--text-main)', fontWeight: 500 }}>{newDate}</div>
+                            )}
+
+                            {/* Slot/Time Comparison */}
+                            {isSlotChanged ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}>
+                                        <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>Ca {change.originalSlot}</span>
+                                        <ArrowRight size={12} />
+                                        <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>Ca {newSlot}</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                        ({b.duration} Giờ)
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                        {new Date(b.timeSlot).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        {change.isChangeRequest && ` (Ca ${newSlot})`}
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                        {b.duration} Giờ
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+        },
+        {
+            header: 'Lý do & Lớp',
+            accessor: (b: Booking) => {
+                const change = parseChangeRequest(b);
+                const isClass = b.reason?.includes('ScheduleId: ') || b.reason?.includes('[Room Change Request]');
+
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {isClass && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.85rem' }}>
+                                <BookOpen size={12} /> {b.reason?.match(/Môn học: (.*?) -/)?.[1] || 'Lịch dạy học'}
+                            </div>
+                        )}
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cleanDisplayReason(b.reason)}>
+                            {cleanDisplayReason(b.reason)}
+                        </div>
+                    </div>
+                );
+            }
+        },
         {
             header: 'Trạng thái',
-            accessor: (b) => {
+            accessor: (b: Booking) => {
                 const info = getStatusInfo(b.status)
                 return (
                     <span className="badge" style={{ backgroundColor: info.bg, color: info.color }}>
@@ -91,7 +221,7 @@ export const BookingManagementPage: React.FC = () => {
         },
         {
             header: 'Hành động',
-            accessor: (b) => (
+            accessor: (b: Booking) => (
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {b.status === BookingStatus.Pending && (
                         <>
@@ -140,7 +270,7 @@ export const BookingManagementPage: React.FC = () => {
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', position: 'relative', zIndex: 1 }}>
                 <DataTable
                     columns={columns}
                     data={bookings}
@@ -149,13 +279,15 @@ export const BookingManagementPage: React.FC = () => {
                 />
 
                 {!loading && total > 0 && (
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(total / 10)}
-                        onPageChange={setCurrentPage}
-                        total={total}
-                        pageSize={10}
-                    />
+                    <div style={{ marginTop: '1.5rem' }}>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={Math.ceil(total / 10)}
+                            onPageChange={setCurrentPage}
+                            total={total}
+                            pageSize={10}
+                        />
+                    </div>
                 )}
             </div>
 

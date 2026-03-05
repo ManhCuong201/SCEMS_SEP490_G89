@@ -4,6 +4,7 @@ using AutoMapper;
 
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Equipment;
+using SCEMS.Application.DTOs.Import;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Entities;
 using SCEMS.Domain.Enums;
@@ -205,13 +206,13 @@ public class EquipmentService : IEquipmentService
         await _unitOfWork.SaveChangesAsync();
         return true;
     }
-    public async Task<int> ImportEquipmentAsync(Stream fileStream)
+    public async Task<ImportResultDto> ImportEquipmentAsync(Stream fileStream)
     {
+        var result = new ImportResultDto();
         using var workbook = new XLWorkbook(fileStream);
         var worksheet = workbook.Worksheet(1);
         var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header
 
-        var importedCount = 0;
         var types = await _unitOfWork.EquipmentTypes.GetAll().ToListAsync();
         var rooms = await _unitOfWork.Rooms.GetAll().ToListAsync();
 
@@ -219,20 +220,41 @@ public class EquipmentService : IEquipmentService
         {
             try
             {
-                var name = row.Cell(1).GetValue<string>();
-                var description = row.Cell(2).GetValue<string>();
-                var typeCode = row.Cell(3).GetValue<string>();
-                var roomCode = row.Cell(4).GetValue<string>();
-                var statusStr = row.Cell(5).GetValue<string>();
+                var name = row.Cell(1).GetValue<string>()?.Trim();
+                var description = row.Cell(2).GetValue<string>()?.Trim();
+                var typeCode = row.Cell(3).GetValue<string>()?.Trim();
+                var roomCode = row.Cell(4).GetValue<string>()?.Trim();
+                var statusStr = row.Cell(5).GetValue<string>()?.Trim();
 
-                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(typeCode) || string.IsNullOrWhiteSpace(roomCode))
-                    continue;
+                var rowErrors = new List<string>();
+                if (string.IsNullOrWhiteSpace(name)) rowErrors.Add("Tên thiết bị là bắt buộc");
+                if (string.IsNullOrWhiteSpace(typeCode)) rowErrors.Add("Mã loại thiết bị là bắt buộc");
+                if (string.IsNullOrWhiteSpace(roomCode)) rowErrors.Add("Mã phòng là bắt buộc");
 
                 var type = types.FirstOrDefault(t => t.Code.Equals(typeCode, StringComparison.OrdinalIgnoreCase));
                 var room = rooms.FirstOrDefault(r => r.RoomCode.Equals(roomCode, StringComparison.OrdinalIgnoreCase));
 
-                if (type == null || room == null)
+                if (!string.IsNullOrWhiteSpace(typeCode) && type == null)
+                    rowErrors.Add($"Loại thiết bị '{typeCode}' không tìm thấy");
+
+                if (!string.IsNullOrWhiteSpace(roomCode) && room == null)
+                    rowErrors.Add($"Phòng '{roomCode}' không tìm thấy");
+
+                // Check for duplicate name in room (prevent accidental doubles in same file or existing)
+                if (room != null && !string.IsNullOrWhiteSpace(name))
+                {
+                    var isDuplicate = await _unitOfWork.Equipment.GetAll()
+                        .AnyAsync(e => e.RoomId == room.Id && e.Name.ToLower() == name.ToLower());
+                    if (isDuplicate)
+                        rowErrors.Add($"Thiết bị '{name}' đã tồn tại trong phòng {room.RoomName}");
+                }
+
+                if (rowErrors.Any())
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Dòng {row.RowNumber()}: {string.Join(", ", rowErrors)}.");
                     continue;
+                }
 
                 EquipmentStatus status = EquipmentStatus.Working;
                 if (Enum.TryParse<EquipmentStatus>(statusStr, true, out var parsedStatus))
@@ -242,24 +264,25 @@ public class EquipmentService : IEquipmentService
 
                 var equipment = new Equipment
                 {
-                    Name = name,
+                    Name = name!,
                     Description = description,
-                    EquipmentTypeId = type.Id,
-                    RoomId = room.Id,
+                    EquipmentTypeId = type!.Id,
+                    RoomId = room!.Id,
                     Status = status
                 };
 
                 await _unitOfWork.Equipment.AddAsync(equipment);
-                importedCount++;
+                result.SuccessCount++;
             }
-            catch
+            catch (Exception ex)
             {
-                continue;
+                result.FailureCount++;
+                result.Errors.Add($"Row {row.RowNumber()}: {ex.Message}");
             }
         }
 
         await _unitOfWork.SaveChangesAsync();
-        return importedCount;
+        return result;
     }
 
 

@@ -30,6 +30,18 @@ public class ImportService : IImportService
         var worksheet = workbook.Worksheet(1);
         var rows = worksheet.RowsUsed().Skip(1); // Skip header
 
+        // Fetch all existing emails and student codes to check for duplicates in-memory
+        var existingEmails = await _unitOfWork.Accounts.GetAll()
+            .Select(a => a.Email.ToLower())
+            .ToListAsync();
+        var processedEmails = new HashSet<string>(existingEmails, StringComparer.OrdinalIgnoreCase);
+
+        var existingCodes = await _unitOfWork.Accounts.GetAll()
+            .Where(a => a.StudentCode != null)
+            .Select(a => a.StudentCode.ToLower())
+            .ToListAsync();
+        var processedCodes = new HashSet<string>(existingCodes, StringComparer.OrdinalIgnoreCase);
+
         foreach (var row in rows)
         {
             try
@@ -40,13 +52,34 @@ public class ImportService : IImportService
                 var password = row.Cell(4).GetValue<string>();
                 var roleStr = row.Cell(5).GetValue<string>();
 
-                if (string.IsNullOrWhiteSpace(email)) continue;
+                var rowErrors = new List<string>();
 
-                var existingAccount = await _unitOfWork.Accounts.GetByEmailAsync(email);
-                if (existingAccount != null)
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    rowErrors.Add("Email là bắt buộc");
+                }
+                else
+                {
+                    var emailLower = email.Trim().ToLower();
+                    if (processedEmails.Contains(emailLower))
+                    {
+                        rowErrors.Add($"Email '{email}' đã tồn tại hoặc bị trùng lặp trong tệp");
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(studentCode))
+                {
+                    var codeLower = studentCode.Trim().ToLower();
+                    if (processedCodes.Contains(codeLower))
+                    {
+                        rowErrors.Add($"Mã sinh viên/nhân viên '{studentCode}' đã tồn tại hoặc bị trùng lặp trong tệp");
+                    }
+                }
+
+                if (rowErrors.Any())
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Email {email} already exists.");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: {string.Join(", ", rowErrors)}.");
                     continue;
                 }
                 
@@ -60,7 +93,7 @@ public class ImportService : IImportService
                 var account = new Account
                 {
                     FullName = fullName,
-                    Email = email,
+                    Email = email!,
                     StudentCode = studentCode,
                     Role = role,
                     PasswordHash = _passwordHasher.HashPassword(password),
@@ -68,12 +101,20 @@ public class ImportService : IImportService
                 };
 
                 await _unitOfWork.Accounts.AddAsync(account);
+                
+                // Add to processed lists to catch duplicates in the same file
+                processedEmails.Add(email!.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(studentCode))
+                {
+                    processedCodes.Add(studentCode.Trim().ToLower());
+                }
+
                 result.SuccessCount++;
             }
             catch (Exception ex)
             {
                 result.FailureCount++;
-                result.Errors.Add($"Row {row.RowNumber()}: {ex.Message}");
+                result.Errors.Add($"Dòng {row.RowNumber()}: {ex.Message}");
             }
         }
         
@@ -93,7 +134,24 @@ public class ImportService : IImportService
         var existingClassCodes = await _unitOfWork.Classes.GetAll()
             .Select(c => c.ClassCode)
             .ToListAsync();
-        var processedClassCodes = new HashSet<string>(existingClassCodes);
+        var processedClassCodes = new HashSet<string>(existingClassCodes, StringComparer.OrdinalIgnoreCase);
+
+        // Optimization: Pre-cache ALL accounts (lecturers/staff) in-memory
+        var allAccounts = await _unitOfWork.Accounts.GetAll().ToListAsync();
+        var lecturerMap = new Dictionary<string, Account>(StringComparer.OrdinalIgnoreCase);
+        foreach (var acc in allAccounts)
+        {
+            if (!string.IsNullOrEmpty(acc.StudentCode)) lecturerMap[acc.StudentCode] = acc;
+            if (!string.IsNullOrEmpty(acc.Email))
+            {
+                lecturerMap[acc.Email] = acc;
+                var prefix = acc.Email.Split('@')[0];
+                if (!lecturerMap.ContainsKey(prefix)) lecturerMap[prefix] = acc;
+            }
+        }
+
+        // Fetch ALL existing schedules to check for conflicts in-memory for speed
+        var existingSchedules = await _unitOfWork.TeachingSchedules.GetAll().ToListAsync();
 
         foreach (var row in rows)
         {
@@ -107,27 +165,25 @@ public class ImportService : IImportService
                 var slotEntry = row.Cell(8).GetValue<string>()?.Trim();
                 var lecturerCode = row.Cell(9).GetValue<string>()?.Trim();
 
-                if (string.IsNullOrWhiteSpace(classCode)) continue;
+                if (string.IsNullOrWhiteSpace(classCode))
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Mã lớp là bắt buộc.");
+                    continue;
+                }
 
                 var room = rooms.FirstOrDefault(r => r.RoomName.Equals(roomName, StringComparison.OrdinalIgnoreCase) || r.RoomCode.Equals(roomName, StringComparison.OrdinalIgnoreCase));
                 if (room == null)
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Room {roomName} not found.");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Không tìm thấy phòng {roomName}.");
                     continue;
                 }
 
-                var searchCode = lecturerCode.Trim().ToLower();
-                var lecturerAccount = await _unitOfWork.Accounts.GetAll().FirstOrDefaultAsync(a => 
-                    (a.StudentCode != null && a.StudentCode.ToLower() == searchCode) || 
-                    (a.Email != null && a.Email.ToLower() == searchCode) || 
-                    (a.Email != null && a.Email.ToLower().StartsWith(searchCode + "@")) ||
-                    (a.FullName != null && a.FullName.ToLower() == searchCode)
-                );
-                if (lecturerAccount == null)
+                if (string.IsNullOrWhiteSpace(lecturerCode) || !lecturerMap.TryGetValue(lecturerCode.Trim(), out var lecturerAccount))
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Lecturer with code {lecturerCode} not found.");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Không tìm thấy giảng viên có mã/email {lecturerCode}.");
                     continue;
                 }
 
@@ -147,7 +203,7 @@ public class ImportService : IImportService
                 if (!TryParseExcelDate(fromCell, out var fromDate))
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Invalid From Date: {fromCell.GetString()}");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Ngày bắt đầu không hợp lệ: {fromCell.GetString()}");
                     continue;
                 }
 
@@ -155,7 +211,7 @@ public class ImportService : IImportService
                 if (!TryParseExcelDate(toCell, out var toDate))
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Invalid To Date: {toCell.GetString()}");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Ngày kết thúc không hợp lệ: {toCell.GetString()}");
                     continue;
                 }
 
@@ -163,7 +219,7 @@ public class ImportService : IImportService
                 if (!targetDays.Any())
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Invalid or missing days of week: {daysOfWeekStr}");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Ngày trong tuần không hợp lệ hoặc bị thiếu: {daysOfWeekStr}");
                     continue;
                 }
 
@@ -192,6 +248,34 @@ public class ImportService : IImportService
                             foreach (var slot in slotsToApply)
                             {
                                 var times = SlotHelper.GetSlotTimes(slotType, slot);
+                                var slotConflicts = new List<string>();
+
+                                // --- CONFLICT VALIDATION ---
+                                
+                                // 1. Check for Room Conflict
+                                if (existingSchedules.Any(s => s.RoomId == room.Id && s.Date.Date == current.Date && s.Slot == slot))
+                                {
+                                    slotConflicts.Add($"Phòng {room.RoomName} đã có lịch");
+                                }
+
+                                // 2. Check for Lecturer Conflict
+                                if (existingSchedules.Any(s => s.LecturerId == lecturerAccount.Id.ToString() && s.Date.Date == current.Date && s.Slot == slot))
+                                {
+                                    slotConflicts.Add($"Giảng viên {lecturerAccount.FullName} ({lecturerCode}) đã có lịch");
+                                }
+
+                                // 3. Check for Class Conflict (Redundancy check)
+                                if (existingSchedules.Any(s => s.ClassCode.Equals(classCode, StringComparison.OrdinalIgnoreCase) && s.Date.Date == current.Date && s.Slot == slot))
+                                {
+                                    slotConflicts.Add($"Lớp {classCode} đã có lịch");
+                                }
+
+                                if (slotConflicts.Any())
+                                {
+                                    result.FailureCount++;
+                                    result.Errors.Add($"Dòng {row.RowNumber()} - Ngày {current:dd/MM/yyyy} - Slot {slot}: {string.Join(", ", slotConflicts)}.");
+                                    continue;
+                                }
 
                                 var schedule = new Teaching_Schedule
                                 {
@@ -206,7 +290,9 @@ public class ImportService : IImportService
                                     LecturerName = lecturerAccount.FullName,
                                     LecturerEmail = lecturerAccount.Email
                                 };
+                                
                                 await _unitOfWork.TeachingSchedules.AddAsync(schedule);
+                                existingSchedules.Add(schedule); // Add to local list to catch conflicts within the same file
 
                                 result.SuccessCount++;
                             }
@@ -428,17 +514,25 @@ public class ImportService : IImportService
                 var classCode = row.Cell(1).GetValue<string>()?.Trim();
                 var studentSearch = row.Cell(2).GetValue<string>()?.Trim(); // Code or Email
 
-                if (string.IsNullOrWhiteSpace(classCode) || string.IsNullOrWhiteSpace(studentSearch)) continue;
+                var rowErrors = new List<string>();
+
+                if (string.IsNullOrWhiteSpace(classCode)) rowErrors.Add("Mã lớp là bắt buộc");
+                if (string.IsNullOrWhiteSpace(studentSearch)) rowErrors.Add("Mã sinh viên/Email là bắt buộc");
+
+                if (rowErrors.Any())
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Dòng {row.RowNumber()}: {string.Join(", ", rowErrors)}.");
+                    continue;
+                }
 
                 var targetClass = existingClasses.FirstOrDefault(c => c.ClassCode.Equals(classCode, StringComparison.OrdinalIgnoreCase));
                 if (targetClass == null)
                 {
-                    result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Class {classCode} not found.");
-                    continue;
+                    rowErrors.Add($"Không tìm thấy lớp {classCode}");
                 }
 
-                var searchStr = studentSearch.ToLower();
+                var searchStr = studentSearch!.ToLower();
                 var targetStudent = existingStudents.FirstOrDefault(s => 
                     (s.StudentCode != null && s.StudentCode.ToLower() == searchStr) || 
                     (s.Email != null && s.Email.ToLower() == searchStr) ||
@@ -447,23 +541,28 @@ public class ImportService : IImportService
 
                 if (targetStudent == null)
                 {
+                    rowErrors.Add($"Không tìm thấy sinh viên {studentSearch}");
+                }
+
+                if (rowErrors.Any())
+                {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Student {studentSearch} not found.");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: {string.Join(", ", rowErrors)}.");
                     continue;
                 }
 
-                var exists = existingClassStudents.Any(cs => cs.ClassId == targetClass.Id && cs.StudentId == targetStudent.Id);
+                var exists = existingClassStudents.Any(cs => cs.ClassId == targetClass!.Id && cs.StudentId == targetStudent!.Id);
                 if (exists)
                 {
                     result.FailureCount++;
-                    result.Errors.Add($"Row {row.RowNumber()}: Student {studentSearch} is already in class {classCode}.");
+                    result.Errors.Add($"Dòng {row.RowNumber()}: Sinh viên {studentSearch} đã có trong lớp {classCode}.");
                     continue;
                 }
 
                 var newClassStudent = new ClassStudent
                 {
-                    ClassId = targetClass.Id,
-                    StudentId = targetStudent.Id
+                    ClassId = targetClass!.Id,
+                    StudentId = targetStudent!.Id
                 };
 
                 await _unitOfWork.ClassStudents.AddAsync(newClassStudent);
@@ -476,7 +575,7 @@ public class ImportService : IImportService
             catch (Exception ex)
             {
                 result.FailureCount++;
-                result.Errors.Add($"Row {row.RowNumber()}: {ex.Message}");
+                result.Errors.Add($"Dòng {row.RowNumber()}: {ex.Message}");
             }
         }
 

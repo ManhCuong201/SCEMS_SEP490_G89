@@ -98,8 +98,8 @@ public class RoomsController : ControllerBase
         try
         {
             using var stream = file.OpenReadStream();
-            var count = await _roomService.ImportRoomAsync(stream);
-            return Ok(new { count });
+            var result = await _roomService.ImportRoomAsync(stream);
+            return Ok(result);
         }
         catch (Exception ex)
         {

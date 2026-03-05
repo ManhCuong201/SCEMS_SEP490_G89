@@ -8,7 +8,7 @@ public interface IBookingService
 {
     Task<PaginatedResult<BookingResponseDto>> GetBookingsAsync(PaginationParams @params, Guid? userId = null);
     Task<BookingResponseDto?> GetBookingByIdAsync(Guid id);
-    Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId);
+    Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId, bool skipDurationCheck = false);
     Task<BookingResponseDto?> UpdateStatusAsync(Guid id, BookingStatus status);
     Task<List<BookingResponseDto>> GetRoomScheduleAsync(Guid roomId, DateTime startDate, DateTime endDate);
     Task<List<BookingResponseDto>> GetBookingsByDateAsync(DateTime date);

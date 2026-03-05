@@ -1,5 +1,6 @@
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Equipment;
+using SCEMS.Application.DTOs.Import;
 
 namespace SCEMS.Application.Services.Interfaces;
 
@@ -11,7 +12,7 @@ public interface IEquipmentService
     Task<EquipmentResponseDto?> UpdateEquipmentAsync(Guid id, UpdateEquipmentDto dto);
     Task<bool> DeleteEquipmentAsync(Guid id);
     Task<bool> UpdateStatusAsync(Guid id, int status);
-    Task<int> ImportEquipmentAsync(Stream fileStream);
+    Task<ImportResultDto> ImportEquipmentAsync(Stream fileStream);
     Task<Stream> GetTemplateStreamAsync();
     Task<List<EquipmentHistoryResponseDto>> GetEquipmentHistoryAsync(Guid equipmentId);
 }

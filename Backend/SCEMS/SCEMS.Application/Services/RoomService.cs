@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Room;
+using SCEMS.Application.DTOs.Import;
 using SCEMS.Application.DTOs.Department;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Entities;
@@ -189,34 +190,72 @@ public class RoomService : IRoomService
         return true;
     }
 
-    public async Task<int> ImportRoomAsync(Stream fileStream)
+    public async Task<ImportResultDto> ImportRoomAsync(Stream fileStream)
     {
+        var result = new ImportResultDto();
         using var workbook = new XLWorkbook(fileStream);
         var worksheet = workbook.Worksheet(1);
         var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header
 
-        // Fetch all room types to lookup
+        // Fetch all room types and existing rooms to check logic in-memory
         var roomTypes = await _unitOfWork.RoomTypes.GetAllAsync();
-
-        var importedCount = 0;
+        var existingRoomCodes = await _unitOfWork.Rooms.GetAll().Select(r => r.RoomCode.ToLower()).ToListAsync();
+        var processedCodes = new HashSet<string>(existingRoomCodes, StringComparer.OrdinalIgnoreCase);
 
         foreach (var row in rows)
         {
             try
             {
-                var code = row.Cell(1).GetValue<string>();
-                var name = row.Cell(2).GetValue<string>();
-                var capacityStr = row.Cell(3).GetValue<string>();
-                var statusStr = row.Cell(4).GetValue<string>();
-                var roomTypeCode = row.Cell(5).GetValue<string>();
-                var deptCode = row.Cell(6).GetValue<string>();
+                var code = row.Cell(1).GetValue<string>()?.Trim();
+                var name = row.Cell(2).GetValue<string>()?.Trim();
+                var capacityStr = row.Cell(3).GetValue<string>()?.Trim();
+                var statusStr = row.Cell(4).GetValue<string>()?.Trim();
+                var roomTypeCode = row.Cell(5).GetValue<string>()?.Trim();
+                var deptCode = row.Cell(6).GetValue<string>()?.Trim();
 
-                if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+                var roomTypeFound = true;
+                var deptFound = true;
+                var rowErrors = new List<string>();
+
+                if (string.IsNullOrWhiteSpace(code)) rowErrors.Add("Mã phòng là bắt buộc");
+                if (string.IsNullOrWhiteSpace(name)) rowErrors.Add("Tên phòng là bắt buộc");
+
+                if (!string.IsNullOrWhiteSpace(code) && processedCodes.Contains(code.ToLower()))
+                {
+                    rowErrors.Add($"Mã phòng '{code}' đã tồn tại hoặc bị trùng lặp trong tệp");
+                }
+
+                Guid? typeId = null;
+                if (!string.IsNullOrWhiteSpace(roomTypeCode))
+                {
+                    var type = roomTypes.FirstOrDefault(t => t.Code.Equals(roomTypeCode, StringComparison.OrdinalIgnoreCase));
+                    if (type != null) typeId = type.Id;
+                    else
+                    {
+                        roomTypeFound = false;
+                        rowErrors.Add($"Loại phòng '{roomTypeCode}' không tìm thấy");
+                    }
+                }
+
+                Guid? deptId = null;
+                if (!string.IsNullOrWhiteSpace(deptCode))
+                {
+                    var dept = await _unitOfWork.Departments.GetAll()
+                        .FirstOrDefaultAsync(d => d.DepartmentCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase));
+                    if (dept != null) deptId = dept.Id;
+                    else
+                    {
+                        deptFound = false;
+                        rowErrors.Add($"Phòng ban '{deptCode}' không tìm thấy");
+                    }
+                }
+
+                if (rowErrors.Any())
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Dòng {row.RowNumber()}: {string.Join(", ", rowErrors)}.");
                     continue;
-
-                // Check duplicate
-                var existing = await _unitOfWork.Rooms.GetByRoomCodeAsync(code);
-                if (existing != null) continue;
+                }
 
                 int capacity = 30;
                 if (!int.TryParse(capacityStr, out capacity)) capacity = 30;
@@ -227,44 +266,27 @@ public class RoomService : IRoomService
 
                 var room = new Room
                 {
-                    RoomCode = code,
-                    RoomName = name,
+                    RoomCode = code!,
+                    RoomName = name!,
                     Capacity = capacity,
-                    Status = status
+                    Status = status,
+                    RoomTypeId = typeId,
+                    DepartmentId = deptId
                 };
 
-                // Set Room Type if provided
-                if (!string.IsNullOrWhiteSpace(roomTypeCode))
-                {
-                    var type = roomTypes.FirstOrDefault(t => t.Code.Equals(roomTypeCode, StringComparison.OrdinalIgnoreCase));
-                    if (type != null)
-                    {
-                        room.RoomTypeId = type.Id;
-                    }
-                }
-
-                // Set Department if provided
-                if (!string.IsNullOrWhiteSpace(deptCode))
-                {
-                    var dept = await _unitOfWork.Departments.GetAll()
-                        .FirstOrDefaultAsync(d => d.DepartmentCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase));
-                    if (dept != null)
-                    {
-                        room.DepartmentId = dept.Id;
-                    }
-                }
-
                 await _unitOfWork.Rooms.AddAsync(room);
-                importedCount++;
+                processedCodes.Add(code!.ToLower());
+                result.SuccessCount++;
             }
-            catch
+            catch (Exception ex)
             {
-                continue;
+                result.FailureCount++;
+                result.Errors.Add($"Row {row.RowNumber()}: {ex.Message}");
             }
         }
 
         await _unitOfWork.SaveChangesAsync();
-        return importedCount;
+        return result;
     }
 
     public async Task<Stream> GetTemplateStreamAsync()

@@ -12,6 +12,7 @@ public interface INotificationService
     Task SendNotificationAsync(Guid recipientId, string title, string message, string? link = null);
     Task SendToRoleAsync(AccountRole role, string title, string message, string? link = null);
     Task<IEnumerable<Notification>> GetUserUnreadNotificationsAsync(Guid userId);
+    Task<IEnumerable<Notification>> GetUserNotificationsAsync(Guid userId, int count = 50);
     Task MarkAsReadAsync(Guid notificationId, Guid userId);
     Task MarkAllAsReadAsync(Guid userId);
 }
