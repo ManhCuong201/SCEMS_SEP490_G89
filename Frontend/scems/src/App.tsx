@@ -153,9 +153,15 @@ const AppContent: React.FC = () => {
       } />
       <Route path="/notifications" element={
         <PrivateRoute>
-          <UserLayout>
-            <NotificationsPage />
-          </UserLayout>
+          {(user?.role === 'Admin' || user?.role === 'AssetStaff' || user?.role === 'BookingStaff' || user?.role === 'Guard') ? (
+            <AdminLayout>
+              <NotificationsPage />
+            </AdminLayout>
+          ) : (
+            <UserLayout>
+              <NotificationsPage />
+            </UserLayout>
+          )}
         </PrivateRoute>
       } />
       <Route path="/" element={<HomeRedirect />} />

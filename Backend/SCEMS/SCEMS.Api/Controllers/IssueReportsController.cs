@@ -61,8 +61,19 @@ public class IssueReportsController : ControllerBase
     public async Task<IActionResult> CreateReport([FromBody] CreateIssueReportDto dto)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _issueReportService.CreateReportAsync(dto, userId);
-        return CreatedAtAction(nameof(GetReport), new { id = result.Id }, result);
+        try
+        {
+            var result = await _issueReportService.CreateReportAsync(dto, userId);
+            return CreatedAtAction(nameof(GetReport), new { id = result.Id }, result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPatch("{id}/status")]

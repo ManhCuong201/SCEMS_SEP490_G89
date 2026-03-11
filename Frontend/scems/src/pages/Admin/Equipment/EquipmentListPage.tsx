@@ -13,7 +13,7 @@ import { EquipmentHistory } from '../../../types/equipment';
 export const EquipmentListPage: React.FC = () => {
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [error, setError] = useState<string | React.ReactNode>('');
     const [success, setSuccess] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState('');
@@ -159,8 +159,29 @@ export const EquipmentListPage: React.FC = () => {
                                 try {
                                     setLoading(true);
                                     const res = await equipmentService.import(e.target.files[0]);
-                                    setSuccess(`Đã nhập thành công ${res.count} thiết bị`);
-                                    loadEquipment();
+                                    if (res.failureCount > 0 && res.successCount === 0) {
+                                        setError(
+                                            <div>
+                                                <strong>Import thất bại ({res.failureCount} dòng):</strong>
+                                                <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', maxHeight: '160px', overflowY: 'auto' }}>
+                                                    {res.errors.map((err, i) => <li key={i} style={{ fontSize: '0.85rem' }}>{err}</li>)}
+                                                </ul>
+                                            </div>
+                                        );
+                                    } else {
+                                        setSuccess(`Đã nhập thành công ${res.successCount} thiết bị.${res.failureCount > 0 ? ` ${res.failureCount} dòng thất bại.` : ''}`);
+                                        if (res.errors.length > 0) {
+                                            setError(
+                                                <div>
+                                                    <strong>{res.failureCount} dòng thất bại:</strong>
+                                                    <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', maxHeight: '160px', overflowY: 'auto' }}>
+                                                        {res.errors.map((err, i) => <li key={i} style={{ fontSize: '0.85rem' }}>{err}</li>)}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        }
+                                        loadEquipment();
+                                    }
                                 } catch (err: any) {
                                     setError(err.response?.data?.message || 'Nhập thiết bị thất bại');
                                 } finally {

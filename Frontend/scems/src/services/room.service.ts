@@ -32,10 +32,10 @@ export const roomService = {
     await api.patch(`/admin/rooms/${id}/status`, { status })
   },
 
-  async import(file: File): Promise<{ count: number }> {
+  async import(file: File): Promise<{ successCount: number; failureCount: number; errors: string[] }> {
     const formData = new FormData()
     formData.append('file', file)
-    const { data } = await api.post<{ count: number }>('/admin/rooms/import', formData, {
+    const { data } = await api.post<{ successCount: number; failureCount: number; errors: string[] }>('/admin/rooms/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     return data

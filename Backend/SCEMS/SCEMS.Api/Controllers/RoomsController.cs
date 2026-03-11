@@ -45,6 +45,10 @@ public class RoomsController : ControllerBase
             var room = await _roomService.CreateRoomAsync(dto);
             return CreatedAtAction(nameof(GetRoomById), new { id = room.Id }, room);
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { message = ex.Message });
@@ -61,6 +65,10 @@ public class RoomsController : ControllerBase
             if (room == null)
                 return NotFound(new { message = "Room not found" });
             return Ok(room);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

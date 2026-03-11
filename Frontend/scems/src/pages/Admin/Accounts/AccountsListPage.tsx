@@ -13,7 +13,7 @@ export const AccountsListPage: React.FC = () => {
   const { user: currentUser } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | React.ReactNode>('')
   const [success, setSuccess] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -64,7 +64,7 @@ export const AccountsListPage: React.FC = () => {
 
   const handleStatusChange = async (id: string, newStatus: string, e: React.ChangeEvent<HTMLSelectElement>) => {
     try {
-      const statusValue = parseInt(newStatus)
+      const statusValue = newStatus === AccountStatus.Active ? 0 : 1;
       await accountService.updateStatus(id, statusValue)
       setSuccess('Đã cập nhật trạng thái')
       loadAccounts()
@@ -148,11 +148,29 @@ export const AccountsListPage: React.FC = () => {
 
     try {
       const result = await accountService.importAccounts(file)
-      setSuccess(`Đã nhập thành công ${result.successCount} tài khoản. ${result.failureCount} thất bại.`)
-      if (result.errors.length > 0) {
-        setError(`Import thất bại một phần: ${result.errors.slice(0, 3).join(', ')}${result.errors.length > 3 ? '...' : ''}`)
+      if (result.failureCount > 0 && result.successCount === 0) {
+        setError(
+          <div>
+            <strong>Import thất bại ({result.failureCount} dòng):</strong>
+            <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', maxHeight: '160px', overflowY: 'auto' }}>
+              {result.errors.map((e, i) => <li key={i} style={{ fontSize: '0.85rem' }}>{e}</li>)}
+            </ul>
+          </div>
+        )
+      } else {
+        setSuccess(`Đã nhập thành công ${result.successCount} tài khoản.${result.failureCount > 0 ? ` ${result.failureCount} dòng thất bại.` : ''}`)
+        if (result.errors.length > 0) {
+          setError(
+            <div>
+              <strong>{result.failureCount} dòng thất bại:</strong>
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', maxHeight: '160px', overflowY: 'auto' }}>
+                {result.errors.map((e, i) => <li key={i} style={{ fontSize: '0.85rem' }}>{e}</li>)}
+              </ul>
+            </div>
+          )
+        }
+        loadAccounts()
       }
-      loadAccounts()
     } catch (err: any) {
       setError(err.response?.data?.message || 'Nhập tài khoản thất bại')
     } finally {

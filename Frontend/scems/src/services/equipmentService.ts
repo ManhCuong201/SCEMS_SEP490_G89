@@ -39,10 +39,10 @@ export const equipmentService = {
         await api.patch(`/admin/equipment/${id}/status`, { status });
     },
 
-    import: async (file: File): Promise<{ count: number }> => {
+    import: async (file: File): Promise<{ successCount: number; failureCount: number; errors: string[] }> => {
         const formData = new FormData();
         formData.append('file', file);
-        const { data } = await api.post<{ count: number }>('/admin/equipment/import', formData, {
+        const { data } = await api.post<{ successCount: number; failureCount: number; errors: string[] }>('/admin/equipment/import', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return data;

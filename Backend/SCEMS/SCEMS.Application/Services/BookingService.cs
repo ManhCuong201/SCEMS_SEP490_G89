@@ -272,7 +272,8 @@ public class BookingService : IBookingService
                                  {
                                      await _notificationService.SendNotificationAsync(studentId, 
                                          "Thay đổi lịch học", 
-                                         $"Lịch học môn {schedule.Subject} đã được đổi sang phòng {booking.Room?.RoomName} lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.");
+                                         $"Lịch học môn {schedule.Subject} đã được đổi sang phòng {booking.Room?.RoomName} lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
+                                         "/schedule");
                                  }
                              }
                          }
@@ -292,24 +293,28 @@ public class BookingService : IBookingService
         // Result Notification to Requester
         await _notificationService.SendNotificationAsync(booking.RequestedBy, 
             $"Kết quả: {requestTypeStr}", 
-            $"{requestTypeStr} cho phòng {booking.Room?.RoomName} vào {booking.TimeSlot:dd/MM/yyyy} đã {statusStr}.");
+            $"{requestTypeStr} cho phòng {booking.Room?.RoomName} vào {booking.TimeSlot:dd/MM/yyyy} đã {statusStr}.",
+            "/my-bookings");
 
         // Audit Log for Admin
         await _notificationService.SendToRoleAsync(AccountRole.Admin, 
             $"Nhật ký hệ thống: {requestTypeStr}", 
-            $"{requestTypeStr} của tài khoản ID {booking.RequestedBy} cho phòng {booking.Room?.RoomName} đã {statusStr}.");
+            $"{requestTypeStr} của tài khoản ID {booking.RequestedBy} cho phòng {booking.Room?.RoomName} đã {statusStr}.",
+            "/admin/bookings");
 
         if (status == BookingStatus.Approved)
         {
             // Security Notification
             await _notificationService.SendToRoleAsync(AccountRole.Guard, 
                 "Lịch trình phòng mới được phê duyệt", 
-                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.");
+                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
+                "/admin/booking-board");
 
             // Asset Staff Notification
             await _notificationService.SendToRoleAsync(AccountRole.AssetStaff, 
                 "Yêu cầu chuẩn bị thiết bị", 
-                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}. Vui lòng kiểm tra và chuẩn bị thiết bị nếu cần.");
+                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}. Vui lòng kiểm tra và chuẩn bị thiết bị nếu cần.",
+                "/admin/booking-board");
         }
 
         return _mapper.Map<BookingResponseDto>(booking);

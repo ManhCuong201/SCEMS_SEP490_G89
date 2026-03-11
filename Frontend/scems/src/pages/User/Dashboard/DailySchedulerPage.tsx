@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useDebounce } from '../../../hooks/useDebounce'
 import { createPortal } from 'react-dom'
 import { roomService } from '../../../services/room.service'
 import { roomTypeService } from '../../../services/roomType.service'
@@ -73,6 +74,7 @@ export const DailySchedulerPage: React.FC = () => {
 
     const [selectedDate, setSelectedDate] = useState(getLocalToday())
     const [search, setSearch] = useState('')
+    const debouncedSearch = useDebounce(search, 400)
     const [selectedType, setSelectedType] = useState('')
     const [availableOnly, setAvailableOnly] = useState(false)
     const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
@@ -107,19 +109,15 @@ export const DailySchedulerPage: React.FC = () => {
     const loadData = async () => {
         setLoading(true)
         try {
-            const allRooms = await roomService.getAllRoomsBatched(undefined, 50, undefined, selectedDepartment || undefined)
+            const allRooms = await roomService.getAllRoomsBatched(undefined, 50, debouncedSearch || undefined, selectedDepartment || undefined)
             const [typesData, schedulesData, bookingsData] = await Promise.all([
                 roomTypeService.getAll(),
                 scheduleService.getSchedulesByDay(selectedDate),
                 bookingService.getBookingsByDay(selectedDate)
             ])
 
-            // Apply existing filters manually to the full list
+            // Apply remaining client-side filters
             let filtered = allRooms;
-            if (search) {
-                const s = search.toLowerCase();
-                filtered = filtered.filter(r => r.roomName.toLowerCase().includes(s) || (r.roomCode && r.roomCode.toLowerCase().includes(s)));
-            }
             if (selectedDepartment) {
                 filtered = filtered.filter(r => r.departmentId === selectedDepartment);
             }
@@ -138,7 +136,7 @@ export const DailySchedulerPage: React.FC = () => {
 
     useEffect(() => {
         loadData()
-    }, [selectedDate, search, selectedType, selectedDepartment])
+    }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
 
     const handleBookClick = (room: Room, hour: number, alreadyRequested: boolean, classSchedule?: ScheduleResponse) => {
         if (alreadyRequested) return

@@ -49,12 +49,16 @@ export const SchedulePage: React.FC = () => {
     // Slots 0 to 12
     const slots = Array.from({ length: 13 }, (_, i) => i)
 
+    // Fetch rooms once on mount — room list is static and not affected by week or class filter
     useEffect(() => {
-        fetchSchedule()
         if (user?.role === 'Lecturer' || user?.role === 'Admin') {
             roomService.getAllRoomsBatched(undefined, 50).then(setRooms).catch(console.error)
         }
-    }, [currentDate, classSearch, user?.role])
+    }, [user?.role])
+
+    useEffect(() => {
+        fetchSchedule()
+    }, [currentDate, classSearch])
 
     const fetchSchedule = async () => {
         setLoading(true)

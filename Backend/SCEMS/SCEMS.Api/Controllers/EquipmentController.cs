@@ -45,6 +45,10 @@ public class EquipmentController : ControllerBase
             var equipment = await _equipmentService.CreateEquipmentAsync(dto);
             return CreatedAtAction(nameof(GetEquipmentById), new { id = equipment.Id }, equipment);
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { message = ex.Message });
@@ -61,6 +65,10 @@ public class EquipmentController : ControllerBase
             if (equipment == null)
                 return NotFound(new { message = "Equipment not found" });
             return Ok(equipment);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

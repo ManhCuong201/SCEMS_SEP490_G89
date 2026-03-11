@@ -26,10 +26,8 @@ public class RoomService : IRoomService
     public async Task<PaginatedRoomsDto> GetRoomsAsync(PaginationParams @params)
     {
         IQueryable<Room> query = _unitOfWork.Rooms.GetAll()
-        .Include(r => r.Bookings)
-        .Include(r => r.Equipment)
-        .Include(r => r.RoomType)
-        .Include(r => r.Department);
+            .Include(r => r.RoomType)
+            .Include(r => r.Department);
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
@@ -59,34 +57,35 @@ public class RoomService : IRoomService
             query = query.OrderByDescending(r => r.CreatedAt);
         }
 
-        var total = query.Count();
-        var items = query
+        var total = await query.CountAsync();
+
+        // Project counts as inline SQL subqueries to avoid loading all child rows into memory
+        var items = await query
             .Skip((@params.PageIndex - 1) * @params.PageSize)
             .Take(@params.PageSize)
-            .ToList();
-
-        var dtos = items.Select(r => new RoomResponseDto
-        {
-            Id = r.Id,
-            RoomCode = r.RoomCode,
-            RoomName = r.RoomName,
-            Capacity = r.Capacity,
-            Status = r.Status,
-            EquipmentCount = r.Equipment.Count,
-            PendingRequestsCount = r.Bookings.Count(b => b.Status == BookingStatus.Pending),
-            RoomTypeId = r.RoomTypeId,
-            RoomTypeName = r.RoomType?.Name ?? "N/A",
-            Building = r.Building ?? "N/A",
-            DepartmentId = r.DepartmentId,
-            DepartmentName = r.Department?.DepartmentName ?? "N/A",
-            DepartmentCode = r.Department?.DepartmentCode ?? "N/A",
-            CreatedAt = r.CreatedAt,
-            UpdatedAt = r.UpdatedAt
-        }).ToList();
+            .Select(r => new RoomResponseDto
+            {
+                Id = r.Id,
+                RoomCode = r.RoomCode,
+                RoomName = r.RoomName,
+                Capacity = r.Capacity,
+                Status = r.Status,
+                EquipmentCount = r.Equipment.Count(),
+                PendingRequestsCount = r.Bookings.Count(b => b.Status == BookingStatus.Pending),
+                RoomTypeId = r.RoomTypeId,
+                RoomTypeName = r.RoomType != null ? r.RoomType.Name : "N/A",
+                Building = r.Building ?? "N/A",
+                DepartmentId = r.DepartmentId,
+                DepartmentName = r.Department != null ? r.Department.DepartmentName : "N/A",
+                DepartmentCode = r.Department != null ? r.Department.DepartmentCode : "N/A",
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt
+            })
+            .ToListAsync();
 
         return new PaginatedRoomsDto
         {
-            Items = dtos,
+            Items = items,
             Total = total,
             PageIndex = @params.PageIndex,
             PageSize = @params.PageSize
@@ -118,6 +117,20 @@ public class RoomService : IRoomService
             throw new InvalidOperationException($"Room with code {dto.RoomCode} already exists");
         }
 
+        if (dto.RoomTypeId.HasValue)
+        {
+            var roomType = await _unitOfWork.RoomTypes.GetByIdAsync(dto.RoomTypeId.Value);
+            if (roomType == null)
+                throw new KeyNotFoundException($"Room type with ID '{dto.RoomTypeId}' not found.");
+        }
+
+        if (dto.DepartmentId.HasValue)
+        {
+            var department = await _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId.Value);
+            if (department == null)
+                throw new KeyNotFoundException($"Department with ID '{dto.DepartmentId}' not found.");
+        }
+
         var room = new Room
         {
             RoomCode = dto.RoomCode,
@@ -146,6 +159,20 @@ public class RoomService : IRoomService
         if (existingRoom != null && existingRoom.Id != id)
         {
             throw new InvalidOperationException($"Room with code {dto.RoomCode} already exists");
+        }
+
+        if (dto.RoomTypeId.HasValue)
+        {
+            var roomType = await _unitOfWork.RoomTypes.GetByIdAsync(dto.RoomTypeId.Value);
+            if (roomType == null)
+                throw new KeyNotFoundException($"Room type with ID '{dto.RoomTypeId}' not found.");
+        }
+
+        if (dto.DepartmentId.HasValue)
+        {
+            var department = await _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId.Value);
+            if (department == null)
+                throw new KeyNotFoundException($"Department with ID '{dto.DepartmentId}' not found.");
         }
 
         room.RoomCode = dto.RoomCode;

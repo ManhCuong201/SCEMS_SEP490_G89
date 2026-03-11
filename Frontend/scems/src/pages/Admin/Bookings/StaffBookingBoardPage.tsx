@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useDebounce } from '../../../hooks/useDebounce'
 import { createPortal } from 'react-dom'
 import { roomService } from '../../../services/room.service'
 import { roomTypeService } from '../../../services/roomType.service'
@@ -40,6 +41,7 @@ export const StaffBookingBoardPage: React.FC = () => {
 
     const [selectedDate, setSelectedDate] = useState(getLocalToday())
     const [search, setSearch] = useState('')
+    const debouncedSearch = useDebounce(search, 400)
     const [selectedType, setSelectedType] = useState('')
     const [activeTab, setActiveTab] = useState<'all' | 'pending'>('pending')
     const [departments, setDepartments] = useState<Department[]>([])
@@ -99,7 +101,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                     setLoading(false)
                 },
                 50,
-                search || undefined,
+                debouncedSearch || undefined,
                 selectedDepartment || undefined
             )
         } catch (err: any) {
@@ -111,7 +113,7 @@ export const StaffBookingBoardPage: React.FC = () => {
 
     useEffect(() => {
         loadData()
-    }, [selectedDate, search, selectedType, selectedDepartment])
+    }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
 
     const handleUpdateStatus = async (id: string, status: BookingStatus) => {
         try {

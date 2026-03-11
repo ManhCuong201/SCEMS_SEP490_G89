@@ -42,12 +42,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 maxWidth: '400px',
                 padding: '2rem',
                 margin: '1rem',
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-main)',
-                boxShadow: 'var(--shadow-xl)'
+                backgroundColor: '#ffffff', // Force white bg
+                color: '#1e293b', // Force dark text
+                boxShadow: 'var(--shadow-xl)',
+                position: 'relative',
+                zIndex: 1001
             }}>
-                <h3 style={{ marginBottom: '1rem', color: 'var(--text-main)' }}>{title}</h3>
-                <p style={{ marginBottom: '2rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>{message}</p>
+                <h3 style={{ marginBottom: '1rem', color: '#0f172a', fontWeight: 'bold' }}>{title}</h3>
+                <p style={{ marginBottom: '2rem', color: '#475569', lineHeight: '1.6' }}>{message}</p>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                     <button className="btn btn-secondary" onClick={onCancel}>

@@ -12,7 +12,7 @@ import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 export const RoomsListPage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | React.ReactNode>('')
   const [success, setSuccess] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -61,13 +61,20 @@ export const RoomsListPage: React.FC = () => {
     loadDepartments();
   }, [])
 
+  // Single effect: when filters change, reset to page 1 and reload.
+  // When only currentPage changes (user clicked pagination), just reload.
   useEffect(() => {
-    setCurrentPage(1)
+    if (currentPage !== 1) {
+      setCurrentPage(1)
+      // The state update above will re-trigger this effect with currentPage===1
+      return
+    }
+    loadRooms()
   }, [search, statusFilter, departmentFilter, sortBy])
 
   useEffect(() => {
     loadRooms()
-  }, [currentPage, search, statusFilter, departmentFilter, sortBy])
+  }, [currentPage])
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -188,9 +195,30 @@ export const RoomsListPage: React.FC = () => {
               const file = e.target.files?.[0]
               if (!file) return
               try {
-                const { count } = await roomService.import(file)
-                setSuccess(`Đã nhập ${count} phòng`)
-                loadRooms()
+                const res = await roomService.import(file)
+                if (res.failureCount > 0 && res.successCount === 0) {
+                  setError(
+                    <div>
+                      <strong>Import thất bại ({res.failureCount} dòng):</strong>
+                      <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', maxHeight: '160px', overflowY: 'auto' }}>
+                        {res.errors.map((e, i) => <li key={i} style={{ fontSize: '0.85rem' }}>{e}</li>)}
+                      </ul>
+                    </div>
+                  )
+                } else {
+                  setSuccess(`Đã nhập ${res.successCount} phòng thành công.${res.failureCount > 0 ? ` ${res.failureCount} dòng thất bại.` : ''}`)
+                  if (res.errors.length > 0) {
+                    setError(
+                      <div>
+                        <strong>{res.failureCount} dòng thất bại:</strong>
+                        <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', maxHeight: '160px', overflowY: 'auto' }}>
+                          {res.errors.map((e, i) => <li key={i} style={{ fontSize: '0.85rem' }}>{e}</li>)}
+                        </ul>
+                      </div>
+                    )
+                  }
+                  loadRooms()
+                }
               } catch (err: any) {
                 setError(err.response?.data?.message || 'Import thất bại')
               }

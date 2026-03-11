@@ -112,6 +112,14 @@ public class EquipmentService : IEquipmentService
 
     public async Task<EquipmentResponseDto> CreateEquipmentAsync(CreateEquipmentDto dto)
     {
+        var room = await _unitOfWork.Rooms.GetByIdAsync(dto.RoomId);
+        if (room == null)
+            throw new KeyNotFoundException($"Room with ID '{dto.RoomId}' not found.");
+
+        var equipmentType = await _unitOfWork.EquipmentTypes.GetByIdAsync(dto.EquipmentTypeId);
+        if (equipmentType == null)
+            throw new KeyNotFoundException($"Equipment type with ID '{dto.EquipmentTypeId}' not found.");
+
         var equipment = _mapper.Map<Equipment>(dto);
         
         await _unitOfWork.Equipment.AddAsync(equipment);
@@ -121,12 +129,11 @@ public class EquipmentService : IEquipmentService
         
         await _unitOfWork.SaveChangesAsync();
 
-        var room = await _unitOfWork.Rooms.GetByIdAsync(equipment.RoomId);
-        var msg = $"Trang thiết bị mới '{equipment.Name}' đã được thêm vào phòng {room?.RoomName}.";
+        var msg = $"Trang thiết bị mới '{equipment.Name}' đã được thêm vào phòng {room.RoomName}.";
         
-        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thêm mới thiết bị", msg);
-        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị được thêm mới", msg);
-        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị được thêm mới", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thêm mới thiết bị", msg, "/admin/equipment");
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị được thêm mới", msg, "/admin/equipment");
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị được thêm mới", msg, "/admin/equipment");
 
         return _mapper.Map<EquipmentResponseDto>(equipment);
     }
@@ -139,6 +146,9 @@ public class EquipmentService : IEquipmentService
         if (!string.IsNullOrEmpty(dto.Name)) equipment.Name = dto.Name;
         if (dto.RoomId.HasValue && dto.RoomId.Value != equipment.RoomId)
         {
+            var targetRoom = await _unitOfWork.Rooms.GetByIdAsync(dto.RoomId.Value);
+            if (targetRoom == null)
+                throw new KeyNotFoundException($"Room with ID '{dto.RoomId}' not found.");
              // Close previous history
              var lastHistory = await _unitOfWork.RoomEquipmentHistories.GetAll()
                 .Where(h => h.EquipmentId == equipment.Id && h.UnassignedAt == null)
@@ -165,9 +175,9 @@ public class EquipmentService : IEquipmentService
         var room = await _unitOfWork.Rooms.GetByIdAsync(equipment.RoomId);
         var msg = $"Trang thiết bị '{equipment.Name}' trong phòng {room?.RoomName} đã được cập nhật. Trạng thái: {equipment.Status}";
         
-        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thiết bị được cập nhật", msg);
-        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị được cập nhật", msg);
-        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị được cập nhật", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thiết bị được cập nhật", msg, "/admin/equipment");
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị được cập nhật", msg, "/admin/equipment");
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị được cập nhật", msg, "/admin/equipment");
 
         // Refresh 
         equipment = await _unitOfWork.Equipment.GetAll()
@@ -189,9 +199,9 @@ public class EquipmentService : IEquipmentService
         _unitOfWork.Equipment.Delete(equipment);
         await _unitOfWork.SaveChangesAsync();
 
-        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thiết bị bị gỡ bỏ", msg);
-        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị bị gỡ bỏ", msg);
-        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị bị gỡ bỏ", msg);
+        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Thiết bị bị gỡ bỏ", msg, "/admin/equipment");
+        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Thiết bị bị gỡ bỏ", msg, "/admin/equipment");
+        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Thiết bị bị gỡ bỏ", msg, "/admin/equipment");
 
         return true;
     }
