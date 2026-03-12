@@ -541,7 +541,26 @@ public class ImportService : IImportService
 
                 if (targetStudent == null)
                 {
-                    rowErrors.Add($"Không tìm thấy sinh viên {studentSearch}");
+                    // Instead of failing, add as a pending student
+                    var existsPending = existingClassStudents.Any(cs => cs.ClassId == targetClass!.Id && cs.PendingStudentIdentifier?.ToLower() == searchStr);
+                    if (existsPending)
+                    {
+                        result.FailureCount++;
+                        result.Errors.Add($"Dòng {row.RowNumber()}: Sinh viên {studentSearch} (chờ đăng ký) đã có trong lớp {classCode}.");
+                        continue;
+                    }
+
+                    var newPendingStudent = new ClassStudent
+                    {
+                        ClassId = targetClass!.Id,
+                        StudentId = null,
+                        PendingStudentIdentifier = studentSearch
+                    };
+
+                    await _unitOfWork.ClassStudents.AddAsync(newPendingStudent);
+                    existingClassStudents.Add(newPendingStudent);
+                    result.SuccessCount++;
+                    continue;
                 }
 
                 if (rowErrors.Any())

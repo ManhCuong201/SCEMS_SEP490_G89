@@ -86,7 +86,12 @@ export const AdminSchedulesPage: React.FC = () => {
                 await loadSchedules(); // Reload data
                 alert(res.message || 'Import lịch học thành công');
             } catch (err: any) {
-                setError(err.response?.data?.message || 'Import lịch học thất bại');
+                const errData = err.response?.data;
+                if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
+                    setError(`${errData.message || 'Import hoàn tất với lỗi'}\nChi tiết:\n${errData.errors.join('\n')}`);
+                } else {
+                    setError(errData?.message || 'Import lịch học thất bại');
+                }
             } finally {
                 setLoading(false);
                 e.target.value = ''; // Reset input

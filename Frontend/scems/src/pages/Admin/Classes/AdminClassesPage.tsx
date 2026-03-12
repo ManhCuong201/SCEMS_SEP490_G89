@@ -113,7 +113,12 @@ export const AdminClassesPage: React.FC = () => {
                                                 setSuccessMsg(resp.message || 'Import sinh viên thành công')
                                                 loadClasses()
                                             } catch (err: any) {
-                                                setError(err.response?.data?.message || 'Import sinh viên thất bại')
+                                                const errData = err.response?.data
+                                                if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
+                                                    setError(`${errData.message || 'Import hoàn tất với lỗi'}\nChi tiết:\n${errData.errors.join('\n')}`)
+                                                } else {
+                                                    setError(errData?.message || 'Import sinh viên thất bại')
+                                                }
                                             } finally {
                                                 setImporting(false)
                                                 e.target.value = ''

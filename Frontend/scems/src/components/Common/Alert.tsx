@@ -11,7 +11,7 @@ export const Alert: React.FC<AlertProps> = ({ type, message, onClose }) => {
 
   return (
     <div className={className}>
-      <span>{message}</span>
+      <span style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{message}</span>
       {onClose && (
         <button onClick={onClose} aria-label="Close alert">
           ×
