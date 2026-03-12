@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.EquipmentType;
 using SCEMS.Application.Services.Interfaces;
@@ -20,7 +21,8 @@ public class EquipmentTypeService : IEquipmentTypeService
 
     public async Task<PaginatedEquipmentTypesDto> GetEquipmentTypesAsync(PaginationParams @params)
     {
-        var query = _unitOfWork.EquipmentTypes.GetAllWithDetails();
+        // Use base GetAll() (no Include) for filtering/sorting — avoids loading full Equipment collections
+        var query = _unitOfWork.EquipmentTypes.GetAll();
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
@@ -28,37 +30,32 @@ public class EquipmentTypeService : IEquipmentTypeService
             query = query.Where(et => et.Name.ToLower().Contains(search));
         }
 
-        if (!string.IsNullOrWhiteSpace(@params.SortBy))
+        query = @params.SortBy?.ToLowerInvariant() switch
         {
-            query = @params.SortBy.ToLowerInvariant() switch
-            {
-                "name" => query.OrderBy(et => et.Name),
-                "recent" => query.OrderByDescending(et => et.CreatedAt),
-                _ => query.OrderBy(et => et.Name)
-            };
-        }
-        else
-        {
-            query = query.OrderByDescending(et => et.CreatedAt);
-        }
+            "name" => query.OrderBy(et => et.Name),
+            "recent" => query.OrderByDescending(et => et.CreatedAt),
+            _ => query.OrderByDescending(et => et.CreatedAt)
+        };
 
-        var total = query.Count();
-        var items = query
+        var total = await query.CountAsync();
+
+        // Project to DTO in-database with a COUNT subquery — no navigation collection loaded
+        var equipmentQuery = _unitOfWork.Equipment.GetAll();
+        var dtos = await query
             .Skip((@params.PageIndex - 1) * @params.PageSize)
             .Take(@params.PageSize)
-            .ToList();
-
-        var dtos = items.Select(et => new EquipmentTypeResponseDto
-        {
-            Id = et.Id,
-            Name = et.Name,
-            Code = et.Code,
-            Description = et.Description,
-            Status = et.Status,
-            EquipmentCount = et.Equipment.Count,
-            CreatedAt = et.CreatedAt,
-            UpdatedAt = et.UpdatedAt
-        }).ToList();
+            .Select(et => new EquipmentTypeResponseDto
+            {
+                Id = et.Id,
+                Name = et.Name,
+                Code = et.Code,
+                Description = et.Description,
+                Status = et.Status,
+                EquipmentCount = equipmentQuery.Count(e => e.EquipmentTypeId == et.Id),
+                CreatedAt = et.CreatedAt,
+                UpdatedAt = et.UpdatedAt
+            })
+            .ToListAsync();
 
         return new PaginatedEquipmentTypesDto
         {
