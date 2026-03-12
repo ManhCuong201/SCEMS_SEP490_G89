@@ -2,6 +2,7 @@ using AutoMapper;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using SCEMS.Application.DTOs.Schedule;
+using SCEMS.Application.DTOs.Import;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Entities;
 using SCEMS.Domain.Enums;
@@ -90,14 +91,9 @@ public class TeachingScheduleService : ITeachingScheduleService
         return memoryStream.ToArray();
     }
 
-    public async Task<string> ImportScheduleAsync(Stream excelStream, Guid currentUserId)
+    public async Task<ImportResultDto> ImportScheduleAsync(Stream excelStream, Guid currentUserId)
     {
-        var result = await _importService.ImportTeachingScheduleAsync(excelStream);
-        if (result.Errors.Any())
-        {
-            return $"Successfully imported {result.SuccessCount} sessions. Errors: {result.FailureCount}. Details: {string.Join(" | ", result.Errors.Take(10))}";
-        }
-        return $"Successfully imported {result.SuccessCount} sessions. Errors: {result.FailureCount}";
+        return await _importService.ImportTeachingScheduleAsync(excelStream);
     }
 
     public async Task<List<ScheduleResponseDto>> GetSchedulesByDateAsync(DateTime date)

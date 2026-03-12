@@ -65,7 +65,17 @@ public class TeachingSchedulesController : ControllerBase
         {
             using var stream = file.OpenReadStream();
             var result = await _teachingScheduleService.ImportScheduleAsync(stream, userId);
-            return Ok(new { message = result });
+
+            if (result.FailureCount > 0)
+            {
+                return BadRequest(new
+                {
+                    message = $"Import completed with errors. Success: {result.SuccessCount}, Failed: {result.FailureCount}",
+                    errors = result.Errors
+                });
+            }
+
+            return Ok(new { message = $"Successfully imported {result.SuccessCount} sessions." });
         }
         catch (Exception ex)
         {

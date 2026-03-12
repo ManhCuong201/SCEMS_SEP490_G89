@@ -12,6 +12,7 @@ export const AdminSchedulesPage: React.FC = () => {
     const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const getWeekRange = (date: Date) => {
@@ -82,9 +83,11 @@ export const AdminSchedulesPage: React.FC = () => {
         if (e.target.files && e.target.files[0]) {
             try {
                 setLoading(true);
+                setError('');
+                setSuccess('');
                 const res = await scheduleService.importSchedule(e.target.files[0]);
                 await loadSchedules(); // Reload data
-                alert(res.message || 'Import lịch học thành công');
+                setSuccess(res.message || 'Import lịch học thành công');
             } catch (err: any) {
                 const errData = err.response?.data;
                 if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
@@ -164,6 +167,7 @@ export const AdminSchedulesPage: React.FC = () => {
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+            {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
             {loading ? (
                 <Loading />
