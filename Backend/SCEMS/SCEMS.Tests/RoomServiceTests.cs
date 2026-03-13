@@ -24,7 +24,7 @@ public class RoomServiceTests
 
     public RoomServiceTests()
     {
-        _uowMock = new Mock<IUnitOfWork>();
+        _uowMock = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mapperMock = new Mock<IMapper>();
         _service = new RoomService(_uowMock.Object, _mapperMock.Object);
     }

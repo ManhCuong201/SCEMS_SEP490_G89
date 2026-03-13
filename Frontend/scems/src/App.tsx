@@ -48,6 +48,8 @@ import { UserIssueReportsPage } from './pages/User/IssueReports/UserIssueReports
 import { SecurityDashboardPage } from './pages/Admin/Dashboard/SecurityDashboardPage'
 import NotificationsPage from './pages/Notifications/NotificationsPage'
 import { ProfilePage } from './pages/Profile/ProfilePage'
+import SystemSettingsPage from './pages/Admin/Settings/SystemSettingsPage'
+import { LiveStatusPage } from './pages/Admin/Rooms/LiveStatusPage'
 
 const HomeRedirect = () => {
   const { user } = useAuth()
@@ -94,7 +96,9 @@ const AppContent: React.FC = () => {
               <Route path="equipment/create" element={<CreateEquipmentPage />} />
               <Route path="equipment/:id/edit" element={<EditEquipmentPage />} />
               <Route path="issue-reports" element={<AdminIssueReportsPage />} />
+              <Route path="live-status" element={<LiveStatusPage />} />
               <Route path="security-checks" element={<SecurityDashboardPage />} />
+              <Route path="settings" element={<SystemSettingsPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </AdminLayout>

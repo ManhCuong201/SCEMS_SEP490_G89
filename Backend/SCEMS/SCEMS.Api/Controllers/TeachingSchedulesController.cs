@@ -33,7 +33,6 @@ public class TeachingSchedulesController : ControllerBase
     {
         var schedules = await _teachingScheduleService.GetSchedulesByDateAsync(date);
         return Ok(schedules);
-        return Ok(schedules);
     }
 
     [HttpGet("all")]

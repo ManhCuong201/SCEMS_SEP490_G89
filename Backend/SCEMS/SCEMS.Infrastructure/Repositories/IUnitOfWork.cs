@@ -20,6 +20,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<SCEMS.Domain.Entities.RoomType> RoomTypes { get; }
     IDepartmentRepository Departments { get; }
     IGenericRepository<SCEMS.Domain.Entities.RoomEquipmentHistory> RoomEquipmentHistories { get; }
+    IGenericRepository<SCEMS.Domain.Entities.System_Configuration> SystemConfigurations { get; }
 
     Task SaveChangesAsync();
 }

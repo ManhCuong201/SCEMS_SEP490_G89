@@ -25,7 +25,7 @@ public class AccountServiceTests
 
     public AccountServiceTests()
     {
-        _uowMock = new Mock<IUnitOfWork>();
+        _uowMock = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mapperMock = new Mock<IMapper>();
         _classServiceMock = new Mock<IClassService>();
         _service = new AccountService(_uowMock.Object, _mapperMock.Object, _classServiceMock.Object);

@@ -25,7 +25,7 @@ public class EquipmentServiceTests
 
     public EquipmentServiceTests()
     {
-        _uowMock = new Mock<IUnitOfWork>();
+        _uowMock = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mapperMock = new Mock<IMapper>();
         _notificationMock = new Mock<INotificationService>();
         _service = new EquipmentService(_uowMock.Object, _mapperMock.Object, _notificationMock.Object);

@@ -119,8 +119,9 @@ export const RoomCalendarPage: React.FC = () => {
             const { start, end } = getWeekRange(currentDate)
             const bookingData = await bookingService.getRoomSchedule(id, start.toISOString(), end.toISOString())
             setBookings(bookingData)
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
+        } catch (err: unknown) {
+            const error = err as any; // Temporary cast to access properties while maintaining catch type
+            setError(error.response?.data?.message || 'Tải dữ liệu thất bại')
         } finally {
             setLoading(false)
         }
@@ -189,8 +190,9 @@ export const RoomCalendarPage: React.FC = () => {
             setModalOpen(false)
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Gửi yêu cầu thất bại')
+        } catch (err: unknown) {
+            const error = err as any;
+            setError(error.response?.data?.message || 'Gửi yêu cầu thất bại')
         } finally {
             setSubmitting(false)
         }

@@ -31,6 +31,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IConfigurationService, ConfigurationService>();
 
         return services;
     }

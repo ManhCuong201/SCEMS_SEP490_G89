@@ -137,6 +137,10 @@ using (var scope = app.Services.CreateScope())
         dbContext.SaveChanges();
     }
 
+    // Initialize Configuration Settings
+    var configService = scope.ServiceProvider.GetRequiredService<IConfigurationService>();
+    await configService.InitializeDefaultSettingsAsync();
+
     // Call FPT Data Seeder
     var solutionBasePath = Directory.GetParent(builder.Environment.ContentRootPath)?.FullName ?? "";
     await SCEMS.Infrastructure.Data.FptDataSeeder.SeedAsync(dbContext, solutionBasePath, passwordHasher.HashPassword);

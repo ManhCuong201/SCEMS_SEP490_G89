@@ -101,7 +101,7 @@ public class BookingController : ControllerBase
             var booking = await _bookingService.CreateRoomChangeRequestAsync(dto, userId);
             return CreatedAtAction(nameof(GetBookingById), new { id = booking.Id }, booking);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
             return Forbid();
         }
@@ -121,7 +121,7 @@ public class BookingController : ControllerBase
             var booking = await _bookingService.CreateScheduleChangeRequestAsync(dto, userId);
             return CreatedAtAction(nameof(GetBookingById), new { id = booking.Id }, booking);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
             return Forbid();
         }
@@ -132,7 +132,7 @@ public class BookingController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
-    [Authorize(Roles = "Admin,BookingStaff")]
+    [Authorize(Roles = "Admin,BookingStaff,Guard")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateBookingStatusDto dto)
     {
         var booking = await _bookingService.UpdateStatusAsync(id, dto.Status);

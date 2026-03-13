@@ -347,4 +347,68 @@ public class RoomService : IRoomService
         stream.Position = 0;
         return stream;
     }
+    public async Task<List<RoomLiveStatusDto>> GetRoomsLiveStatusAsync()
+    {
+        var now = DateTime.Now;
+        var today = DateTime.Today;
+
+        var rooms = await _unitOfWork.Rooms.GetAll().ToListAsync();
+        
+        var activeBookings = await _unitOfWork.Bookings.GetAll()
+            .Include(b => b.RequestedByAccount)
+            .Where(b => b.TimeSlot.Date == today && 
+                        (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn))
+            .ToListAsync();
+
+        var activeSchedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .Where(ts => ts.Date == today)
+            .ToListAsync();
+
+        var result = new List<RoomLiveStatusDto>();
+
+        foreach (var room in rooms)
+        {
+            var live = new RoomLiveStatusDto
+            {
+                RoomId = room.Id,
+                RoomCode = room.RoomCode,
+                RoomName = room.RoomName,
+                Building = room.Building ?? "N/A",
+                IsOccupied = false,
+                CurrentActivity = "Available"
+            };
+
+            // Check Booking
+            var currentBooking = activeBookings.FirstOrDefault(b => b.RoomId == room.Id && 
+                now >= b.TimeSlot && now < b.TimeSlot.AddHours(b.Duration));
+            
+            if (currentBooking != null)
+            {
+                live.IsOccupied = true;
+                live.CurrentActivity = "Booking";
+                live.Description = currentBooking.Reason;
+                live.ActivityEndTime = currentBooking.TimeSlot.AddHours(currentBooking.Duration);
+                live.OccupiedBy = currentBooking.RequestedByAccount?.FullName ?? "Unknown";
+            }
+            else
+            {
+                // Check Schedule
+                var currentSchedule = activeSchedules.FirstOrDefault(s => s.RoomId == room.Id &&
+                    now.TimeOfDay >= s.StartTime && now.TimeOfDay < s.EndTime);
+
+                if (currentSchedule != null)
+                {
+                    live.IsOccupied = true;
+                    live.CurrentActivity = "Class";
+                    live.Description = $"{currentSchedule.Subject} ({currentSchedule.ClassCode})";
+                    live.ActivityEndTime = today.Add(currentSchedule.EndTime);
+                    live.OccupiedBy = currentSchedule.LecturerName;
+                }
+            }
+
+            result.Add(live);
+        }
+
+        return result;
+    }
 }

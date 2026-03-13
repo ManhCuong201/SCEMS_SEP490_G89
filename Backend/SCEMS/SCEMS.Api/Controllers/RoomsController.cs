@@ -36,6 +36,14 @@ public class RoomsController : ControllerBase
         return Ok(room);
     }
 
+    [HttpGet("live-status")]
+    [Authorize(Roles = "Admin,BookingStaff,Guard")]
+    public async Task<IActionResult> GetRoomsLiveStatus()
+    {
+        var result = await _roomService.GetRoomsLiveStatusAsync();
+        return Ok(result);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin,AssetStaff")]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto dto)

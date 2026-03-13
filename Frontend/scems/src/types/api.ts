@@ -121,7 +121,8 @@ export enum BookingStatus {
   Pending = "Pending",
   Approved = "Approved",
   Rejected = "Rejected",
-  Cancelled = "Cancelled"
+  Cancelled = "Cancelled",
+  CheckedIn = "CheckedIn"
 }
 
 export interface Booking {
@@ -257,3 +258,13 @@ export interface CreateScheduleChangeRequest {
   reason: string;
 }
 
+export interface RoomLiveStatusDto {
+  id: string;
+  roomCode: string;
+  roomName: string;
+  currentStatus: string;
+  currentActivity?: string;
+  currentUser?: string;
+  nextActivityStartTime?: string;
+  hasNextActivity: boolean;
+}

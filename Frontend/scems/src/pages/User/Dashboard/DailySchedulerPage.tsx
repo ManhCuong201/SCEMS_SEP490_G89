@@ -127,8 +127,9 @@ export const DailySchedulerPage: React.FC = () => {
             setRoomTypes(typesData)
             setSchedules(schedulesData)
             setBookings(bookingsData)
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
+        } catch (err: unknown) {
+            const error = err as any;
+            setError(error.response?.data?.message || 'Tải dữ liệu thất bại')
         } finally {
             setLoading(false)
         }
@@ -225,8 +226,9 @@ export const DailySchedulerPage: React.FC = () => {
                 setModalOpen(false)
                 setModalSuccess('')
             }, 2000)
-        } catch (err: any) {
-            const msg = err.response?.data?.message || 'Gửi yêu cầu thất bại';
+        } catch (err: unknown) {
+            const error = err as any;
+            const msg = error.response?.data?.message || 'Gửi yêu cầu thất bại';
             if (msg.includes('|')) {
                 const errorList = msg.split('|').filter((m: string) => m.trim() !== '');
                 setModalError(
@@ -287,7 +289,8 @@ export const DailySchedulerPage: React.FC = () => {
         const isPast = new Date() > slotEnd
 
         if (classInSlot) {
-            const isMyClass = classInSlot.lecturerId?.toLowerCase() === user?.id?.toLowerCase() || (classInSlot as any).lecturerEmail?.toLowerCase() === user?.email?.toLowerCase()
+            const lecturerEmail = (classInSlot as any).lecturerEmail as string | undefined;
+            const isMyClass = classInSlot.lecturerId?.toLowerCase() === user?.id?.toLowerCase() || lecturerEmail?.toLowerCase() === user?.email?.toLowerCase()
 
             return (
                 <div

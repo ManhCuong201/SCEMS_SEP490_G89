@@ -62,7 +62,12 @@ export const StaffBookingBoardPage: React.FC = () => {
             setDepartments(deptsData)
             setRoomTypes(typesData)
             setSchedules(schedulesData)
-            setBookings(bookingsData)
+            
+            // Filter out pending bookings if user is Guard
+            const visibleBookings = user?.role === 'Guard' 
+                ? bookingsData.filter(b => b.status !== BookingStatus.Pending)
+                : bookingsData;
+            setBookings(visibleBookings)
 
             // Then, load rooms INCREMENTALLY
             await roomService.getAllRoomsBatched(
@@ -73,22 +78,24 @@ export const StaffBookingBoardPage: React.FC = () => {
                         : batchRooms;
 
                     // Sort rooms with Intelligent Prioritization:
-                    // Priority 1: Rooms with PENDING bookings for THIS DAY
+                    // Priority 1: Rooms with PENDING bookings for THIS DAY (Staff only)
                     // Priority 2: Rooms with any OTHER booking ACTIVITY (Approved/Rejected/Classes)
                     // Priority 3: All other rooms (Empty)
                     // Within each group, sort by roomName
 
                     const sortedRooms = [...filteredRooms].sort((a, b) => {
-                        // Check for Pending status in overlaps on this day
-                        const aHasPending = bookingsData.some(bk => bk.roomId === a.id && bk.status === BookingStatus.Pending);
-                        const bHasPending = bookingsData.some(bk => bk.roomId === b.id && bk.status === BookingStatus.Pending);
+                        if (user?.role !== 'Guard') {
+                            // Check for Pending status in overlaps on this day
+                            const aHasPending = visibleBookings.some(bk => bk.roomId === a.id && bk.status === BookingStatus.Pending);
+                            const bHasPending = visibleBookings.some(bk => bk.roomId === b.id && bk.status === BookingStatus.Pending);
 
-                        if (aHasPending && !bHasPending) return -1;
-                        if (!aHasPending && bHasPending) return 1;
+                            if (aHasPending && !bHasPending) return -1;
+                            if (!aHasPending && bHasPending) return 1;
+                        }
 
                         // Check for ANY Handled activity (Approved/Rejected or Schedules)
-                        const aHasActivity = bookingsData.some(bk => bk.roomId === a.id) || schedulesData.some(s => s.roomId === a.id);
-                        const bHasActivity = bookingsData.some(bk => bk.roomId === b.id) || schedulesData.some(s => s.roomId === b.id);
+                        const aHasActivity = visibleBookings.some(bk => bk.roomId === a.id) || schedulesData.some(s => s.roomId === a.id);
+                        const bHasActivity = visibleBookings.some(bk => bk.roomId === b.id) || schedulesData.some(s => s.roomId === b.id);
 
                         if (aHasActivity && !bHasActivity) return -1;
                         if (!aHasActivity && bHasActivity) return 1;
@@ -167,7 +174,7 @@ export const StaffBookingBoardPage: React.FC = () => {
 
         // PRIORITIZE Change Requests for Staff visibility
         const pendingBookings = overlapsForSlot.filter(b => b.status === BookingStatus.Pending)
-        if (pendingBookings.length > 0) {
+        if (pendingBookings.length > 0 && user?.role !== 'Guard') {
             const hasSlotChange = pendingBookings.some(b => b.reason?.includes('[Schedule Change Request]'))
             const hasRoomChange = pendingBookings.some(b => b.reason?.includes('[Room Change Request]'))
 
@@ -212,7 +219,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                 return change.scheduleId === classInSlot.id;
             });
 
-            if (outgoingRequest) {
+            if (outgoingRequest && user?.role !== 'Guard') {
                 const change = parseChangeRequest(outgoingRequest);
                 const isSlotChange = change.type === 'ScheduleChange';
 
@@ -471,7 +478,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                     </div>
                                                 )}
 
-                                                {booking.status === BookingStatus.Pending && (
+                                                {booking.status === BookingStatus.Pending && user?.role !== 'Guard' && (
                                                     <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
                                                         <button
                                                             onClick={() => handleUpdateStatus(booking.id, BookingStatus.Rejected)}

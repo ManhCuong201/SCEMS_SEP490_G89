@@ -65,6 +65,7 @@ export const Sidebar: React.FC = () => {
               <NavLink href="/admin/room-types" label="Loại phòng" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
               <NavLink href="/admin/equipment-types" label="Loại thiết bị" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />
               <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
+              <NavLink href="/admin/settings" label="Cài đặt hệ thống" icon={<Settings size={20} />} active={isActive('/admin/settings')} />
             </>
           )}
           {user?.role === 'AssetStaff' && (
@@ -85,6 +86,9 @@ export const Sidebar: React.FC = () => {
           )}
           {user?.role === 'Guard' && (
             <>
+              <NavLink href="/admin/live-status" label="Giám sát phòng" icon={<ShieldCheck size={20} />} active={isActive('/admin/live-status')} />
+              <NavLink href="/admin/booking-board" label="Bảng đặt phòng" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} />
+              <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
               <NavLink href="/admin/security-checks" label="Kiểm tra an ninh" icon={<ShieldCheck size={20} />} active={isActive('/admin/security-checks')} />
               <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
             </>

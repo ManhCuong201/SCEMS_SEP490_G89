@@ -23,22 +23,26 @@ public class BookingServiceTests
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<INotificationService> _notificationMock;
-    private readonly IOptions<BookingSettings> _settings;
+    private readonly Mock<IConfigurationService> _configMock;
     private readonly BookingService _service;
 
     public BookingServiceTests()
     {
-        _uowMock = new Mock<IUnitOfWork>();
+        _uowMock = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mapperMock = new Mock<IMapper>();
         _notificationMock = new Mock<INotificationService>();
-        _settings = Options.Create(new BookingSettings
-        {
-            StartHour = 7,
-            EndHour = 22,
-            SlotDurationMinutes = 60
-        });
+        _configMock = new Mock<IConfigurationService>();
 
-        _service = new BookingService(_uowMock.Object, _mapperMock.Object, _settings, _notificationMock.Object);
+        // Default config setups to match previous static settings
+        _configMock.Setup(c => c.GetValueAsync("Booking.StartHour", It.IsAny<int>())).ReturnsAsync(7);
+        _configMock.Setup(c => c.GetValueAsync("Booking.EndHour", It.IsAny<int>())).ReturnsAsync(22);
+        _configMock.Setup(c => c.GetValueAsync("Booking.SlotDurationMinutes", It.IsAny<int>())).ReturnsAsync(60);
+        _configMock.Setup(c => c.GetValueAsync("Booking.MaxDurationHours", It.IsAny<int>())).ReturnsAsync(4);
+        _uowMock.Setup(u => u.Bookings.GetAll()).Returns(new List<Booking>().BuildMockDbSet());
+        _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(new List<Teaching_Schedule>().BuildMockDbSet());
+        _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(new List<ClassStudent>().BuildMockDbSet());
+
+        _service = new BookingService(_uowMock.Object, _mapperMock.Object, _configMock.Object, _notificationMock.Object);
     }
 
     [Fact]
@@ -48,7 +52,7 @@ public class BookingServiceTests
         var dto = new CreateBookingDto
         {
             RoomId = Guid.NewGuid(),
-            TimeSlot = DateTime.Now.AddHours(-2),
+            TimeSlot = DateTime.Now.AddDays(-1), // Definitive past time
             Duration = 1,
             Reason = "Test"
         };
@@ -66,9 +70,9 @@ public class BookingServiceTests
         var dto = new CreateBookingDto
         {
             RoomId = Guid.NewGuid(),
-            TimeSlot = DateTime.Today.AddDays(1).AddHours(23),
+            TimeSlot = DateTime.Today.AddDays(7).AddHours(23), // 11 PM
             Duration = 1,
-            Reason = "Test"
+            Reason = "Outside hours"
         };
         var userId = Guid.NewGuid();
 
@@ -84,15 +88,15 @@ public class BookingServiceTests
         var dto = new CreateBookingDto
         {
             RoomId = Guid.NewGuid(),
-            TimeSlot = DateTime.Today.AddDays(1).AddHours(10),
-            Duration = 2,
-            Reason = "Test"
+            TimeSlot = DateTime.Today.AddDays(7).AddHours(10),
+            Duration = 5, // Violates MaxDurationHours (4)
+            Reason = "Invalid duration"
         };
         var userId = Guid.NewGuid();
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
-        Assert.Contains("Thời lượng mượn phòng phải chính xác", ex.Message);
+        Assert.Contains("Thời lượng mượn phòng", ex.Message);
     }
 
     [Fact]
@@ -100,7 +104,7 @@ public class BookingServiceTests
     {
         // Arrange
         var roomId = Guid.NewGuid();
-        var timeSlot = DateTime.Today.AddDays(2).AddHours(10);
+        var timeSlot = DateTime.Today.AddDays(7).AddHours(10);
         var dto = new CreateBookingDto
         {
             RoomId = roomId,
@@ -115,10 +119,10 @@ public class BookingServiceTests
         var existingBookings = new List<Booking>
         {
             new Booking { RoomId = roomId, TimeSlot = timeSlot, Duration = 1, Status = BookingStatus.Approved }
-        }.AsQueryable();
+        }.BuildMockDbSet();
         
         _uowMock.Setup(u => u.Bookings.GetAll()).Returns(existingBookings);
-        _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(new List<Teaching_Schedule>().AsQueryable());
+        _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(new List<Teaching_Schedule>().BuildMockDbSet());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
@@ -136,21 +140,19 @@ public class BookingServiceTests
             RequestedBy = Guid.NewGuid(),
             RoomId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            TimeSlot = DateTime.Now.AddDays(1),
+            TimeSlot = DateTime.Now.AddDays(7),
             Duration = 1,
             Room = new Room { RoomName = "A101" }
         };
 
-        // Mock IQueryable for Include support in GetBookingByIdAsync style
-        var bookings = new List<Booking> { booking }.AsQueryable();
+        var bookings = new List<Booking> { booking }.BuildMockDbSet();
         _uowMock.Setup(u => u.Bookings.GetAll()).Returns(bookings);
-        // Note: BookingService uses .Include() which requires EF Provider. In standard Moq AsQueryable, Include() might throw.
-        // If it throws, I will switch to InMemory provider.
+        _uowMock.Setup(u => u.Bookings.GetByIdAsync(bookingId)).ReturnsAsync(booking);
 
         // Act
-        // await _service.UpdateStatusAsync(bookingId, BookingStatus.Approved);
+        await _service.UpdateStatusAsync(bookingId, BookingStatus.Approved);
 
         // Assert
-        // _notificationMock.Verify(n => n.SendNotificationAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), null), Times.AtLeastOnce());
+        _notificationMock.Verify(n => n.SendNotificationAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce());
     }
 }

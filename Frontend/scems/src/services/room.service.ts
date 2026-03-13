@@ -1,5 +1,5 @@
 import api from './api'
-import { Room, CreateRoomRequest, UpdateRoomRequest, PaginatedResponse } from '../types/api'
+import { Room, CreateRoomRequest, UpdateRoomRequest, PaginatedResponse, RoomLiveStatusDto } from '../types/api'
 
 export const roomService = {
   async getRooms(pageIndex: number = 1, pageSize: number = 10, search?: string, sortBy?: string, departmentId?: string, roomTypeId?: string): Promise<PaginatedResponse<Room>> {
@@ -86,5 +86,10 @@ export const roomService = {
       console.error('Error fetching rooms in batches:', error)
       throw error
     }
+  },
+
+  async getRoomsLiveStatus(): Promise<RoomLiveStatusDto[]> {
+    const { data } = await api.get<RoomLiveStatusDto[]>('/admin/rooms/live-status')
+    return data
   }
 }

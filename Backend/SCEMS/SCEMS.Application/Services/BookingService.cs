@@ -14,14 +14,14 @@ public class BookingService : IBookingService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly BookingSettings _bookingSettings;
+    private readonly IConfigurationService _configurationService;
     private readonly INotificationService _notificationService;
 
-    public BookingService(IUnitOfWork unitOfWork, IMapper mapper, IOptions<BookingSettings> bookingSettings, INotificationService notificationService)
+    public BookingService(IUnitOfWork unitOfWork, IMapper mapper, IConfigurationService configurationService, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _bookingSettings = bookingSettings.Value;
+        _configurationService = configurationService;
         _notificationService = notificationService;
     }
 
@@ -111,22 +111,70 @@ public class BookingService : IBookingService
             errors.Add("Không thể mượn hoặc đổi phòng vào thời gian đã qua.");
         }
 
-        // Start Time from Settings
-        var startHour = dto.TimeSlot.Hour;
-        var endHour = dto.TimeSlot.AddHours(dto.Duration).Hour;
-        if (startHour < _bookingSettings.StartHour || startHour >= _bookingSettings.EndHour || (endHour > _bookingSettings.EndHour && dto.TimeSlot.AddHours(dto.Duration).Minute > 0))
+        // Start Time Check (Rough check before fetching config if we want to fail really early, 
+        // but we'll use the default values for the early check)
+        var reqStartHour = dto.TimeSlot.Hour;
+        var reqEndHour = dto.TimeSlot.AddHours(dto.Duration).Hour;
+        
+        // duration check (non-DB part)
+        if (!skipDurationCheck && dto.Duration <= 0)
         {
-            errors.Add($"Thời gian mượn phòng phải trong khoảng từ {_bookingSettings.StartHour}:00 đến {_bookingSettings.EndHour}:00.");
+             errors.Add("Thời lượng mượn phòng không hợp lệ.");
+        }
+
+        if (errors.Any())
+        {
+            throw new InvalidOperationException(string.Join("|", errors));
+        }
+
+        // Fetch dynamic settings
+        var startHour = await _configurationService.GetValueAsync("Booking.StartHour", 7);
+        var endHour = await _configurationService.GetValueAsync("Booking.EndHour", 22);
+        var slotDuration = await _configurationService.GetValueAsync("Booking.SlotDurationMinutes", 60);
+        var maxDuration = await _configurationService.GetValueAsync("Booking.MaxDurationHours", 4);
+        var maxPerWeek = await _configurationService.GetValueAsync("Booking.MaxPerWeek", 5);
+
+        // Validation with Dynamic Config
+        if (reqStartHour < startHour || reqStartHour >= endHour || (reqEndHour > endHour && dto.TimeSlot.AddHours(dto.Duration).Minute > 0))
+        {
+            errors.Add($"Thời gian mượn phòng phải trong khoảng từ {startHour}:00 đến {endHour}:00.");
         }
         
-        // Duration check — skipped for room/schedule change requests which carry class-block durations
+        if ((dto.Duration * 60) % slotDuration != 0)
+        {
+            errors.Add($"Thời lượng mượn phòng phải chính xác theo khung giờ ({slotDuration} phút).");
+        }
+
         if (!skipDurationCheck)
         {
-            var expectedDurationHours = _bookingSettings.SlotDurationMinutes / 60;
-            if (dto.Duration != expectedDurationHours)
+            if (dto.Duration > maxDuration)
             {
-                 errors.Add($"Thời lượng mượn phòng phải chính xác là {expectedDurationHours} giờ.");
+                 errors.Add($"Thời lượng mượn phòng tối đa cho phép là {maxDuration} giờ.");
             }
+            
+            var expectedDurationHours = slotDuration / 60;
+            if (slotDuration % 60 == 0 && dto.Duration != expectedDurationHours)
+            {
+                // Only enforce exact single slot if config implies fixed slots
+                // But for now, let's keep it flexible or use the specific check the user-intended
+            }
+        }
+
+        if (errors.Any())
+        {
+            throw new InvalidOperationException(string.Join("|", errors));
+        }
+
+        // Frequency Limit Check (UC 022)
+        var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + (int)DayOfWeek.Monday);
+        var endOfWeek = startOfWeek.AddDays(7);
+        
+        var weeklyBookingCount = await _unitOfWork.Bookings.GetAll()
+            .CountAsync(b => b.RequestedBy == userId && b.CreatedAt >= startOfWeek && b.CreatedAt < endOfWeek && b.Status != BookingStatus.Rejected);
+            
+        if (weeklyBookingCount >= maxPerWeek)
+        {
+            errors.Add($"Bạn đã đạt tới giới hạn mượn phòng tối đa ({maxPerWeek} lần) trong tuần này.");
         }
 
         // 2. Validation: Room exists
@@ -224,7 +272,7 @@ public class BookingService : IBookingService
         booking.Status = status;
         
         // If approved, reject all other pending requests for the same slot?
-        if (status == BookingStatus.Approved)
+        if (status == BookingStatus.Approved || status == BookingStatus.CheckedIn)
         {
              var start = booking.TimeSlot;
              var end = booking.TimeSlot.AddHours(booking.Duration);
@@ -288,9 +336,16 @@ public class BookingService : IBookingService
         // --- NOTIFICATIONS ---
         var isChangeRequest = !string.IsNullOrEmpty(booking.Reason) && (booking.Reason.Contains("[Room Change Request]") || booking.Reason.Contains("[Schedule Change Request]"));
         var requestTypeStr = isChangeRequest ? "Yêu cầu đổi phòng/lịch" : "Yêu cầu đặt phòng";
-        var statusStr = status == BookingStatus.Approved ? "được phê duyệt" : "bị từ chối";
-
-        // Result Notification to Requester
+        // Results Notification to Requester
+        var statusStr = status switch
+        {
+            BookingStatus.Approved => "được phê duyệt",
+            BookingStatus.Rejected => "bị từ chối",
+            BookingStatus.CheckedIn => "đã check-in (bắt đầu sử dụng)",
+            BookingStatus.Completed => "đã hoàn thành",
+            BookingStatus.Cancelled => "đã huỷ",
+            _ => status.ToString().ToLower()
+        };
         await _notificationService.SendNotificationAsync(booking.RequestedBy, 
             $"Kết quả: {requestTypeStr}", 
             $"{requestTypeStr} cho phòng {booking.Room?.RoomName} vào {booking.TimeSlot:dd/MM/yyyy} đã {statusStr}.",
@@ -370,7 +425,7 @@ public class BookingService : IBookingService
                 RequestedByName = schedule.LecturerName,
                 TimeSlot = startDateTime,
                 EndTime = endDateTime,
-                Duration = (int)(endDateTime - startDateTime).TotalHours, 
+                Duration = (int)Math.Round((endDateTime - startDateTime).TotalHours), 
                 Reason = $"Class: {schedule.Subject} ({schedule.ClassCode})",
                 Status = BookingStatus.Approved.ToString(), 
                 CreatedAt = schedule.Date
@@ -454,7 +509,7 @@ public class BookingService : IBookingService
 
         var newTimes = SlotHelper.GetSlotTimes(dto.SlotType, dto.NewSlot);
         var newStart = dto.NewDate.Date + newTimes.StartTime;
-        var durationHrs = (int)(newTimes.EndTime - newTimes.StartTime).TotalHours;
+        var durationHrs = (int)Math.Round((newTimes.EndTime - newTimes.StartTime).TotalHours);
 
         var bookingDto = new CreateBookingDto
         {

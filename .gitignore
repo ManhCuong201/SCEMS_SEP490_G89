@@ -57,4 +57,5 @@ main.py
 .agent
 *.txt
 *.log
+*.xlsx
 Data_SEP
