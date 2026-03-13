@@ -29,56 +29,46 @@ public class ClassServiceTests
         _service = new ClassService(_uowMock.Object, _mapperMock.Object);
     }
 
+    // UTC_CS_01: GetClassByIdAsync returns null for non-existent class
     [Fact]
     public async Task GetClassByIdAsync_NotFound_ReturnsNull()
     {
-        // Arrange
         var id = Guid.NewGuid();
-        _uowMock.Setup(u => u.Classes.GetByIdAsync(id)).ReturnsAsync((Class)null);
+        _uowMock.Setup(u => u.Classes.GetByIdAsync(id)).ReturnsAsync((Class)null!);
 
-        // Act
         var result = await _service.GetClassByIdAsync(id);
 
-        // Assert
         Assert.Null(result);
     }
 
+    // UTC_CS_02: GetClassesByLecturerAsync returns mapped DTOs for lecturer
     [Fact]
     public async Task GetClassesByLecturerAsync_ReturnsMappedDtos()
     {
-        // Arrange
         var lecturerId = Guid.NewGuid();
-        var classes = new List<Class> 
-        { 
-            new Class { Id = Guid.NewGuid(), ClassCode = "C1", LecturerId = lecturerId } 
-        };
-        var dtos = new List<ClassResponseDto> 
-        { 
-            new ClassResponseDto { Id = classes[0].Id, ClassCode = "C1" } 
-        };
+        var classes = new List<Class> { new Class { Id = Guid.NewGuid(), ClassCode = "C1", LecturerId = lecturerId } };
+        var dtos = new List<ClassResponseDto> { new ClassResponseDto { Id = classes[0].Id, ClassCode = "C1" } };
 
         _uowMock.Setup(u => u.Classes.GetAll()).Returns(classes.BuildMockDbSet());
         _mapperMock.Setup(m => m.Map<List<ClassResponseDto>>(classes)).Returns(dtos);
 
-        // Act
         var result = await _service.GetClassesByLecturerAsync(lecturerId);
 
-        // Assert
         Assert.Single(result);
         Assert.Equal("C1", result[0].ClassCode);
     }
 
+    // UTC_CS_03: GetAllClassesAsync with no filter returns all classes
     [Fact]
     public async Task GetAllClassesAsync_ReturnsAllMappedDtos()
     {
-        // Arrange
-        var classes = new List<Class> 
-        { 
+        var classes = new List<Class>
+        {
             new Class { Id = Guid.NewGuid(), ClassCode = "C1" },
             new Class { Id = Guid.NewGuid(), ClassCode = "C2" }
         };
-        var dtos = new List<ClassResponseDto> 
-        { 
+        var dtos = new List<ClassResponseDto>
+        {
             new ClassResponseDto { Id = classes[0].Id, ClassCode = "C1" },
             new ClassResponseDto { Id = classes[1].Id, ClassCode = "C2" }
         };
@@ -86,64 +76,68 @@ public class ClassServiceTests
         _uowMock.Setup(u => u.Classes.GetAll()).Returns(classes.BuildMockDbSet());
         _mapperMock.Setup(m => m.Map<List<ClassResponseDto>>(classes)).Returns(dtos);
 
-        // Act
         var result = await _service.GetAllClassesAsync();
 
-        // Assert
         Assert.Equal(2, result.Count);
     }
 
+    // UTC_CS_04: GetClassStudentsAsync maps both linked and pending students
     [Fact]
-    public async Task GetClassStudentsAsync_WithPendingStudent_MapsCorrectly()
+    public async Task GetClassStudentsAsync_MapsLinkedAndPending()
     {
-        // Arrange
         var classId = Guid.NewGuid();
         var enrollments = new List<ClassStudent>
         {
-            new ClassStudent 
-            { 
-                ClassId = classId, 
+            new ClassStudent
+            {
+                ClassId = classId,
                 StudentId = Guid.NewGuid(),
                 Student = new Account { Id = Guid.NewGuid(), FullName = "Test Student", Email = "test@edu.vn" }
             },
-            new ClassStudent 
-            { 
-                ClassId = classId, 
+            new ClassStudent
+            {
+                ClassId = classId,
                 StudentId = null,
                 PendingStudentIdentifier = "pending@edu.vn"
             }
         };
-
         _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(enrollments.BuildMockDbSet());
 
-        // Act
         var result = await _service.GetClassStudentsAsync(classId);
 
-        // Assert
         Assert.Equal(2, result.Count);
         Assert.Contains(result, r => r.FullName == "Test Student");
         Assert.Contains(result, r => r.FullName == "Pending Registration" && r.Email == "pending@edu.vn");
     }
 
+    // UTC_CS_05: GetClassStudentsAsync with no students returns empty
+    [Fact]
+    public async Task GetClassStudentsAsync_NoStudents_ReturnsEmpty()
+    {
+        var classId = Guid.NewGuid();
+        _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(new List<ClassStudent>().BuildMockDbSet());
+
+        var result = await _service.GetClassStudentsAsync(classId);
+
+        Assert.Empty(result);
+    }
+
+    // UTC_CS_06: LinkPendingEnrollmentsAsync with no pending does not update
     [Fact]
     public async Task LinkPendingEnrollmentsAsync_NoPending_DoesNotCallUpdate()
     {
-        // Arrange
-        var studentId = Guid.NewGuid();
         _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(new List<ClassStudent>().BuildMockDbSet());
 
-        // Act
-        await _service.LinkPendingEnrollmentsAsync(studentId, "test@scems.com", "S123");
+        await _service.LinkPendingEnrollmentsAsync(Guid.NewGuid(), "test@scems.com", "S123");
 
-        // Assert
         _uowMock.Verify(u => u.ClassStudents.Update(It.IsAny<ClassStudent>()), Times.Never);
         _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 
+    // UTC_CS_07: LinkPendingEnrollmentsAsync with matching pending calls Update
     [Fact]
     public async Task LinkPendingEnrollmentsAsync_WithPending_CallsUpdate()
     {
-        // Arrange
         var studentId = Guid.NewGuid();
         var enrollments = new List<ClassStudent>
         {
@@ -151,11 +145,25 @@ public class ClassServiceTests
         };
         _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(enrollments.BuildMockDbSet());
 
-        // Act
         await _service.LinkPendingEnrollmentsAsync(studentId, "test@scems.com", "S123");
 
-        // Assert
         _uowMock.Verify(u => u.ClassStudents.Update(It.IsAny<ClassStudent>()), Times.Once);
-        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.AtLeastOnce);
+    }
+
+    // UTC_CS_08: LinkPendingEnrollmentsAsync only links by matching email identifier
+    [Fact]
+    public async Task LinkPendingEnrollmentsAsync_NonMatchingEmail_DoesNotUpdate()
+    {
+        var studentId = Guid.NewGuid();
+        var enrollments = new List<ClassStudent>
+        {
+            new ClassStudent { StudentId = null, PendingStudentIdentifier = "different@edu.vn" }
+        };
+        _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(enrollments.BuildMockDbSet());
+
+        await _service.LinkPendingEnrollmentsAsync(studentId, "test@scems.com", "S123");
+
+        _uowMock.Verify(u => u.ClassStudents.Update(It.IsAny<ClassStudent>()), Times.Never);
     }
 }

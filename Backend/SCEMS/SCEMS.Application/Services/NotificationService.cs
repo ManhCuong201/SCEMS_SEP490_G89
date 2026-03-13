@@ -83,6 +83,9 @@ public class NotificationService : INotificationService
         var unreadList = await _unitOfWork.Notifications.GetAll()
             .Where(n => n.RecipientId == userId && !n.IsRead)
             .ToListAsync();
+            
+        if (!unreadList.Any()) return;
+
         foreach (var notification in unreadList)
         {
             notification.IsRead = true;

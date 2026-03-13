@@ -33,11 +33,11 @@ public class BookingServiceTests
         _notificationMock = new Mock<INotificationService>();
         _configMock = new Mock<IConfigurationService>();
 
-        // Default config setups to match previous static settings
         _configMock.Setup(c => c.GetValueAsync("Booking.StartHour", It.IsAny<int>())).ReturnsAsync(7);
         _configMock.Setup(c => c.GetValueAsync("Booking.EndHour", It.IsAny<int>())).ReturnsAsync(22);
         _configMock.Setup(c => c.GetValueAsync("Booking.SlotDurationMinutes", It.IsAny<int>())).ReturnsAsync(60);
         _configMock.Setup(c => c.GetValueAsync("Booking.MaxDurationHours", It.IsAny<int>())).ReturnsAsync(4);
+        _configMock.Setup(c => c.GetValueAsync("Booking.MaxPerWeek", It.IsAny<int>())).ReturnsAsync(5);
         _uowMock.Setup(u => u.Bookings.GetAll()).Returns(new List<Booking>().BuildMockDbSet());
         _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(new List<Teaching_Schedule>().BuildMockDbSet());
         _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(new List<ClassStudent>().BuildMockDbSet());
@@ -45,114 +45,165 @@ public class BookingServiceTests
         _service = new BookingService(_uowMock.Object, _mapperMock.Object, _configMock.Object, _notificationMock.Object);
     }
 
+    // UTC_BS_01: Booking in past time
     [Fact]
     public async Task CreateBookingAsync_PastTime_ThrowsException()
     {
-        // Arrange
-        var dto = new CreateBookingDto
-        {
-            RoomId = Guid.NewGuid(),
-            TimeSlot = DateTime.Now.AddDays(-1), // Definitive past time
-            Duration = 1,
-            Reason = "Test"
-        };
-        var userId = Guid.NewGuid();
-
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
+        var lectureId = Guid.Parse("800ae92e-74be-4e81-b419-f8a8e426f95b"); // Phạm Thu Hà
+        var dto = new CreateBookingDto { RoomId = Guid.NewGuid(), TimeSlot = DateTime.Now.AddDays(-1), Duration = 1, Reason = "Học PRN231" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, lectureId));
         Assert.Contains("thời gian đã qua", ex.Message);
     }
 
+    // UTC_BS_02: Booking before opening hours
     [Fact]
-    public async Task CreateBookingAsync_OutsideHours_ThrowsException()
+    public async Task CreateBookingAsync_OutsideHours_BeforeOpen_ThrowsException()
     {
-        // Arrange
-        var dto = new CreateBookingDto
-        {
-            RoomId = Guid.NewGuid(),
-            TimeSlot = DateTime.Today.AddDays(7).AddHours(23), // 11 PM
-            Duration = 1,
-            Reason = "Outside hours"
-        };
-        var userId = Guid.NewGuid();
-
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
+        var studentId = Guid.Parse("a7ce08bc-c385-48cf-9bcd-cb6683b3f91a"); // Hoàng Minh Trí
+        var dto = new CreateBookingDto { RoomId = Guid.NewGuid(), TimeSlot = DateTime.Today.AddDays(7).AddHours(5), Duration = 1, Reason = "Early" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, studentId));
         Assert.Contains("Thời gian mượn phòng phải trong khoảng", ex.Message);
     }
 
+    // UTC_BS_03: Booking after closing hours
     [Fact]
-    public async Task CreateBookingAsync_InvalidDuration_ThrowsException()
+    public async Task CreateBookingAsync_OutsideHours_AfterClose_ThrowsException()
     {
-        // Arrange
-        var dto = new CreateBookingDto
-        {
-            RoomId = Guid.NewGuid(),
-            TimeSlot = DateTime.Today.AddDays(7).AddHours(10),
-            Duration = 5, // Violates MaxDurationHours (4)
-            Reason = "Invalid duration"
-        };
-        var userId = Guid.NewGuid();
+        var studentId = Guid.Parse("a7ce08bc-c385-48cf-9bcd-cb6683b3f91a"); // Hoàng Minh Trí
+        var dto = new CreateBookingDto { RoomId = Guid.NewGuid(), TimeSlot = DateTime.Today.AddDays(7).AddHours(23), Duration = 1, Reason = "Late" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, studentId));
+        Assert.Contains("Thời gian mượn phòng phải trong khoảng", ex.Message);
+    }
 
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
+    // UTC_BS_04: Duration exceeds max
+    [Fact]
+    public async Task CreateBookingAsync_InvalidDuration_ExceedsMax_ThrowsException()
+    {
+        var dto = new CreateBookingDto { RoomId = Guid.NewGuid(), TimeSlot = DateTime.Today.AddDays(7).AddHours(10), Duration = 5, Reason = "Too long" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, Guid.NewGuid()));
         Assert.Contains("Thời lượng mượn phòng", ex.Message);
     }
 
+    // UTC_BS_05: Zero duration
     [Fact]
-    public async Task CreateBookingAsync_RoomConflict_ThrowsException()
+    public async Task CreateBookingAsync_ZeroDuration_ThrowsException()
     {
-        // Arrange
+        var dto = new CreateBookingDto { RoomId = Guid.NewGuid(), TimeSlot = DateTime.Today.AddDays(7).AddHours(10), Duration = 0, Reason = "Zero" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, Guid.NewGuid()));
+        Assert.Contains("Thời lượng mượn phòng", ex.Message);
+    }
+
+    // UTC_BS_06: Room does not exist
+    [Fact]
+    public async Task CreateBookingAsync_RoomNotFound_ThrowsException()
+    {
+        var roomId = Guid.NewGuid();
+        _uowMock.Setup(u => u.Rooms.GetByIdAsync(roomId)).ReturnsAsync((Room)null!);
+
+        var dto = new CreateBookingDto { RoomId = roomId, TimeSlot = DateTime.Today.AddDays(7).AddHours(10), Duration = 1, Reason = "No room" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, Guid.NewGuid()));
+        Assert.Contains("Không tìm thấy phòng", ex.Message);
+    }
+
+    // UTC_BS_07: Room is under maintenance
+    [Fact]
+    public async Task CreateBookingAsync_RoomUnavailable_ThrowsException()
+    {
+        var roomId = Guid.NewGuid();
+        _uowMock.Setup(u => u.Rooms.GetByIdAsync(roomId)).ReturnsAsync(new Room { Id = roomId, Status = RoomStatus.Disabled });
+
+        var dto = new CreateBookingDto { RoomId = roomId, TimeSlot = DateTime.Today.AddDays(7).AddHours(10), Duration = 1, Reason = "Maintenance" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, Guid.NewGuid()));
+        Assert.Contains("Phòng hiện không khả dụng", ex.Message);
+    }
+
+    // UTC_BS_08: Conflicting approved booking exists
+    [Fact]
+    public async Task CreateBookingAsync_BookingConflict_ThrowsException()
+    {
         var roomId = Guid.NewGuid();
         var timeSlot = DateTime.Today.AddDays(7).AddHours(10);
-        var dto = new CreateBookingDto
-        {
-            RoomId = roomId,
-            TimeSlot = timeSlot,
-            Duration = 1,
-            Reason = "Test conflict"
-        };
-        var userId = Guid.NewGuid();
-
         _uowMock.Setup(u => u.Rooms.GetByIdAsync(roomId)).ReturnsAsync(new Room { Id = roomId, Status = RoomStatus.Available });
-        
+
         var existingBookings = new List<Booking>
         {
             new Booking { RoomId = roomId, TimeSlot = timeSlot, Duration = 1, Status = BookingStatus.Approved }
         }.BuildMockDbSet();
-        
         _uowMock.Setup(u => u.Bookings.GetAll()).Returns(existingBookings);
-        _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(new List<Teaching_Schedule>().BuildMockDbSet());
 
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
+        var dto = new CreateBookingDto { RoomId = roomId, TimeSlot = timeSlot, Duration = 1, Reason = "Conflict" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, Guid.NewGuid()));
         Assert.Contains("Phòng này đã có người khác mượn", ex.Message);
     }
 
+    // UTC_BS_09: Teaching schedule conflict for same room
     [Fact]
-    public async Task UpdateStatusAsync_Approved_SendsNotifications()
+    public async Task CreateBookingAsync_TeachingScheduleConflict_ThrowsException()
     {
-        // Arrange
+        var roomId = Guid.NewGuid();
+        var timeSlot = DateTime.Today.AddDays(7).AddHours(10);
+        _uowMock.Setup(u => u.Rooms.GetByIdAsync(roomId)).ReturnsAsync(new Room { Id = roomId, Status = RoomStatus.Available });
+
+        var schedules = new List<Teaching_Schedule>
+        {
+            new Teaching_Schedule { RoomId = roomId, Date = timeSlot.Date, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(12, 0, 0) }
+        }.BuildMockDbSet();
+        _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(schedules);
+
+        var dto = new CreateBookingDto { RoomId = roomId, TimeSlot = timeSlot, Duration = 1, Reason = "TS conflict" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, Guid.NewGuid()));
+        Assert.Contains("đã được xếp lịch dạy lớp", ex.Message);
+    }
+
+    // UTC_BS_10: Weekly booking limit reached
+    [Fact]
+    public async Task CreateBookingAsync_WeeklyLimitExceeded_ThrowsException()
+    {
+        var roomId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var timeSlot = DateTime.Today.AddDays(7).AddHours(10);
+        _uowMock.Setup(u => u.Rooms.GetByIdAsync(roomId)).ReturnsAsync(new Room { Id = roomId, Status = RoomStatus.Available });
+
+        var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + (int)DayOfWeek.Monday);
+        var weeklyBookings = Enumerable.Range(0, 5).Select(_ => new Booking
+        {
+            RequestedBy = userId, CreatedAt = startOfWeek.AddHours(1), Status = BookingStatus.Pending,
+            TimeSlot = timeSlot.AddHours(-24), Duration = 1, RoomId = Guid.NewGuid()
+        }).ToList().BuildMockDbSet();
+        _uowMock.Setup(u => u.Bookings.GetAll()).Returns(weeklyBookings);
+
+        var dto = new CreateBookingDto { RoomId = roomId, TimeSlot = timeSlot, Duration = 1, Reason = "Limit" };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateBookingAsync(dto, userId));
+        Assert.Contains("giới hạn mượn phòng tối đa", ex.Message);
+    }
+
+    // UTC_BS_11: Approve booking triggers notification
+    [Fact]
+    public async Task UpdateStatusAsync_Approved_SendsNotification()
+    {
         var bookingId = Guid.NewGuid();
         var booking = new Booking
         {
-            Id = bookingId,
-            RequestedBy = Guid.NewGuid(),
-            RoomId = Guid.NewGuid(),
-            Status = BookingStatus.Pending,
-            TimeSlot = DateTime.Now.AddDays(7),
-            Duration = 1,
+            Id = bookingId, RequestedBy = Guid.NewGuid(), RoomId = Guid.NewGuid(),
+            Status = BookingStatus.Pending, TimeSlot = DateTime.Now.AddDays(7), Duration = 1,
             Room = new Room { RoomName = "A101" }
         };
-
-        var bookings = new List<Booking> { booking }.BuildMockDbSet();
-        _uowMock.Setup(u => u.Bookings.GetAll()).Returns(bookings);
+        _uowMock.Setup(u => u.Bookings.GetAll()).Returns(new List<Booking> { booking }.BuildMockDbSet());
         _uowMock.Setup(u => u.Bookings.GetByIdAsync(bookingId)).ReturnsAsync(booking);
 
-        // Act
         await _service.UpdateStatusAsync(bookingId, BookingStatus.Approved);
 
-        // Assert
         _notificationMock.Verify(n => n.SendNotificationAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce());
+    }
+
+    // UTC_BS_12: Update status for non-existent booking returns null
+    [Fact]
+    public async Task UpdateStatusAsync_NotFound_ReturnsNull()
+    {
+        _uowMock.Setup(u => u.Bookings.GetAll()).Returns(new List<Booking>().BuildMockDbSet());
+
+        var result = await _service.UpdateStatusAsync(Guid.NewGuid(), BookingStatus.Approved);
+
+        Assert.Null(result);
     }
 }

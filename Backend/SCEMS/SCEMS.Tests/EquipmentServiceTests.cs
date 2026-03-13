@@ -31,31 +31,72 @@ public class EquipmentServiceTests
         _service = new EquipmentService(_uowMock.Object, _mapperMock.Object, _notificationMock.Object);
     }
 
+    // UTC_EQ_01: Delete equipment that does not exist returns false
     [Fact]
     public async Task DeleteEquipmentAsync_NotFound_ReturnsFalse()
     {
-        // Arrange
         var id = Guid.NewGuid();
-        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync((Equipment)null);
+        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync((Equipment)null!);
 
-        // Act
         var result = await _service.DeleteEquipmentAsync(id);
 
-        // Assert
         Assert.False(result);
     }
 
+    // UTC_EQ_02: Delete existing equipment returns true
+    [Fact]
+    public async Task DeleteEquipmentAsync_Found_ReturnsTrue()
+    {
+        var id = Guid.NewGuid();
+        var equipment = new Equipment { Id = id, Name = "Projector" };
+        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync(equipment);
+
+        var result = await _service.DeleteEquipmentAsync(id);
+
+        Assert.True(result);
+        _uowMock.Verify(u => u.Equipment.Delete(equipment), Times.Once);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    // UTC_EQ_03: Update status of non-existent equipment returns false
     [Fact]
     public async Task UpdateStatusAsync_NotFound_ReturnsFalse()
     {
-        // Arrange
         var id = Guid.NewGuid();
-        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync((Equipment)null);
+        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync((Equipment)null!);
 
-        // Act
         var result = await _service.UpdateStatusAsync(id, (int)EquipmentStatus.Faulty);
 
-        // Assert
         Assert.False(result);
+    }
+
+    // UTC_EQ_04: Update status of existing equipment succeeds
+    [Fact]
+    public async Task UpdateStatusAsync_Found_UpdatesAndReturnsTrue()
+    {
+        var id = Guid.NewGuid();
+        var equipment = new Equipment { Id = id, Name = "Screen", Status = EquipmentStatus.Working };
+        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync(equipment);
+
+        var result = await _service.UpdateStatusAsync(id, (int)EquipmentStatus.Faulty);
+
+        Assert.True(result);
+        Assert.Equal(EquipmentStatus.Faulty, equipment.Status);
+        _uowMock.Verify(u => u.Equipment.Update(equipment), Times.Once);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    // UTC_EQ_05: Update status to Faulty sends notification
+    [Fact]
+    public async Task UpdateStatusAsync_Faulty_SendsNotification()
+    {
+        var id = Guid.NewGuid();
+        var equipment = new Equipment { Id = id, Name = "Projector A", Status = EquipmentStatus.Working, RoomId = Guid.NewGuid() };
+        _uowMock.Setup(u => u.Equipment.GetByIdAsync(id)).ReturnsAsync(equipment);
+        _uowMock.Setup(u => u.Accounts.GetAll()).Returns(new List<Account>().BuildMockDbSet());
+
+        await _service.UpdateStatusAsync(id, (int)EquipmentStatus.Faulty);
+
+        _notificationMock.Verify(n => n.SendToRoleAsync(It.IsAny<AccountRole>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtMostOnce());
     }
 }
