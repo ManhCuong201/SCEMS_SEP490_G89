@@ -6,8 +6,9 @@ import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Pagination } from '../../../components/Common/Pagination'
 import { SearchBar } from '../../../components/Common/SearchBar'
-import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight } from 'lucide-react'
+import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle } from 'lucide-react'
 import { parseChangeRequest, cleanDisplayReason } from '../../../helpers/booking.helper'
+import toast from 'react-hot-toast'
 
 export const UserBookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -58,6 +59,18 @@ export const UserBookingsPage: React.FC = () => {
     return { label: 'Đặt phòng', color: 'var(--text-muted)', bg: 'rgba(148, 163, 184, 0.1)' };
   }
 
+  const handleCancelBooking = async (booking: Booking) => {
+    if (!window.confirm('Bạn có chắc chắn muốn huỷ yêu cầu này không?')) return;
+
+    try {
+      await bookingService.cancelBooking(booking.id);
+      toast.success('Đã huỷ yêu cầu thành công');
+      fetchBookings(page);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi khi huỷ yêu cầu');
+    }
+  }
+
   return (
     <div className="page-container">
       <div className="card-header" style={{ marginBottom: '2rem' }}>
@@ -85,6 +98,7 @@ export const UserBookingsPage: React.FC = () => {
                     <th>Thời lượng</th>
                     <th>Lý do</th>
                     <th>Trạng thái</th>
+                    <th style={{ textAlign: 'right' }}>Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -259,6 +273,30 @@ export const UserBookingsPage: React.FC = () => {
                           </div>
                         </td>
                         <td>{getStatusBadge(booking.status)}</td>
+                        <td style={{ textAlign: 'right' }}>
+                          {(() => {
+                            const isPending = booking.status === BookingStatus.Pending;
+                            const isApproved = booking.status === BookingStatus.Approved;
+                            const isFuture = new Date(booking.timeSlot) > new Date();
+                            const reasonText = booking.reason || "";
+                            const isChangeRequest = reasonText.startsWith("[Room Change Request]") || reasonText.startsWith("[Schedule Change Request]");
+                            
+                            const canCancel = isPending || (isApproved && isFuture && !isChangeRequest);
+
+                            if (canCancel) {
+                              return (
+                                <button 
+                                  onClick={() => handleCancelBooking(booking)}
+                                  className="btn btn-outline" 
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: 'var(--color-danger)', color: 'var(--color-danger)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  <XCircle size={14} /> Huỷ
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </td>
                       </tr>
                     ))
                   )}

@@ -47,6 +47,7 @@ import { AdminIssueReportsPage } from './pages/Admin/IssueReports/AdminIssueRepo
 import { UserIssueReportsPage } from './pages/User/IssueReports/UserIssueReportsPage'
 import { SecurityDashboardPage } from './pages/Admin/Dashboard/SecurityDashboardPage'
 import NotificationsPage from './pages/Notifications/NotificationsPage'
+import { ProfilePage } from './pages/Profile/ProfilePage'
 
 const HomeRedirect = () => {
   const { user } = useAuth()
@@ -160,6 +161,19 @@ const AppContent: React.FC = () => {
           ) : (
             <UserLayout>
               <NotificationsPage />
+            </UserLayout>
+          )}
+        </PrivateRoute>
+      } />
+      <Route path="/profile" element={
+        <PrivateRoute>
+          {(user?.role === 'Admin' || user?.role === 'AssetStaff' || user?.role === 'BookingStaff' || user?.role === 'Guard') ? (
+            <AdminLayout>
+              <ProfilePage />
+            </AdminLayout>
+          ) : (
+            <UserLayout>
+              <ProfilePage />
             </UserLayout>
           )}
         </PrivateRoute>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { LogOut } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import { NotificationMenu } from './NotificationMenu'
 
 export const Header: React.FC = () => {
@@ -72,6 +72,32 @@ export const Header: React.FC = () => {
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Đăng nhập với</p>
                 <p style={{ fontSize: '0.875rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-main)' }}>{user?.email}</p>
               </div>
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  navigate('/profile');
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-glass)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <User size={16} />
+                Hồ sơ cá nhân
+              </button>
               <button
                 onClick={handleLogout}
                 style={{

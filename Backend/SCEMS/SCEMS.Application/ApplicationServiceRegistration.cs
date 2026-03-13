@@ -30,6 +30,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IRoomCheckService, RoomCheckService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IProfileService, ProfileService>();
 
         return services;
     }

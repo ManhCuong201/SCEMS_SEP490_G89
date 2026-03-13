@@ -140,6 +140,26 @@ public class BookingController : ControllerBase
         return Ok(booking);
     }
 
+    [HttpPatch("{id}/cancel")]
+    public async Task<IActionResult> CancelBooking(Guid id)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _bookingService.CancelBookingAsync(id, userId);
+            if (!result) return NotFound();
+            return Ok(new { message = "Yêu cầu đã được huỷ thành công." });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     private Guid GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier); // or "id" from JWT

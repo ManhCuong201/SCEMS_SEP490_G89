@@ -44,5 +44,10 @@ export const bookingService = {
     async getBookingsByDay(date: string): Promise<Booking[]> {
         const { data } = await api.get<Booking[]>(`/booking/day?date=${date}`)
         return data
+    },
+
+    async cancelBooking(id: string): Promise<{ message: string }> {
+        const { data } = await api.patch<{ message: string }>(`/booking/${id}/cancel`)
+        return data
     }
 }

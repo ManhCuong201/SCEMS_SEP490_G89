@@ -467,4 +467,52 @@ public class BookingService : IBookingService
         // Create the booking request using existing overlapping logic
         return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true);
     }
+
+    public async Task<bool> CancelBookingAsync(Guid bookingId, Guid userId)
+    {
+        var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
+        if (booking == null) return false;
+
+        // Ensure user owns the booking
+        if (booking.RequestedBy != userId)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền huỷ yêu cầu của người khác.");
+        }
+
+        // Rule 1: Pending bookings can always be cancelled
+        if (booking.Status == BookingStatus.Pending)
+        {
+            booking.Status = BookingStatus.Cancelled;
+            _unitOfWork.Bookings.Update(booking);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        // Rule 2: Approved bookings can only be cancelled if in the future AND NOT a change request
+        if (booking.Status == BookingStatus.Approved)
+        {
+            if (booking.TimeSlot <= DateTime.Now)
+            {
+                throw new InvalidOperationException("Không thể huỷ yêu cầu đã diễn ra trong quá khứ hoặc hiện tại.");
+            }
+
+            var reason = booking.Reason ?? "";
+            var isChangeRequest = reason.StartsWith("[Room Change Request]") || reason.StartsWith("[Schedule Change Request]");
+            
+            if (isChangeRequest)
+            {
+                throw new InvalidOperationException("Không thể tự động huỷ yêu cầu đổi lịch/đổi phòng đã được duyệt. Vui lòng tạo yêu cầu mới hoặc liên hệ quản trị viên.");
+            }
+
+            booking.Status = BookingStatus.Cancelled;
+            _unitOfWork.Bookings.Update(booking);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        // If already cancelled or rejected, no action needed but we can say it's done or return false
+        if (booking.Status == BookingStatus.Cancelled) return true;
+
+        throw new InvalidOperationException($"Không thể huỷ yêu cầu ở trạng thái: {booking.Status}");
+    }
 }
