@@ -259,12 +259,16 @@ export interface CreateScheduleChangeRequest {
 }
 
 export interface RoomLiveStatusDto {
-  id: string;
+  roomId: string;
   roomCode: string;
   roomName: string;
-  currentStatus: string;
+  building: string;
+  isOccupied: boolean;
   currentActivity?: string;
-  currentUser?: string;
+  description?: string;
+  occupiedBy?: string;
+  activityEndTime?: string;
   nextActivityStartTime?: string;
   hasNextActivity: boolean;
 }
+

@@ -30,7 +30,6 @@ const SystemSettingsPage: React.FC = () => {
             setSaving(key);
             await configService.updateSetting(key, { value });
             toast.success(`Đã cập nhật: ${key}`);
-            // Refresh local state without full reload
             setSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s));
         } catch (error) {
             toast.error('Cập nhật thất bại');
@@ -44,12 +43,19 @@ const SystemSettingsPage: React.FC = () => {
     };
 
     const renderSettingRow = (s: SystemConfiguration) => (
-        <div key={s.key} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-            <div className="mb-2 sm:mb-0 mr-4">
-                <div className="font-medium text-gray-900">{s.key}</div>
-                <div className="text-sm text-gray-500">{s.description}</div>
+        <div key={s.key} style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '1.25rem', 
+            borderBottom: '1px solid var(--border-color)',
+            transition: 'background-color 0.2s ease'
+        }}>
+            <div style={{ flex: '1', marginRight: '1.5rem' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{s.key}</div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{s.description}</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '280px' }}>
                 <input
                     type="text"
                     defaultValue={s.value}
@@ -58,10 +64,12 @@ const SystemSettingsPage: React.FC = () => {
                             handleUpdate(s.key, e.target.value);
                         }
                     }}
-                    className="w-full sm:w-48 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="form-input"
                     disabled={saving === s.key}
                 />
-                {saving === s.key && <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />}
+                <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}>
+                    {saving === s.key && <RefreshCw size={18} className="spinner" style={{ color: 'var(--color-primary)' }} />}
+                </div>
             </div>
         </div>
     );
@@ -75,56 +83,83 @@ const SystemSettingsPage: React.FC = () => {
     ];
 
     return (
-        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                    <Settings className="w-6 h-6" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Cài đặt hệ thống</h1>
-                    <p className="text-gray-500 text-sm">Quản lý các thông số vận hành và quy tắc nghiệp vụ toàn hệ thống</p>
+        <div className="page-container">
+            <div className="page-header" style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ padding: '0.75rem', backgroundColor: 'var(--primary-50)', color: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}>
+                        <Settings size={28} />
+                    </div>
+                    <div>
+                        <h1 style={{ margin: 0 }}>Cài đặt hệ thống</h1>
+                        <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            Quản lý các thông số vận hành và quy tắc nghiệp vụ toàn hệ thống
+                        </p>
+                    </div>
                 </div>
             </div>
 
             {loading ? (
-                <div className="flex justify-center items-center h-64">
-                    <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+                <div className="loading-container">
+                    <RefreshCw className="spinner" size={32} style={{ color: 'var(--color-primary)' }} />
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
+                <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                    <div style={{ 
+                        display: 'flex', 
+                        borderBottom: '1px solid var(--border-color)', 
+                        overflowX: 'auto',
+                        backgroundColor: 'var(--bg-secondary)'
+                    }}>
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
-                                    activeTab === tab.id
-                                        ? 'border-blue-600 text-blue-600 bg-blue-50/50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                }`}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '1rem 1.5rem',
+                                    fontSize: '0.9rem',
+                                    fontWeight: activeTab === tab.id ? 600 : 500,
+                                    color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted)',
+                                    backgroundColor: activeTab === tab.id ? 'var(--bg-primary)' : 'transparent',
+                                    border: 'none',
+                                    borderBottom: `2px solid ${activeTab === tab.id ? 'var(--color-primary)' : 'transparent'}`,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.2s ease',
+                                    outline: 'none'
+                                }}
                             >
-                                <tab.icon className="w-4 h-4" />
+                                <tab.icon size={16} />
                                 {tab.label}
                             </button>
                         ))}
                     </div>
 
-                    <div className="p-0">
-                        <div className="bg-blue-50/50 p-4 border-b border-gray-100 flex items-start gap-3">
-                            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <p className="text-sm text-blue-800 science">
+                    <div style={{ backgroundColor: 'var(--bg-primary)' }}>
+                        <div style={{ 
+                            backgroundColor: 'var(--primary-50)', 
+                            padding: '1rem 1.5rem', 
+                            borderBottom: '1px solid var(--border-color)', 
+                            display: 'flex', 
+                            alignItems: 'flex-start', 
+                            gap: '0.75rem' 
+                        }}>
+                            <Info size={20} style={{ color: 'var(--color-primary)', marginTop: '2px', flexShrink: 0 }} />
+                            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--primary-700)', lineHeight: 1.5 }}>
                                 <strong>Lưu ý:</strong> Các thay đổi sẽ có hiệu lực ngay lập tức. Hãy cẩn trọng khi sửa đổi các thông số lõi như thời gian hoạt động hoặc chính sách bảo mật. 
                                 Một số thay đổi có thể yêu cầu người dùng đăng nhập lại hoặc làm mới trang để áp dụng đầy đủ.
                             </p>
                         </div>
                         
-                        <div className="divide-y divide-gray-100">
+                        <div>
                             {tabs.map(tab => (
-                                <div key={tab.id} className={activeTab === tab.id ? 'block' : 'hidden'}>
+                                <div key={tab.id} style={{ display: activeTab === tab.id ? 'block' : 'none' }}>
                                     {filterSettings(tab.prefix).length > 0 ? (
                                         filterSettings(tab.prefix).map(renderSettingRow)
                                     ) : (
-                                        <div className="p-8 text-center text-gray-500 text-sm italic">
+                                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>
                                             Không có cấu hình nào cho danh mục này.
                                         </div>
                                     )}
