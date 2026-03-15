@@ -144,6 +144,10 @@ using (var scope = app.Services.CreateScope())
     // Call FPT Data Seeder
     var solutionBasePath = Directory.GetParent(builder.Environment.ContentRootPath)?.FullName ?? "";
     await SCEMS.Infrastructure.Data.FptDataSeeder.SeedAsync(dbContext, solutionBasePath, passwordHasher.HashPassword);
+    // Call Mock Data Seeder
+    await SCEMS.Infrastructure.Data.MockDataSeeder.SeedAsync(dbContext, solutionBasePath);
+
+
 }
 
 

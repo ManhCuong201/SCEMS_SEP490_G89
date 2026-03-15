@@ -1,0 +1,1611 @@
+{
+  "accounts": [
+    {
+      "id": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "email": "student1@fpt.edu.vn",
+      "fullName": "Student Name 1",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000001",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17001"
+    },
+    {
+      "id": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "email": "student2@fpt.edu.vn",
+      "fullName": "Student Name 2",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000002",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17002"
+    },
+    {
+      "id": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "email": "student3@fpt.edu.vn",
+      "fullName": "Student Name 3",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000003",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17003"
+    },
+    {
+      "id": "9185e0b7-23b8-412c-b61e-369f665cb644",
+      "email": "student4@fpt.edu.vn",
+      "fullName": "Student Name 4",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000004",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17004"
+    },
+    {
+      "id": "3ab6eb5e-f209-4d5a-928a-1f73b4a06345",
+      "email": "student5@fpt.edu.vn",
+      "fullName": "Student Name 5",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000005",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17005"
+    },
+    {
+      "id": "410aacd3-3432-4bae-aaf3-610b8769b7e7",
+      "email": "student6@fpt.edu.vn",
+      "fullName": "Student Name 6",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000006",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17006"
+    },
+    {
+      "id": "e8872e4e-fc72-4794-bfbe-4b4bbb90e40a",
+      "email": "student7@fpt.edu.vn",
+      "fullName": "Student Name 7",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000007",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17007"
+    },
+    {
+      "id": "fd1038bf-f703-45b1-b4dc-7b6f13f7a546",
+      "email": "student8@fpt.edu.vn",
+      "fullName": "Student Name 8",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000008",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17008"
+    },
+    {
+      "id": "7427624e-5114-44b5-b111-1efe12898a8e",
+      "email": "student9@fpt.edu.vn",
+      "fullName": "Student Name 9",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000009",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17009"
+    },
+    {
+      "id": "74073689-fe06-4d10-babb-85b62c08e6bc",
+      "email": "student10@fpt.edu.vn",
+      "fullName": "Student Name 10",
+      "role": "Student",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000010",
+      "createdAt": "2026-03-15T11:31:00Z",
+      "studentCode": "HE17010"
+    },
+    {
+      "id": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "email": "lecturer11@fpt.edu.vn",
+      "fullName": "Lecturer Name 11",
+      "role": "Lecturer",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000011",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "email": "lecturer12@fpt.edu.vn",
+      "fullName": "Lecturer Name 12",
+      "role": "Lecturer",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000012",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "email": "lecturer13@fpt.edu.vn",
+      "fullName": "Lecturer Name 13",
+      "role": "Lecturer",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000013",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "email": "lecturer14@fpt.edu.vn",
+      "fullName": "Lecturer Name 14",
+      "role": "Lecturer",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000014",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "email": "lecturer15@fpt.edu.vn",
+      "fullName": "Lecturer Name 15",
+      "role": "Lecturer",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000015",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "email": "lecturer16@fpt.edu.vn",
+      "fullName": "Lecturer Name 16",
+      "role": "Lecturer",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000016",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "31dfad9a-448b-491c-8de4-d0e5b966ce53",
+      "email": "assetstaff17@fpt.edu.vn",
+      "fullName": "AssetStaff Name 17",
+      "role": "AssetStaff",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000017",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4f6f832a-7b4e-4729-807c-979de75c49b1",
+      "email": "assetstaff18@fpt.edu.vn",
+      "fullName": "AssetStaff Name 18",
+      "role": "AssetStaff",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000018",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "ffcc2f36-71d6-4437-b842-10b326597403",
+      "email": "assetstaff19@fpt.edu.vn",
+      "fullName": "AssetStaff Name 19",
+      "role": "AssetStaff",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000019",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "c2f64e20-d4fb-4dea-8afd-9f931f1c4cfb",
+      "email": "guard20@fpt.edu.vn",
+      "fullName": "Guard Name 20",
+      "role": "Guard",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000020",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5b4c5f50-a568-463a-9b25-88d62aa1a147",
+      "email": "guard21@fpt.edu.vn",
+      "fullName": "Guard Name 21",
+      "role": "Guard",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000021",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "7d1a3a4a-8eb4-4b54-a09f-295c3e77573d",
+      "email": "guard22@fpt.edu.vn",
+      "fullName": "Guard Name 22",
+      "role": "Guard",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000022",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "37544900-e63f-4d6a-baeb-01bea8290eb5",
+      "email": "bookingstaff23@fpt.edu.vn",
+      "fullName": "BookingStaff Name 23",
+      "role": "BookingStaff",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000023",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "446ef539-df87-4403-8eb4-d6c788c50fc4",
+      "email": "bookingstaff24@fpt.edu.vn",
+      "fullName": "BookingStaff Name 24",
+      "role": "BookingStaff",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000024",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "84f0119b-2f6d-48d9-889f-d1d150e42af1",
+      "email": "bookingstaff25@fpt.edu.vn",
+      "fullName": "BookingStaff Name 25",
+      "role": "BookingStaff",
+      "status": "Active",
+      "passwordHash": "MeVjHh8zML4PIKACmTNQ5f8R+/1+z0kn1aPhT+KM50yao5pn",
+      "phone": "0910000025",
+      "createdAt": "2026-03-15T11:31:00Z"
+    }
+  ],
+  "classes": [
+    {
+      "id": "ee077762-fc60-415d-a92f-31a2ee484e9e",
+      "classCode": "SE1701",
+      "subjectName": "Môn Học 1",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4f3499bf-5ab2-477e-ae2e-487c3120891a",
+      "classCode": "SE1702",
+      "subjectName": "Môn Học 2",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "03c56b7e-c7ab-4c0f-8419-bfc766bf563b",
+      "classCode": "SE1703",
+      "subjectName": "Môn Học 3",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "f84cd216-0491-4497-a437-13ed97e6aeb3",
+      "classCode": "SE1704",
+      "subjectName": "Môn Học 4",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "3f1fbe6a-ad29-4612-9be4-fdd50c0e062c",
+      "classCode": "SE1705",
+      "subjectName": "Môn Học 5",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "95ffa0a8-a55d-4e11-b003-e7380f2d450c",
+      "classCode": "SE1706",
+      "subjectName": "Môn Học 6",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "8d7072e4-e045-42a9-9da7-125eb6a95bcd",
+      "classCode": "SE1707",
+      "subjectName": "Môn Học 7",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5d9e2306-71fc-4bbf-b283-88e0225d0143",
+      "classCode": "SE1708",
+      "subjectName": "Môn Học 8",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "ddaa13f7-a745-4af1-903d-c8071b9f04d4",
+      "classCode": "SE1709",
+      "subjectName": "Môn Học 9",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "65295e4c-ae0b-4f6d-aa91-434bbb24a1fd",
+      "classCode": "SE1710",
+      "subjectName": "Môn Học 10",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "b8a316bd-3afc-4a99-b8c3-2e94b9124510",
+      "classCode": "SE1711",
+      "subjectName": "Môn Học 11",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4d858ea6-2f56-4625-b574-a07940e8e2ff",
+      "classCode": "SE1712",
+      "subjectName": "Môn Học 12",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "80d48a6a-df19-423c-b2d3-9a6b2529d7f9",
+      "classCode": "SE1713",
+      "subjectName": "Môn Học 13",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "23275a05-bfed-4720-8cab-22f844482335",
+      "classCode": "SE1714",
+      "subjectName": "Môn Học 14",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "9e97b213-b6cb-4389-92a6-54a692f2cb31",
+      "classCode": "SE1715",
+      "subjectName": "Môn Học 15",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "be301278-ebea-4f6c-a759-ec13d0c51f28",
+      "classCode": "SE1716",
+      "subjectName": "Môn Học 16",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "238c6c9a-e78d-4822-a1a2-8f49ad97fb05",
+      "classCode": "SE1717",
+      "subjectName": "Môn Học 17",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "df5d6b24-6a35-4054-a37e-2ffd4628a711",
+      "classCode": "SE1718",
+      "subjectName": "Môn Học 18",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "fbe76699-ba8c-4951-854b-6d95f39f6c55",
+      "classCode": "SE1719",
+      "subjectName": "Môn Học 19",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "c187cc66-d801-4b2e-be2e-5688e8f34511",
+      "classCode": "SE1720",
+      "subjectName": "Môn Học 20",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "createdAt": "2026-03-15T11:31:00Z"
+    }
+  ],
+  "classStudents": [
+    {
+      "id": "74c5d663-ed32-4fae-8dc6-c3596519eafc",
+      "classId": "ee077762-fc60-415d-a92f-31a2ee484e9e",
+      "studentId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "b605d970-355e-409e-bc8d-9024d7a5986e",
+      "classId": "4f3499bf-5ab2-477e-ae2e-487c3120891a",
+      "studentId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "58942e5b-3c44-4ba7-a5b9-1ed52ca13fc2",
+      "classId": "03c56b7e-c7ab-4c0f-8419-bfc766bf563b",
+      "studentId": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "39a0eb75-787a-491f-9f50-f2265c330dc1",
+      "classId": "f84cd216-0491-4497-a437-13ed97e6aeb3",
+      "studentId": "9185e0b7-23b8-412c-b61e-369f665cb644",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "bff9c90a-a284-49e7-a3fa-6558d7bd0770",
+      "classId": "3f1fbe6a-ad29-4612-9be4-fdd50c0e062c",
+      "studentId": "3ab6eb5e-f209-4d5a-928a-1f73b4a06345",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "33a65aac-d70e-45de-b053-a1f88dc6aa67",
+      "classId": "95ffa0a8-a55d-4e11-b003-e7380f2d450c",
+      "studentId": "410aacd3-3432-4bae-aaf3-610b8769b7e7",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "f82f2c68-fe87-4dee-a396-3bd25c106618",
+      "classId": "8d7072e4-e045-42a9-9da7-125eb6a95bcd",
+      "studentId": "e8872e4e-fc72-4794-bfbe-4b4bbb90e40a",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4e638c65-2a66-427b-8c39-29ff2fff6354",
+      "classId": "5d9e2306-71fc-4bbf-b283-88e0225d0143",
+      "studentId": "fd1038bf-f703-45b1-b4dc-7b6f13f7a546",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5ff5219d-3664-4d5a-aa79-17bd0baae38f",
+      "classId": "ddaa13f7-a745-4af1-903d-c8071b9f04d4",
+      "studentId": "7427624e-5114-44b5-b111-1efe12898a8e",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "c6a2cae7-b097-4d56-8bb8-1c5c6f5db471",
+      "classId": "65295e4c-ae0b-4f6d-aa91-434bbb24a1fd",
+      "studentId": "74073689-fe06-4d10-babb-85b62c08e6bc",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "2ad7295a-8bb9-4c08-8e3a-4722f5533110",
+      "classId": "b8a316bd-3afc-4a99-b8c3-2e94b9124510",
+      "studentId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "7db10435-605e-4b0e-afaa-5a4ca5ee53f3",
+      "classId": "4d858ea6-2f56-4625-b574-a07940e8e2ff",
+      "studentId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5df7b6d6-98c1-43fb-9281-2e2be6b63ed4",
+      "classId": "80d48a6a-df19-423c-b2d3-9a6b2529d7f9",
+      "studentId": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "ed59ab7b-e27b-4fb0-83bb-a10d5858e2bd",
+      "classId": "23275a05-bfed-4720-8cab-22f844482335",
+      "studentId": "9185e0b7-23b8-412c-b61e-369f665cb644",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "7aeb9508-4725-41a0-ab16-d609ae508c87",
+      "classId": "9e97b213-b6cb-4389-92a6-54a692f2cb31",
+      "studentId": "3ab6eb5e-f209-4d5a-928a-1f73b4a06345",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "eee3aa0f-1148-4ca4-b025-a8b6ae6878da",
+      "classId": "be301278-ebea-4f6c-a759-ec13d0c51f28",
+      "studentId": "410aacd3-3432-4bae-aaf3-610b8769b7e7",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "980c6d3e-e73c-4cd1-a191-40370798b519",
+      "classId": "238c6c9a-e78d-4822-a1a2-8f49ad97fb05",
+      "studentId": "e8872e4e-fc72-4794-bfbe-4b4bbb90e40a",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "444fbabe-d3a3-4f67-8ba8-718a8c80bebf",
+      "classId": "df5d6b24-6a35-4054-a37e-2ffd4628a711",
+      "studentId": "fd1038bf-f703-45b1-b4dc-7b6f13f7a546",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "b6420962-d112-4109-aec1-cb175b23663f",
+      "classId": "fbe76699-ba8c-4951-854b-6d95f39f6c55",
+      "studentId": "7427624e-5114-44b5-b111-1efe12898a8e",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4f399b56-d823-48d9-868e-e3a2016e5f63",
+      "classId": "c187cc66-d801-4b2e-be2e-5688e8f34511",
+      "studentId": "74073689-fe06-4d10-babb-85b62c08e6bc",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "0ec58e1b-97a4-48da-a7a4-f12906c0eb91",
+      "classId": "ee077762-fc60-415d-a92f-31a2ee484e9e",
+      "studentId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "a3b51491-503f-44e5-be17-476202cd2d3a",
+      "classId": "4f3499bf-5ab2-477e-ae2e-487c3120891a",
+      "studentId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "e208c88d-1b2e-4b71-ae92-165f3fd33e54",
+      "classId": "03c56b7e-c7ab-4c0f-8419-bfc766bf563b",
+      "studentId": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "9d2beb17-b156-478a-ba45-34d8b4ce5373",
+      "classId": "f84cd216-0491-4497-a437-13ed97e6aeb3",
+      "studentId": "9185e0b7-23b8-412c-b61e-369f665cb644",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4565b656-2bf5-4f5e-b0be-1ce5d7386b56",
+      "classId": "3f1fbe6a-ad29-4612-9be4-fdd50c0e062c",
+      "studentId": "3ab6eb5e-f209-4d5a-928a-1f73b4a06345",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "2955d55f-2156-4af2-a256-8a4bb66f48bd",
+      "classId": "95ffa0a8-a55d-4e11-b003-e7380f2d450c",
+      "studentId": "410aacd3-3432-4bae-aaf3-610b8769b7e7",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "0a617c9e-cb41-4929-8d88-b9a5d086355a",
+      "classId": "8d7072e4-e045-42a9-9da7-125eb6a95bcd",
+      "studentId": "e8872e4e-fc72-4794-bfbe-4b4bbb90e40a",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "0b8a1005-36f2-4ff1-adfe-2b767412edcc",
+      "classId": "5d9e2306-71fc-4bbf-b283-88e0225d0143",
+      "studentId": "fd1038bf-f703-45b1-b4dc-7b6f13f7a546",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "c8ca3669-de8d-4001-9315-069029db3af8",
+      "classId": "ddaa13f7-a745-4af1-903d-c8071b9f04d4",
+      "studentId": "7427624e-5114-44b5-b111-1efe12898a8e",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4a70f3b1-bf3d-4bd9-9fa1-224948fea51a",
+      "classId": "65295e4c-ae0b-4f6d-aa91-434bbb24a1fd",
+      "studentId": "74073689-fe06-4d10-babb-85b62c08e6bc",
+      "createdAt": "2026-03-15T11:31:00Z"
+    }
+  ],
+  "teachingSchedules": [
+    {
+      "id": "c3e1014e-e4fb-496e-8232-2f12763d09fb",
+      "subject": "Môn Học 1",
+      "classCode": "SE1701",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "lecturerName": "Lecturer Name 12",
+      "lecturerEmail": "lecturer12@fpt.edu.vn",
+      "date": "2026-02-20T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 1,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5771b8c5-bcc9-49d2-b383-abc6b6413610",
+      "subject": "Môn Học 2",
+      "classCode": "SE1702",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "lecturerName": "Lecturer Name 13",
+      "lecturerEmail": "lecturer13@fpt.edu.vn",
+      "date": "2026-02-23T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 2,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "f9ea82b8-b029-4a55-a673-b7beb096803b",
+      "subject": "Môn Học 3",
+      "classCode": "SE1703",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "lecturerName": "Lecturer Name 14",
+      "lecturerEmail": "lecturer14@fpt.edu.vn",
+      "date": "2026-02-24T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 3,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "eb2a47f8-e412-4239-9029-9a850e5a82cc",
+      "subject": "Môn Học 4",
+      "classCode": "SE1704",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "lecturerName": "Lecturer Name 15",
+      "lecturerEmail": "lecturer15@fpt.edu.vn",
+      "date": "2026-02-26T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 4,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "3b8467fc-7800-4b57-892f-0c6b051dca41",
+      "subject": "Môn Học 5",
+      "classCode": "SE1705",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "lecturerName": "Lecturer Name 16",
+      "lecturerEmail": "lecturer16@fpt.edu.vn",
+      "date": "2026-02-28T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 5,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5b3775f8-441f-4a33-a918-3f7e3b4b3a4c",
+      "subject": "Môn Học 6",
+      "classCode": "SE1706",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "lecturerName": "Lecturer Name 11",
+      "lecturerEmail": "lecturer11@fpt.edu.vn",
+      "date": "2026-03-02T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 6,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "ee8c26e4-32d8-4194-94d9-73d1ead030ad",
+      "subject": "Môn Học 7",
+      "classCode": "SE1707",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "lecturerName": "Lecturer Name 12",
+      "lecturerEmail": "lecturer12@fpt.edu.vn",
+      "date": "2026-03-04T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 1,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "6daa5254-9750-4690-bcd6-fdc39f2e5320",
+      "subject": "Môn Học 8",
+      "classCode": "SE1708",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "lecturerName": "Lecturer Name 13",
+      "lecturerEmail": "lecturer13@fpt.edu.vn",
+      "date": "2026-03-06T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 2,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "7c52b40a-74ab-432a-8316-f06f13f07968",
+      "subject": "Môn Học 9",
+      "classCode": "SE1709",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "lecturerName": "Lecturer Name 14",
+      "lecturerEmail": "lecturer14@fpt.edu.vn",
+      "date": "2026-03-09T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 3,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "355779b6-4b31-456f-8efc-81bcc7ef7ff3",
+      "subject": "Môn Học 10",
+      "classCode": "SE1710",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "lecturerName": "Lecturer Name 15",
+      "lecturerEmail": "lecturer15@fpt.edu.vn",
+      "date": "2026-03-10T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 4,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "7798cd2e-4348-4cf3-b8a7-37e56147348f",
+      "subject": "Môn Học 11",
+      "classCode": "SE1711",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "lecturerName": "Lecturer Name 16",
+      "lecturerEmail": "lecturer16@fpt.edu.vn",
+      "date": "2026-03-12T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 5,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "99ff5e7b-17dc-4083-ae59-d14ef035da15",
+      "subject": "Môn Học 12",
+      "classCode": "SE1712",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "lecturerName": "Lecturer Name 11",
+      "lecturerEmail": "lecturer11@fpt.edu.vn",
+      "date": "2026-03-14T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 6,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "784071c7-3800-4e61-8338-0dee13dbd629",
+      "subject": "Môn Học 13",
+      "classCode": "SE1713",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "lecturerName": "Lecturer Name 12",
+      "lecturerEmail": "lecturer12@fpt.edu.vn",
+      "date": "2026-03-16T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 1,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "57ef75cb-5fc4-4320-a82f-b7ce7c6d759a",
+      "subject": "Môn Học 14",
+      "classCode": "SE1714",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "lecturerName": "Lecturer Name 13",
+      "lecturerEmail": "lecturer13@fpt.edu.vn",
+      "date": "2026-03-18T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 2,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4d187c96-2865-4fba-a33c-8e76159ca53e",
+      "subject": "Môn Học 15",
+      "classCode": "SE1715",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "lecturerName": "Lecturer Name 14",
+      "lecturerEmail": "lecturer14@fpt.edu.vn",
+      "date": "2026-03-20T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 3,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "f3569384-533e-4ebe-a1e4-b5d9e6f64d80",
+      "subject": "Môn Học 16",
+      "classCode": "SE1716",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "lecturerName": "Lecturer Name 15",
+      "lecturerEmail": "lecturer15@fpt.edu.vn",
+      "date": "2026-03-23T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 4,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "36e777a2-cc54-4517-8591-2652d7968190",
+      "subject": "Môn Học 17",
+      "classCode": "SE1717",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "lecturerName": "Lecturer Name 16",
+      "lecturerEmail": "lecturer16@fpt.edu.vn",
+      "date": "2026-03-24T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 5,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "d5a88f71-74e0-4db4-8ecb-3db96c2793d8",
+      "subject": "Môn Học 18",
+      "classCode": "SE1718",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "lecturerName": "Lecturer Name 11",
+      "lecturerEmail": "lecturer11@fpt.edu.vn",
+      "date": "2026-03-26T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 6,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "e7db78dc-367b-4e57-8b26-2c429da0b90f",
+      "subject": "Môn Học 19",
+      "classCode": "SE1719",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "lecturerName": "Lecturer Name 12",
+      "lecturerEmail": "lecturer12@fpt.edu.vn",
+      "date": "2026-03-28T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 1,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "8a689d3e-5c40-49b1-bb2c-5938effecc7b",
+      "subject": "Môn Học 20",
+      "classCode": "SE1720",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "lecturerName": "Lecturer Name 13",
+      "lecturerEmail": "lecturer13@fpt.edu.vn",
+      "date": "2026-03-30T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 2,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "74f87f01-73ef-419a-b3cc-59f8c1097bdd",
+      "subject": "Môn Học 1",
+      "classCode": "SE1701",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "lecturerName": "Lecturer Name 12",
+      "lecturerEmail": "lecturer12@fpt.edu.vn",
+      "date": "2026-04-01T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 3,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "f63bc74a-d96f-49b2-8835-4b064095340e",
+      "subject": "Môn Học 2",
+      "classCode": "SE1702",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "lecturerName": "Lecturer Name 13",
+      "lecturerEmail": "lecturer13@fpt.edu.vn",
+      "date": "2026-04-03T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 4,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "feb21eb5-bf68-4ced-814e-d75ecb6a5457",
+      "subject": "Môn Học 3",
+      "classCode": "SE1703",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "lecturerName": "Lecturer Name 14",
+      "lecturerEmail": "lecturer14@fpt.edu.vn",
+      "date": "2026-04-06T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 5,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "00000f3a-ed63-4658-9421-151ae6734ffb",
+      "subject": "Môn Học 4",
+      "classCode": "SE1704",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "lecturerName": "Lecturer Name 15",
+      "lecturerEmail": "lecturer15@fpt.edu.vn",
+      "date": "2026-04-07T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 6,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "efe68862-bf3a-477c-a007-394777db7a3f",
+      "subject": "Môn Học 5",
+      "classCode": "SE1705",
+      "lecturerId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "lecturerName": "Lecturer Name 16",
+      "lecturerEmail": "lecturer16@fpt.edu.vn",
+      "date": "2026-04-09T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 1,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "4adf8162-4c5f-4a08-938b-a4d53c5b0ccf",
+      "subject": "Môn Học 6",
+      "classCode": "SE1706",
+      "lecturerId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "lecturerName": "Lecturer Name 11",
+      "lecturerEmail": "lecturer11@fpt.edu.vn",
+      "date": "2026-04-11T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 2,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "c7149775-ca5f-4d51-95ae-a176c59b7eb6",
+      "subject": "Môn Học 7",
+      "classCode": "SE1707",
+      "lecturerId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "lecturerName": "Lecturer Name 12",
+      "lecturerEmail": "lecturer12@fpt.edu.vn",
+      "date": "2026-04-13T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 3,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "45a9af55-ca1f-40f3-a9c5-cd16b1cf94dd",
+      "subject": "Môn Học 8",
+      "classCode": "SE1708",
+      "lecturerId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "lecturerName": "Lecturer Name 13",
+      "lecturerEmail": "lecturer13@fpt.edu.vn",
+      "date": "2026-04-15T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 4,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "5791942f-4f28-4d47-8eff-bbbaf7147acb",
+      "subject": "Môn Học 9",
+      "classCode": "SE1709",
+      "lecturerId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "lecturerName": "Lecturer Name 14",
+      "lecturerEmail": "lecturer14@fpt.edu.vn",
+      "date": "2026-04-17T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 5,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "08d60037-fc29-463d-b335-a108779df6a5",
+      "subject": "Môn Học 10",
+      "classCode": "SE1710",
+      "lecturerId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "lecturerName": "Lecturer Name 15",
+      "lecturerEmail": "lecturer15@fpt.edu.vn",
+      "date": "2026-04-20T00:00:00Z",
+      "startTime": "07:30:00",
+      "endTime": "09:50:00",
+      "slot": 6,
+      "createdAt": "2026-03-15T11:31:00Z"
+    }
+  ],
+  "issueReports": [
+    {
+      "id": "6081104d-68f9-45d5-ba55-3abfde1169e1",
+      "createdBy": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "description": "Báo cáo sự cố số 1 từ Student.",
+      "status": "Open",
+      "createdAt": "2026-03-06T11:31:00Z"
+    },
+    {
+      "id": "ca5e6848-eff8-4d4c-9d10-dcc9de48154e",
+      "createdBy": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "description": "Báo cáo sự cố số 2 từ Student.",
+      "status": "InProgress",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "5f27d1a3-343f-438f-8080-8ebd16d9cdcf",
+      "createdBy": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "description": "Báo cáo sự cố số 3 từ Student.",
+      "status": "Resolved",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "b9e499e7-05ab-4d99-95d7-282598833dbf",
+      "createdBy": "9185e0b7-23b8-412c-b61e-369f665cb644",
+      "description": "Báo cáo sự cố số 4 từ Student.",
+      "status": "Open",
+      "createdAt": "2026-03-14T11:31:00Z"
+    },
+    {
+      "id": "237fcab8-fb60-4549-9ca0-88912a6abad7",
+      "createdBy": "3ab6eb5e-f209-4d5a-928a-1f73b4a06345",
+      "description": "Báo cáo sự cố số 5 từ Student.",
+      "status": "InProgress",
+      "createdAt": "2026-03-08T11:31:00Z"
+    },
+    {
+      "id": "e5ae8d33-b967-4474-bea4-55d4f658fd7e",
+      "createdBy": "410aacd3-3432-4bae-aaf3-610b8769b7e7",
+      "description": "Báo cáo sự cố số 6 từ Student.",
+      "status": "Resolved",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "3efdea7c-a515-4b4f-80da-addc96168db1",
+      "createdBy": "e8872e4e-fc72-4794-bfbe-4b4bbb90e40a",
+      "description": "Báo cáo sự cố số 7 từ Student.",
+      "status": "Open",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "89b1d8e2-e8c6-4864-8e9f-7b39bdcba709",
+      "createdBy": "fd1038bf-f703-45b1-b4dc-7b6f13f7a546",
+      "description": "Báo cáo sự cố số 8 từ Student.",
+      "status": "InProgress",
+      "createdAt": "2026-03-08T11:31:00Z"
+    },
+    {
+      "id": "e50314bb-c500-4128-b7d2-fa8723ac24ce",
+      "createdBy": "7427624e-5114-44b5-b111-1efe12898a8e",
+      "description": "Báo cáo sự cố số 9 từ Student.",
+      "status": "Resolved",
+      "createdAt": "2026-03-14T11:31:00Z"
+    },
+    {
+      "id": "6b56b425-3e4b-4edb-b2c8-4028adcaa794",
+      "createdBy": "74073689-fe06-4d10-babb-85b62c08e6bc",
+      "description": "Báo cáo sự cố số 10 từ Student.",
+      "status": "Open",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "83f92344-5300-4b4c-b259-c0e75ef49079",
+      "createdBy": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "description": "Báo cáo sự cố số 11 từ Lecturer.",
+      "status": "InProgress",
+      "createdAt": "2026-03-13T11:31:00Z"
+    },
+    {
+      "id": "f426ac30-7383-49b8-8559-7548cad3080c",
+      "createdBy": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "description": "Báo cáo sự cố số 12 từ Lecturer.",
+      "status": "Resolved",
+      "createdAt": "2026-03-14T11:31:00Z"
+    },
+    {
+      "id": "33b97298-d309-416b-a08f-c5226ccdb6e1",
+      "createdBy": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "description": "Báo cáo sự cố số 13 từ Lecturer.",
+      "status": "Open",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "e68d7020-ab06-4839-90e8-4d641ee54ad0",
+      "createdBy": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "description": "Báo cáo sự cố số 14 từ Lecturer.",
+      "status": "InProgress",
+      "createdAt": "2026-03-12T11:31:00Z"
+    },
+    {
+      "id": "2f21eb6d-5fe1-4e8c-8c89-d5e4d1793599",
+      "createdBy": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "description": "Báo cáo sự cố số 15 từ Lecturer.",
+      "status": "Resolved",
+      "createdAt": "2026-03-06T11:31:00Z"
+    },
+    {
+      "id": "a5ae6738-b444-48c4-8d96-ae08b6eb15b2",
+      "createdBy": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "description": "Báo cáo sự cố số 16 từ Lecturer.",
+      "status": "Open",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "44a6049c-6c4a-46d9-86e3-af5de5c8fe4f",
+      "createdBy": "31dfad9a-448b-491c-8de4-d0e5b966ce53",
+      "description": "Báo cáo sự cố số 17 từ AssetStaff.",
+      "status": "InProgress",
+      "createdAt": "2026-03-11T11:31:00Z"
+    },
+    {
+      "id": "743aeefc-56e7-4d80-bb65-4b1412463974",
+      "createdBy": "4f6f832a-7b4e-4729-807c-979de75c49b1",
+      "description": "Báo cáo sự cố số 18 từ AssetStaff.",
+      "status": "Resolved",
+      "createdAt": "2026-03-10T11:31:00Z"
+    },
+    {
+      "id": "d38e8f3b-eda7-4c81-82a8-a72f789447d9",
+      "createdBy": "ffcc2f36-71d6-4437-b842-10b326597403",
+      "description": "Báo cáo sự cố số 19 từ AssetStaff.",
+      "status": "Open",
+      "createdAt": "2026-03-09T11:31:00Z"
+    },
+    {
+      "id": "3c2a58b6-47b5-4950-8a90-541122c3d664",
+      "createdBy": "c2f64e20-d4fb-4dea-8afd-9f931f1c4cfb",
+      "description": "Báo cáo sự cố số 20 từ Guard.",
+      "status": "InProgress",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "0639e884-8eb6-4d25-af57-4e0997c834f6",
+      "createdBy": "5b4c5f50-a568-463a-9b25-88d62aa1a147",
+      "description": "Báo cáo sự cố số 21 từ Guard.",
+      "status": "Resolved",
+      "createdAt": "2026-03-10T11:31:00Z"
+    },
+    {
+      "id": "15f927eb-0f12-40ab-be3c-68bf54ec6426",
+      "createdBy": "7d1a3a4a-8eb4-4b54-a09f-295c3e77573d",
+      "description": "Báo cáo sự cố số 22 từ Guard.",
+      "status": "Open",
+      "createdAt": "2026-03-14T11:31:00Z"
+    },
+    {
+      "id": "61c4f535-c53c-40f3-adff-f146a79c512a",
+      "createdBy": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "description": "Báo cáo sự cố bổ sung số 23.",
+      "status": "Open",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "1a6f8afa-3593-427a-ab74-245e1c6240cd",
+      "createdBy": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "description": "Báo cáo sự cố bổ sung số 24.",
+      "status": "Open",
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "c0201d77-83ff-43ac-bfca-57059eae3e53",
+      "createdBy": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "description": "Báo cáo sự cố bổ sung số 25.",
+      "status": "Open",
+      "createdAt": "2026-03-15T11:31:00Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "43b94020-ff29-4a61-9b0d-428e11bc69c1",
+      "recipientId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 1, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-15T11:31:00Z"
+    },
+    {
+      "id": "8b6b039f-dbb0-4ffd-b796-a1f0ba627e91",
+      "recipientId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 2, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-15T10:31:00Z"
+    },
+    {
+      "id": "e7096ba1-0106-4e2f-bb05-34b70681a804",
+      "recipientId": "f5e3c16f-a462-4fce-bdc0-e0e880567088",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 3, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-15T09:31:00Z"
+    },
+    {
+      "id": "c2bbc094-c62c-4872-a1fd-6a01b13d9bdf",
+      "recipientId": "9185e0b7-23b8-412c-b61e-369f665cb644",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 4, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-15T08:31:00Z"
+    },
+    {
+      "id": "86a8baaf-f9b0-4030-8a6a-ebf1684ebab0",
+      "recipientId": "3ab6eb5e-f209-4d5a-928a-1f73b4a06345",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 5, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-15T07:31:00Z"
+    },
+    {
+      "id": "451b685a-e4dc-4d14-8852-fa904184a62d",
+      "recipientId": "410aacd3-3432-4bae-aaf3-610b8769b7e7",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 6, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-15T06:31:00Z"
+    },
+    {
+      "id": "18388916-bb66-4020-b585-895c7da11628",
+      "recipientId": "e8872e4e-fc72-4794-bfbe-4b4bbb90e40a",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 7, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-15T05:31:00Z"
+    },
+    {
+      "id": "eecb3758-0884-43b4-bb63-e828ed18d264",
+      "recipientId": "fd1038bf-f703-45b1-b4dc-7b6f13f7a546",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 8, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-15T04:31:00Z"
+    },
+    {
+      "id": "7b875d75-eb66-4e57-b836-acf6c53969e1",
+      "recipientId": "7427624e-5114-44b5-b111-1efe12898a8e",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 9, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-15T03:31:00Z"
+    },
+    {
+      "id": "b43b2790-b764-42b0-9586-909fdb52fc08",
+      "recipientId": "74073689-fe06-4d10-babb-85b62c08e6bc",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Student Name 10, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-15T02:31:00Z"
+    },
+    {
+      "id": "cca943bf-a987-4894-9285-a776d18047e8",
+      "recipientId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Lecturer Name 11, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-15T01:31:00Z"
+    },
+    {
+      "id": "7745cc9b-feac-4c55-a17c-c9afb35b54e8",
+      "recipientId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Lecturer Name 12, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-15T00:31:00Z"
+    },
+    {
+      "id": "665f6e31-55cf-4566-add7-757da66a6c33",
+      "recipientId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Lecturer Name 13, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T23:31:00Z"
+    },
+    {
+      "id": "c207d2d5-5d5f-40c2-8a41-bcab8dd338d3",
+      "recipientId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Lecturer Name 14, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-14T22:31:00Z"
+    },
+    {
+      "id": "68b8c8ab-ae58-4e66-be96-ef40891f9e91",
+      "recipientId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Lecturer Name 15, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T21:31:00Z"
+    },
+    {
+      "id": "cad4a426-9628-48f3-a055-56a69406c273",
+      "recipientId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Lecturer Name 16, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-14T20:31:00Z"
+    },
+    {
+      "id": "97a0f6ae-dcd0-43e5-90d1-31963b039c9f",
+      "recipientId": "31dfad9a-448b-491c-8de4-d0e5b966ce53",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào AssetStaff Name 17, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T19:31:00Z"
+    },
+    {
+      "id": "2f91757e-e3fe-4a29-83c8-9f3a10775dd2",
+      "recipientId": "4f6f832a-7b4e-4729-807c-979de75c49b1",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào AssetStaff Name 18, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-14T18:31:00Z"
+    },
+    {
+      "id": "428bb357-7fb3-42d9-a883-dd38da6d9a3b",
+      "recipientId": "ffcc2f36-71d6-4437-b842-10b326597403",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào AssetStaff Name 19, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T17:31:00Z"
+    },
+    {
+      "id": "f448b47d-c3df-4431-bc10-ad13f3b6b44e",
+      "recipientId": "c2f64e20-d4fb-4dea-8afd-9f931f1c4cfb",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Guard Name 20, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-14T16:31:00Z"
+    },
+    {
+      "id": "a1978a8e-def8-4103-a106-64ed05c7608a",
+      "recipientId": "5b4c5f50-a568-463a-9b25-88d62aa1a147",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Guard Name 21, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T15:31:00Z"
+    },
+    {
+      "id": "d935b991-b62d-48e9-b07d-d98f94d622b5",
+      "recipientId": "7d1a3a4a-8eb4-4b54-a09f-295c3e77573d",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào Guard Name 22, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-14T14:31:00Z"
+    },
+    {
+      "id": "e556d93c-c5bb-48dd-ac7e-335916cc2101",
+      "recipientId": "37544900-e63f-4d6a-baeb-01bea8290eb5",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào BookingStaff Name 23, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T13:31:00Z"
+    },
+    {
+      "id": "d06ab0d4-a626-40d8-83f8-8910e45771de",
+      "recipientId": "446ef539-df87-4403-8eb4-d6c788c50fc4",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào BookingStaff Name 24, hệ thống đã được cập nhật.",
+      "isRead": false,
+      "createdAt": "2026-03-14T12:31:00Z"
+    },
+    {
+      "id": "aa57d536-847e-4114-829f-c09092e5befa",
+      "recipientId": "84f0119b-2f6d-48d9-889f-d1d150e42af1",
+      "title": "Thông báo hệ thống",
+      "message": "Xin chào BookingStaff Name 25, hệ thống đã được cập nhật.",
+      "isRead": true,
+      "createdAt": "2026-03-14T11:31:00Z"
+    }
+  ],
+  "bookings": [
+    {
+      "id": "ba614952-0a19-4025-9e2a-c627e966916d",
+      "accountId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "requestedBy": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "timeSlot": "2026-02-25T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 1",
+      "status": "Pending",
+      "createdAt": "2026-03-12T11:31:00Z"
+    },
+    {
+      "id": "63032be2-7c11-416e-bff9-14527b8c1cab",
+      "accountId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "requestedBy": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "timeSlot": "2026-02-27T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 2",
+      "status": "Approved",
+      "createdAt": "2026-03-11T11:31:00Z"
+    },
+    {
+      "id": "53776d5a-9c36-4207-b6fa-e59b88b88905",
+      "accountId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "requestedBy": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "timeSlot": "2026-03-02T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 3",
+      "status": "Rejected",
+      "createdAt": "2026-03-06T11:31:00Z"
+    },
+    {
+      "id": "c7161ecc-7a34-4984-9af9-4c66dd7a1cf7",
+      "accountId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "requestedBy": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "timeSlot": "2026-03-04T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 4",
+      "status": "Pending",
+      "createdAt": "2026-03-12T11:31:00Z"
+    },
+    {
+      "id": "7f54095b-0255-4472-a751-690d38d0fd32",
+      "accountId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "requestedBy": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "timeSlot": "2026-03-07T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 5",
+      "status": "Approved",
+      "createdAt": "2026-03-09T11:31:00Z"
+    },
+    {
+      "id": "2e84be43-5d99-4caf-98d0-d4676a58e450",
+      "accountId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "requestedBy": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "timeSlot": "2026-03-09T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 6",
+      "status": "Rejected",
+      "createdAt": "2026-03-01T11:31:00Z"
+    },
+    {
+      "id": "3dc77398-fb59-449d-8c4b-ea1371a0d740",
+      "accountId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "requestedBy": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "timeSlot": "2026-03-12T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 7",
+      "status": "Pending",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "1548600c-d8ac-4b22-ada9-8233d36cddb1",
+      "accountId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "requestedBy": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "timeSlot": "2026-03-14T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 8",
+      "status": "Approved",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "072ec972-f392-43e2-9731-c312b738df0d",
+      "accountId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "requestedBy": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "timeSlot": "2026-03-17T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 9",
+      "status": "Rejected",
+      "createdAt": "2026-03-08T11:31:00Z"
+    },
+    {
+      "id": "28f278b7-7997-45bc-bf04-6f3c74437519",
+      "accountId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "requestedBy": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "timeSlot": "2026-03-19T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 10",
+      "status": "Pending",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "18daea10-0985-48b2-80de-badb5a0dd969",
+      "accountId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "requestedBy": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "timeSlot": "2026-03-22T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 11",
+      "status": "Approved",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "01d4ebc1-a8c3-4595-aa52-2e81591dd3bd",
+      "accountId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "requestedBy": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "timeSlot": "2026-03-24T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 12",
+      "status": "Rejected",
+      "createdAt": "2026-03-06T11:31:00Z"
+    },
+    {
+      "id": "4ca75692-a202-45bb-9dd3-6418451419c6",
+      "accountId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "requestedBy": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "timeSlot": "2026-03-27T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 13",
+      "status": "Pending",
+      "createdAt": "2026-03-01T11:31:00Z"
+    },
+    {
+      "id": "58a50ef2-0b33-4cd3-965e-4ab9a80b0e46",
+      "accountId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "requestedBy": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "timeSlot": "2026-03-29T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 14",
+      "status": "Approved",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "38e09d25-33fb-4c7b-b2b3-4a54747810d9",
+      "accountId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "requestedBy": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "timeSlot": "2026-04-01T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 15",
+      "status": "Rejected",
+      "createdAt": "2026-03-11T11:31:00Z"
+    },
+    {
+      "id": "a9ea6177-d8df-4edb-9cb6-ccc267d05940",
+      "accountId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "requestedBy": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "timeSlot": "2026-04-03T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 16",
+      "status": "Pending",
+      "createdAt": "2026-03-01T11:31:00Z"
+    },
+    {
+      "id": "f7918233-da4b-45d4-a8ff-5c6e687e8ff2",
+      "accountId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "requestedBy": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "timeSlot": "2026-04-06T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 17",
+      "status": "Approved",
+      "createdAt": "2026-03-13T11:31:00Z"
+    },
+    {
+      "id": "402a777d-cfda-439b-87e3-7c1d3d68192c",
+      "accountId": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "requestedBy": "f4cb02ed-2495-456a-b63b-0fbf3ae13f8d",
+      "timeSlot": "2026-04-08T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 18",
+      "status": "Rejected",
+      "createdAt": "2026-03-10T11:31:00Z"
+    },
+    {
+      "id": "e0ebb440-c407-43be-abe7-0188cdcea64b",
+      "accountId": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "requestedBy": "16f225b5-14d5-4a2f-bf52-710b81707c8c",
+      "timeSlot": "2026-04-11T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 19",
+      "status": "Pending",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "a4200178-bbeb-49f1-b387-303adca7505e",
+      "accountId": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "requestedBy": "86b6c1cc-47f0-4a2e-80e4-860dd1be9bf0",
+      "timeSlot": "2026-04-13T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 20",
+      "status": "Approved",
+      "createdAt": "2026-03-11T11:31:00Z"
+    },
+    {
+      "id": "7aebea00-df2d-48e1-9b42-d8de8ef1ae4d",
+      "accountId": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "requestedBy": "bc89b36f-c18a-40f8-ad3b-f8f89458ff50",
+      "timeSlot": "2026-04-16T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 21",
+      "status": "Rejected",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "ef4a59c1-4d9c-4983-b24e-e0f2cf7e01af",
+      "accountId": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "requestedBy": "720a9e00-4ea4-4a9d-993c-817df136ded7",
+      "timeSlot": "2026-04-18T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 22",
+      "status": "Pending",
+      "createdAt": "2026-03-07T11:31:00Z"
+    },
+    {
+      "id": "c0ef8b55-c016-46a5-bee4-47568ba1b589",
+      "accountId": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "requestedBy": "046d6d32-49ff-498a-91e3-8cfa7766c5e6",
+      "timeSlot": "2026-04-21T08:00:00Z",
+      "duration": 3,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 23",
+      "status": "Approved",
+      "createdAt": "2026-03-05T11:31:00Z"
+    },
+    {
+      "id": "58e87b7b-0f66-4026-9a35-40b1a8f03d9c",
+      "accountId": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "requestedBy": "e0136868-659d-4bf3-a5e3-d5af8a3b2e7b",
+      "timeSlot": "2026-04-23T08:00:00Z",
+      "duration": 4,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 24",
+      "status": "Rejected",
+      "createdAt": "2026-03-04T11:31:00Z"
+    },
+    {
+      "id": "6cba0aae-35f8-4a22-a1f5-612c3c7425e6",
+      "accountId": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "requestedBy": "c499c639-8bfa-4029-bf6a-a9d4e979c1c6",
+      "timeSlot": "2026-04-26T08:00:00Z",
+      "duration": 2,
+      "reason": "Mượn phòng tổ chức sự kiện / học bù số 25",
+      "status": "Pending",
+      "createdAt": "2026-03-07T11:31:00Z"
+    }
+  ]
+}
