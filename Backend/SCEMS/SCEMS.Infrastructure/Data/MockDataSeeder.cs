@@ -35,7 +35,7 @@ public class MockDataSeeder
 
             if (!File.Exists(filePath))
             {
-                Console.WriteLine($"Mock data file not found at {filePath}");
+                Console.WriteLine($"[MockDataSeeder] File JSON không tồn tại ở: {filePath}");
                 return;
             }
 
@@ -43,14 +43,17 @@ public class MockDataSeeder
             var jsonContent = await File.ReadAllTextAsync(filePath);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            options.Converters.Add(new JsonStringEnumConverter()); // Cho phép Map string "Student" vào AccountRole.Student
+            options.Converters.Add(new JsonStringEnumConverter()); // Map string vào Enum
+            options.Converters.Add(new TimeSpanToStringConverter()); // Xử lý lỗi convert StartTime/EndTime
 
             var seedData = JsonSerializer.Deserialize<MockDataFormat>(jsonContent, options);
 
             if (seedData != null)
             {
                 // 1. Thêm Accounts
-                if (seedData.Accounts.Any() && !await context.Accounts.AnyAsync(a => a.Email == "student1@fpt.edu.vn"))
+                // Lấy email đầu tiên trong file JSON để check xem DB đã nạp file này chưa
+                var firstEmail = seedData.Accounts.FirstOrDefault()?.Email;
+                if (!string.IsNullOrEmpty(firstEmail) && !await context.Accounts.AnyAsync(a => a.Email == firstEmail))
                 {
                     await context.Accounts.AddRangeAsync(seedData.Accounts);
                     await context.SaveChangesAsync();
@@ -72,31 +75,38 @@ public class MockDataSeeder
                 var firstRoom = await context.Rooms.FirstOrDefaultAsync();
                 var firstEquip = await context.Equipment.FirstOrDefaultAsync();
 
-                // 3. Thêm Lịch học
-                if (seedData.TeachingSchedules.Any() && !await context.TeachingSchedules.AnyAsync() && firstRoom != null)
+                if (firstRoom != null)
                 {
-                    foreach (var s in seedData.TeachingSchedules) s.RoomId = firstRoom.Id;
-                    await context.TeachingSchedules.AddRangeAsync(seedData.TeachingSchedules);
-                    await context.SaveChangesAsync();
-                }
+                    // 3. Thêm Lịch học
+                    if (seedData.TeachingSchedules.Any() && !await context.TeachingSchedules.AnyAsync())
+                    {
+                        foreach (var s in seedData.TeachingSchedules) s.RoomId = firstRoom.Id;
+                        await context.TeachingSchedules.AddRangeAsync(seedData.TeachingSchedules);
+                        await context.SaveChangesAsync();
+                    }
 
-                // 4. Thêm Report & Noti & Booking
-                if (seedData.IssueReports.Any() && !await context.IssueReports.AnyAsync() && firstRoom != null)
-                {
-                    foreach (var i in seedData.IssueReports) { i.RoomId = firstRoom.Id; i.EquipmentId = firstEquip?.Id; }
-                    await context.IssueReports.AddRangeAsync(seedData.IssueReports);
-                    await context.SaveChangesAsync();
+                    // 4. Thêm Report & Noti & Booking
+                    if (seedData.IssueReports.Any() && !await context.IssueReports.AnyAsync())
+                    {
+                        foreach (var i in seedData.IssueReports) { i.RoomId = firstRoom.Id; i.EquipmentId = firstEquip?.Id; }
+                        await context.IssueReports.AddRangeAsync(seedData.IssueReports);
+                        await context.SaveChangesAsync();
+                    }
+                    if (seedData.Notifications.Any() && !await context.Notifications.AnyAsync())
+                    {
+                        await context.Notifications.AddRangeAsync(seedData.Notifications);
+                        await context.SaveChangesAsync();
+                    }
+                    if (seedData.Bookings.Any() && !await context.Bookings.AnyAsync())
+                    {
+                        foreach (var b in seedData.Bookings) b.RoomId = firstRoom.Id;
+                        await context.Bookings.AddRangeAsync(seedData.Bookings);
+                        await context.SaveChangesAsync();
+                    }
                 }
-                if (seedData.Notifications.Any() && !await context.Notifications.AnyAsync())
+                else
                 {
-                    await context.Notifications.AddRangeAsync(seedData.Notifications);
-                    await context.SaveChangesAsync();
-                }
-                if (seedData.Bookings.Any() && !await context.Bookings.AnyAsync() && firstRoom != null)
-                {
-                    foreach (var b in seedData.Bookings) b.RoomId = firstRoom.Id;
-                    await context.Bookings.AddRangeAsync(seedData.Bookings);
-                    await context.SaveChangesAsync();
+                    Console.WriteLine("[CẢNH BÁO] Không tìm thấy Room nào trong DB. Bỏ qua nạp Booking, Schedule, Report!");
                 }
 
                 Console.WriteLine("Mock system data seeded successfully.");
@@ -107,5 +117,20 @@ public class MockDataSeeder
             Console.WriteLine($"An error occurred while seeding Mock Data: {ex.Message}");
             throw;
         }
+    }
+}
+
+// Lớp hỗ trợ bắt buộc phải có để chuyển chuỗi "07:30:00" trong JSON thành kiểu TimeSpan của C#
+public class TimeSpanToStringConverter : JsonConverter<TimeSpan>
+{
+    public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var value = reader.GetString();
+        return TimeSpan.TryParse(value, out var timeSpan) ? timeSpan : TimeSpan.Zero;
+    }
+
+    public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString(@"hh\:mm\:ss"));
     }
 }
