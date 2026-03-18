@@ -147,6 +147,8 @@ using (var scope = app.Services.CreateScope())
     // Call Mock Data Seeder
     await SCEMS.Infrastructure.Data.MockDataSeeder.SeedAsync(dbContext, solutionBasePath);
 
+    await SCEMS.Infrastructure.Data.ExtendedDataSeeder.SeedAsync(dbContext, solutionBasePath);
+
 
 }
 
