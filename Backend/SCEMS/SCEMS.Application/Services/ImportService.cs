@@ -539,6 +539,13 @@ public class ImportService : IImportService
                     (s.Email != null && s.Email.ToLower().StartsWith(searchStr + "@"))
                 );
 
+                if (rowErrors.Any())
+                {
+                    result.FailureCount++;
+                    result.Errors.Add($"Dòng {row.RowNumber()}: {string.Join(", ", rowErrors)}.");
+                    continue;
+                }
+
                 if (targetStudent == null)
                 {
                     // Instead of failing, add as a pending student
