@@ -1,0 +1,807 @@
+{
+  "BookingHistories": [
+    {
+      "Id": "1a62d04a-4d29-4f6c-8422-999052b614e1",
+      "BookingId": "4690bfa3-02f9-4b36-a14a-f325a3a7895e",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "3ac0490d-fbf9-46e5-b020-9e99c734f831",
+      "Reason": "Phê duyệt yêu cầu mượn phòng học bù.",
+      "ChangedByAccountId": "3ac0490d-fbf9-46e5-b020-9e99c734f831",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2b62d04a-4d29-4f6c-8422-999052b614e2",
+      "BookingId": "893c5c96-0338-4b72-ac24-9b1d7d08b3ba",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "77169bab-5756-41ff-a175-2336e65d6741",
+      "Reason": "Đã xếp phòng cho buổi bảo vệ dự án cuối kỳ.",
+      "ChangedByAccountId": "77169bab-5756-41ff-a175-2336e65d6741",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3c62d04a-4d29-4f6c-8422-999052b614e3",
+      "BookingId": "67044ec3-d227-46dc-a077-3e284000e3be",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "21f99604-7a93-4e37-a105-bcb7af01cbf1",
+      "Reason": "Phê duyệt đổi phòng do phòng cũ bị hỏng điều hòa.",
+      "ChangedByAccountId": "21f99604-7a93-4e37-a105-bcb7af01cbf1",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4d62d04a-4d29-4f6c-8422-999052b614e4",
+      "BookingId": "1314c1cd-40a2-4aee-b286-630d7b223405",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "2f7e4144-0db3-4685-9d7e-221e69a6bc1e",
+      "Reason": "Giáo vụ xếp lịch hoạt động cho CLB âm nhạc.",
+      "ChangedByAccountId": "2f7e4144-0db3-4685-9d7e-221e69a6bc1e",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5e62d04a-4d29-4f6c-8422-999052b614e5",
+      "BookingId": "31bdf7dd-e7b6-455b-b9f3-8b783c74c93d",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "05ff3fa7-7a02-4583-9ee5-e586359ca63f",
+      "Reason": "Duyệt phòng tổ chức hội thảo chuyên đề IT.",
+      "ChangedByAccountId": "05ff3fa7-7a02-4583-9ee5-e586359ca63f",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "6f62d04a-4d29-4f6c-8422-999052b614e6",
+      "BookingId": "3536da41-a3f1-4db5-b827-02ba40a6b7d2",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "8a75d519-4eea-4bd1-a3d8-9335e4ce89ee",
+      "Reason": "Xếp phòng trống cho sinh viên tự học.",
+      "ChangedByAccountId": "8a75d519-4eea-4bd1-a3d8-9335e4ce89ee",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "7a62d04a-4d29-4f6c-8422-999052b614e7",
+      "BookingId": "2e0618ab-7341-4770-bc56-e9102c775bb9",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "fb79ad71-79cd-450d-b2bd-1e49193cbe09",
+      "Reason": "Chấp nhận dời lịch học sang Slot 4.",
+      "ChangedByAccountId": "fb79ad71-79cd-450d-b2bd-1e49193cbe09",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "8b62d04a-4d29-4f6c-8422-999052b614e8",
+      "BookingId": "8b52f48f-ef8e-42ce-9257-ec2a66e4a956",
+      "PreviousStatus": 0,
+      "NewStatus": 2,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "05c205b1-0f41-4d3f-89a5-981ca8382421",
+      "Reason": "Từ chối do phòng này đang được bảo trì.",
+      "ChangedByAccountId": "05c205b1-0f41-4d3f-89a5-981ca8382421",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "9c62d04a-4d29-4f6c-8422-999052b614e9",
+      "BookingId": "76ec2a4a-7ed4-4063-a65c-3a3f5a2ba25c",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "077a5336-0a34-4887-8423-e1f87b24c46a",
+      "Reason": "Phê duyệt lịch dạy tăng cường cho lớp PRN211.",
+      "ChangedByAccountId": "077a5336-0a34-4887-8423-e1f87b24c46a",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "0d62d04a-4d29-4f6c-8422-999052b614ea",
+      "BookingId": "05513320-5331-47e9-a940-762f4723e973",
+      "PreviousStatus": 0,
+      "NewStatus": 2,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "d3dd2daa-8d0c-49fe-a898-303793001a6a",
+      "Reason": "Từ chối do bị trùng lịch với lớp SE1705.",
+      "ChangedByAccountId": "d3dd2daa-8d0c-49fe-a898-303793001a6a",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "1e62d04a-4d29-4f6c-8422-999052b614eb",
+      "BookingId": "5f6c884f-e2ea-42c2-8418-b2a6fdf9ff50",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "a53488a4-434e-420a-a26c-c48bba8d10f5",
+      "Reason": "Duyệt mượn phòng họp giáo viên.",
+      "ChangedByAccountId": "a53488a4-434e-420a-a26c-c48bba8d10f5",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2f62d04a-4d29-4f6c-8422-999052b614ec",
+      "BookingId": "f5509930-8d5f-4ab7-b8d9-693f421e4a3a",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "28ccd114-6b48-4462-94d7-07be61196a40",
+      "Reason": "Đã đổi lịch dạy bù cho giảng viên.",
+      "ChangedByAccountId": "28ccd114-6b48-4462-94d7-07be61196a40",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3a62d04a-4d29-4f6c-8422-999052b614ed",
+      "BookingId": "76ef61a0-afb6-455b-866d-1ab217156f08",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "db220d7d-81a7-40c9-a175-fb959f07ed7c",
+      "Reason": "Phê duyệt sử dụng phòng cho bài kiểm tra tiếng Anh.",
+      "ChangedByAccountId": "db220d7d-81a7-40c9-a175-fb959f07ed7c",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4b62d04a-4d29-4f6c-8422-999052b614ee",
+      "BookingId": "9861df29-8dce-4346-96b8-dde327d61e2a",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "d2733deb-a65f-4913-8ab2-9ae7ccd14682",
+      "Reason": "Duyệt yêu cầu mượn phòng hội trường.",
+      "ChangedByAccountId": "d2733deb-a65f-4913-8ab2-9ae7ccd14682",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5c62d04a-4d29-4f6c-8422-999052b614ef",
+      "BookingId": "ab70ba62-a39c-461a-8bb7-09d6614421b8",
+      "PreviousStatus": 0,
+      "NewStatus": 1,
+      "ChangedAt": "2026-03-15T12:00:00Z",
+      "ChangedBy": "8b1372c9-1247-41d4-bad5-f925717b0ec6",
+      "Reason": "Đã đổi phòng thi cuối kỳ theo yêu cầu.",
+      "ChangedByAccountId": "8b1372c9-1247-41d4-bad5-f925717b0ec6",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    }
+  ],
+  "ClassroomReports": [
+    {
+      "Id": "1a62d04b-4d29-4f6c-8422-999052b614e1",
+      "RoomId": "70226883-2d8e-4b26-8981-9f0ade0bd885",
+      "IssueDescription": "Điều hòa số 2 kêu to và không mát.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T08:30:00Z",
+      "ReportedBy": "3ac0490d-fbf9-46e5-b020-9e99c734f831",
+      "ReportedByAccountId": "3ac0490d-fbf9-46e5-b020-9e99c734f831",
+      "CreatedAt": "2026-03-15T08:30:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2b62d04b-4d29-4f6c-8422-999052b614e2",
+      "RoomId": "f0882c96-03a4-44d1-bed0-c1d4cebfc4c9",
+      "IssueDescription": "Hệ thống điện bị chập chờn, bóng đèn nhấp nháy.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T09:15:00Z",
+      "ReportedBy": "77169bab-5756-41ff-a175-2336e65d6741",
+      "ReportedByAccountId": "77169bab-5756-41ff-a175-2336e65d6741",
+      "CreatedAt": "2026-03-15T09:15:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3c62d04b-4d29-4f6c-8422-999052b614e3",
+      "RoomId": "49522687-6dcd-4e83-b87e-fdb9f200b27e",
+      "IssueDescription": "Cửa phòng bị kẹt ổ khóa không mở được.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T10:00:00Z",
+      "ReportedBy": "21f99604-7a93-4e37-a105-bcb7af01cbf1",
+      "ReportedByAccountId": "21f99604-7a93-4e37-a105-bcb7af01cbf1",
+      "CreatedAt": "2026-03-15T10:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4d62d04b-4d29-4f6c-8422-999052b614e4",
+      "RoomId": "140687b9-8b35-4b0c-9436-fa8db27dc5ec",
+      "IssueDescription": "Phòng rất bẩn, lao công chưa dọn rác từ hôm qua.",
+      "Status": 1,
+      "ReportedAt": "2026-03-15T11:45:00Z",
+      "ReportedBy": "2f7e4144-0db3-4685-9d7e-221e69a6bc1e",
+      "ReportedByAccountId": "2f7e4144-0db3-4685-9d7e-221e69a6bc1e",
+      "CreatedAt": "2026-03-15T11:45:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5e62d04b-4d29-4f6c-8422-999052b614e5",
+      "RoomId": "02b52001-d4ab-4268-8301-5a6fda381fd2",
+      "IssueDescription": "Bàn giáo viên bị gãy chân, cần thay mới.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T13:20:00Z",
+      "ReportedBy": "05ff3fa7-7a02-4583-9ee5-e586359ca63f",
+      "ReportedByAccountId": "05ff3fa7-7a02-4583-9ee5-e586359ca63f",
+      "CreatedAt": "2026-03-15T13:20:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "6f62d04b-4d29-4f6c-8422-999052b614e6",
+      "RoomId": "01acf7f3-ff02-49c8-98e0-a74d96ae67ac",
+      "IssueDescription": "Nước rò rỉ từ trần nhà xuống máy tính bàn.",
+      "Status": 1,
+      "ReportedAt": "2026-03-15T14:10:00Z",
+      "ReportedBy": "8a75d519-4eea-4bd1-a3d8-9335e4ce89ee",
+      "ReportedByAccountId": "8a75d519-4eea-4bd1-a3d8-9335e4ce89ee",
+      "CreatedAt": "2026-03-15T14:10:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "7a62d04b-4d29-4f6c-8422-999052b614e7",
+      "RoomId": "61f9a77e-6834-4e7d-a654-78d908e50f47",
+      "IssueDescription": "Công tắc quạt trần bị hỏng, bật không quay.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T15:30:00Z",
+      "ReportedBy": "fb79ad71-79cd-450d-b2bd-1e49193cbe09",
+      "ReportedByAccountId": "fb79ad71-79cd-450d-b2bd-1e49193cbe09",
+      "CreatedAt": "2026-03-15T15:30:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "8b62d04b-4d29-4f6c-8422-999052b614e8",
+      "RoomId": "ff7b5fbb-9f07-4f01-94e5-67486efcd21e",
+      "IssueDescription": "Wifi phòng học bị rớt liên tục.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T16:00:00Z",
+      "ReportedBy": "05c205b1-0f41-4d3f-89a5-981ca8382421",
+      "ReportedByAccountId": "05c205b1-0f41-4d3f-89a5-981ca8382421",
+      "CreatedAt": "2026-03-15T16:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "9c62d04b-4d29-4f6c-8422-999052b614e9",
+      "RoomId": "80e64de4-df67-42d6-af38-cd1d966f4e75",
+      "IssueDescription": "Rèm cửa bị đứt dây kéo không che được nắng.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T16:45:00Z",
+      "ReportedBy": "077a5336-0a34-4887-8423-e1f87b24c46a",
+      "ReportedByAccountId": "077a5336-0a34-4887-8423-e1f87b24c46a",
+      "CreatedAt": "2026-03-15T16:45:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "0d62d04b-4d29-4f6c-8422-999052b614ea",
+      "RoomId": "08865b3f-de8b-482b-bc97-7aa1895719eb",
+      "IssueDescription": "Màn chiếu không kéo xuống được.",
+      "Status": 1,
+      "ReportedAt": "2026-03-15T17:15:00Z",
+      "ReportedBy": "d3dd2daa-8d0c-49fe-a898-303793001a6a",
+      "ReportedByAccountId": "d3dd2daa-8d0c-49fe-a898-303793001a6a",
+      "CreatedAt": "2026-03-15T17:15:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "1e62d04b-4d29-4f6c-8422-999052b614eb",
+      "RoomId": "e78befe1-5017-407a-a65a-6674ba3544be",
+      "IssueDescription": "Bảng viết bị mờ, không lau sạch được chữ.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T08:00:00Z",
+      "ReportedBy": "a53488a4-434e-420a-a26c-c48bba8d10f5",
+      "ReportedByAccountId": "a53488a4-434e-420a-a26c-c48bba8d10f5",
+      "CreatedAt": "2026-03-16T08:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2f62d04b-4d29-4f6c-8422-999052b614ec",
+      "RoomId": "8adaca1d-0371-4492-a376-7a18a319fc41",
+      "IssueDescription": "Có mùi hôi bốc lên từ hệ thống thông gió.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T09:30:00Z",
+      "ReportedBy": "28ccd114-6b48-4462-94d7-07be61196a40",
+      "ReportedByAccountId": "28ccd114-6b48-4462-94d7-07be61196a40",
+      "CreatedAt": "2026-03-16T09:30:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3a62d04b-4d29-4f6c-8422-999052b614ed",
+      "RoomId": "4238146c-ea8b-4f9f-842d-cf10cdc635cb",
+      "IssueDescription": "Thiếu 5 bộ bàn ghế sinh viên so với sĩ số.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T10:20:00Z",
+      "ReportedBy": "db220d7d-81a7-40c9-a175-fb959f07ed7c",
+      "ReportedByAccountId": "db220d7d-81a7-40c9-a175-fb959f07ed7c",
+      "CreatedAt": "2026-03-16T10:20:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4b62d04b-4d29-4f6c-8422-999052b614ee",
+      "RoomId": "95d484eb-faf2-410b-b831-b8cee1dd115e",
+      "IssueDescription": "Phòng bị mất điện hoàn toàn một bên sườn.",
+      "Status": 1,
+      "ReportedAt": "2026-03-16T13:40:00Z",
+      "ReportedBy": "d2733deb-a65f-4913-8ab2-9ae7ccd14682",
+      "ReportedByAccountId": "d2733deb-a65f-4913-8ab2-9ae7ccd14682",
+      "CreatedAt": "2026-03-16T13:40:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5c62d04b-4d29-4f6c-8422-999052b614ef",
+      "RoomId": "bd779e88-c041-4962-ad39-432b219a9adf",
+      "IssueDescription": "Chuông báo cháy khu vực hành lang phòng kêu liên tục.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T15:10:00Z",
+      "ReportedBy": "8b1372c9-1247-41d4-bad5-f925717b0ec6",
+      "ReportedByAccountId": "8b1372c9-1247-41d4-bad5-f925717b0ec6",
+      "CreatedAt": "2026-03-16T15:10:00Z",
+      "IsDeleted": false
+    }
+  ],
+  "ClassroomStatuses": [
+    {
+      "Id": "1a62d04c-4d29-4f6c-8422-999052b614e1",
+      "RoomId": "70226883-2d8e-4b26-8981-9f0ade0bd885",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1701",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2b62d04c-4d29-4f6c-8422-999052b614e2",
+      "RoomId": "f0882c96-03a4-44d1-bed0-c1d4cebfc4c9",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1702",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3c62d04c-4d29-4f6c-8422-999052b614e3",
+      "RoomId": "49522687-6dcd-4e83-b87e-fdb9f200b27e",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1703",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4d62d04c-4d29-4f6c-8422-999052b614e4",
+      "RoomId": "140687b9-8b35-4b0c-9436-fa8db27dc5ec",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1704",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5e62d04c-4d29-4f6c-8422-999052b614e5",
+      "RoomId": "02b52001-d4ab-4268-8301-5a6fda381fd2",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1705",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "6f62d04c-4d29-4f6c-8422-999052b614e6",
+      "RoomId": "01acf7f3-ff02-49c8-98e0-a74d96ae67ac",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1706",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "7a62d04c-4d29-4f6c-8422-999052b614e7",
+      "RoomId": "61f9a77e-6834-4e7d-a654-78d908e50f47",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1707",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "8b62d04c-4d29-4f6c-8422-999052b614e8",
+      "RoomId": "ff7b5fbb-9f07-4f01-94e5-67486efcd21e",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1708",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "9c62d04c-4d29-4f6c-8422-999052b614e9",
+      "RoomId": "80e64de4-df67-42d6-af38-cd1d966f4e75",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1709",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "0d62d04c-4d29-4f6c-8422-999052b614ea",
+      "RoomId": "08865b3f-de8b-482b-bc97-7aa1895719eb",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1710",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "1e62d04c-4d29-4f6c-8422-999052b614eb",
+      "RoomId": "e78befe1-5017-407a-a65a-6674ba3544be",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1711",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2f62d04c-4d29-4f6c-8422-999052b614ec",
+      "RoomId": "8adaca1d-0371-4492-a376-7a18a319fc41",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1712",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3a62d04c-4d29-4f6c-8422-999052b614ed",
+      "RoomId": "4238146c-ea8b-4f9f-842d-cf10cdc635cb",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1713",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4b62d04c-4d29-4f6c-8422-999052b614ee",
+      "RoomId": "95d484eb-faf2-410b-b831-b8cee1dd115e",
+      "IsOccupied": true,
+      "IsLocked": false,
+      "CurrentClassCode": "SE1714",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5c62d04c-4d29-4f6c-8422-999052b614ef",
+      "RoomId": "bd779e88-c041-4962-ad39-432b219a9adf",
+      "IsOccupied": false,
+      "IsLocked": true,
+      "CurrentClassCode": "SE1715",
+      "LastUpdated": "2026-03-15T12:00:00Z",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    }
+  ],
+  "EquipmentReports": [
+    {
+      "Id": "1a62d04d-4d29-4f6c-8422-999052b614e1",
+      "EquipmentId": "b1a929c1-cbe5-41df-8f9a-dc4b40de1bac",
+      "IssueDescription": "Máy chiếu bị mờ, ố vàng, không nhìn rõ chữ.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T08:30:00Z",
+      "ReportedBy": "3ac0490d-fbf9-46e5-b020-9e99c734f831",
+      "ReportedByAccountId": "3ac0490d-fbf9-46e5-b020-9e99c734f831",
+      "CreatedAt": "2026-03-15T08:30:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2b62d04d-4d29-4f6c-8422-999052b614e2",
+      "EquipmentId": "0466ba7b-c57a-4036-a71a-f689291bae2a",
+      "IssueDescription": "Micro không dây bị hỏng, nói không phát ra tiếng.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T09:15:00Z",
+      "ReportedBy": "77169bab-5756-41ff-a175-2336e65d6741",
+      "ReportedByAccountId": "77169bab-5756-41ff-a175-2336e65d6741",
+      "CreatedAt": "2026-03-15T09:15:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3c62d04d-4d29-4f6c-8422-999052b614e3",
+      "EquipmentId": "93be90eb-5387-45e9-b618-fbc71b23602d",
+      "IssueDescription": "Dây cáp HDMI bị đứt phần cắm nối với máy tính.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T10:00:00Z",
+      "ReportedBy": "21f99604-7a93-4e37-a105-bcb7af01cbf1",
+      "ReportedByAccountId": "21f99604-7a93-4e37-a105-bcb7af01cbf1",
+      "CreatedAt": "2026-03-15T10:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4d62d04d-4d29-4f6c-8422-999052b614e4",
+      "EquipmentId": "2acac14b-b940-402d-b28a-4c6df84919b9",
+      "IssueDescription": "Chuột máy tính giáo viên bị liệt chuột phải.",
+      "Status": 1,
+      "ReportedAt": "2026-03-15T11:45:00Z",
+      "ReportedBy": "2f7e4144-0db3-4685-9d7e-221e69a6bc1e",
+      "ReportedByAccountId": "2f7e4144-0db3-4685-9d7e-221e69a6bc1e",
+      "CreatedAt": "2026-03-15T11:45:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5e62d04d-4d29-4f6c-8422-999052b614e5",
+      "EquipmentId": "795e94c1-d94f-455c-b5c7-f98df00657e4",
+      "IssueDescription": "Bàn phím kẹt phím Space, không gõ được khoảng trắng.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T13:20:00Z",
+      "ReportedBy": "05ff3fa7-7a02-4583-9ee5-e586359ca63f",
+      "ReportedByAccountId": "05ff3fa7-7a02-4583-9ee5-e586359ca63f",
+      "CreatedAt": "2026-03-15T13:20:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "6f62d04d-4d29-4f6c-8422-999052b614e6",
+      "EquipmentId": "cb4579f9-d7d6-49fd-a706-28bb63a1aef6",
+      "IssueDescription": "Màn hình tivi không lên nguồn khi bật công tắc.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T14:10:00Z",
+      "ReportedBy": "8a75d519-4eea-4bd1-a3d8-9335e4ce89ee",
+      "ReportedByAccountId": "8a75d519-4eea-4bd1-a3d8-9335e4ce89ee",
+      "CreatedAt": "2026-03-15T14:10:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "7a62d04d-4d29-4f6c-8422-999052b614e7",
+      "EquipmentId": "058836bf-6b1a-4198-b326-86b7e9854bd6",
+      "IssueDescription": "Điều khiển điều hòa hết pin hoặc bị hỏng, không chỉnh được nhiệt.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T15:30:00Z",
+      "ReportedBy": "fb79ad71-79cd-450d-b2bd-1e49193cbe09",
+      "ReportedByAccountId": "fb79ad71-79cd-450d-b2bd-1e49193cbe09",
+      "CreatedAt": "2026-03-15T15:30:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "8b62d04d-4d29-4f6c-8422-999052b614e8",
+      "EquipmentId": "2a13ce90-6b5a-4ada-83ae-f8e974a75911",
+      "IssueDescription": "Loa treo tường kêu rất rè và rít khi bật to.",
+      "Status": 1,
+      "ReportedAt": "2026-03-15T16:00:00Z",
+      "ReportedBy": "05c205b1-0f41-4d3f-89a5-981ca8382421",
+      "ReportedByAccountId": "05c205b1-0f41-4d3f-89a5-981ca8382421",
+      "CreatedAt": "2026-03-15T16:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "9c62d04d-4d29-4f6c-8422-999052b614e9",
+      "EquipmentId": "85dec7f6-7644-4449-97bf-2890e6828ebd",
+      "IssueDescription": "Mất âm li trên phòng máy tính giáo viên.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T16:45:00Z",
+      "ReportedBy": "077a5336-0a34-4887-8423-e1f87b24c46a",
+      "ReportedByAccountId": "077a5336-0a34-4887-8423-e1f87b24c46a",
+      "CreatedAt": "2026-03-15T16:45:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "0d62d04d-4d29-4f6c-8422-999052b614ea",
+      "EquipmentId": "88b29a1d-7919-44f9-9afd-99e58c244f84",
+      "IssueDescription": "Bàn phím máy tính hỏng nút Enter.",
+      "Status": 0,
+      "ReportedAt": "2026-03-15T17:15:00Z",
+      "ReportedBy": "d3dd2daa-8d0c-49fe-a898-303793001a6a",
+      "ReportedByAccountId": "d3dd2daa-8d0c-49fe-a898-303793001a6a",
+      "CreatedAt": "2026-03-15T17:15:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "1e62d04d-4d29-4f6c-8422-999052b614eb",
+      "EquipmentId": "92ab4899-72d1-4134-b517-b168ac4ba5c4",
+      "IssueDescription": "Camera giám sát phòng bị mất tín hiệu đèn đỏ.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T08:00:00Z",
+      "ReportedBy": "a53488a4-434e-420a-a26c-c48bba8d10f5",
+      "ReportedByAccountId": "a53488a4-434e-420a-a26c-c48bba8d10f5",
+      "CreatedAt": "2026-03-16T08:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2f62d04d-4d29-4f6c-8422-999052b614ec",
+      "EquipmentId": "6574b5f3-a13c-4943-b69c-e8ce3106bf49",
+      "IssueDescription": "Màn hình LCD nhấp nháy, có sọc đen dọc.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T09:30:00Z",
+      "ReportedBy": "28ccd114-6b48-4462-94d7-07be61196a40",
+      "ReportedByAccountId": "28ccd114-6b48-4462-94d7-07be61196a40",
+      "CreatedAt": "2026-03-16T09:30:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3a62d04d-4d29-4f6c-8422-999052b614ed",
+      "EquipmentId": "4e5bec54-4596-40c7-be9f-c82eae33a3e2",
+      "IssueDescription": "Quạt trần kêu quá to ảnh hưởng giờ học.",
+      "Status": 1,
+      "ReportedAt": "2026-03-16T10:20:00Z",
+      "ReportedBy": "db220d7d-81a7-40c9-a175-fb959f07ed7c",
+      "ReportedByAccountId": "db220d7d-81a7-40c9-a175-fb959f07ed7c",
+      "CreatedAt": "2026-03-16T10:20:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4b62d04d-4d29-4f6c-8422-999052b614ee",
+      "EquipmentId": "33cd1a3b-ad54-40ac-84fb-0b3f0a1876d1",
+      "IssueDescription": "Hệ thống điện bảng bị rò rỉ điện giật nhẹ.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T13:40:00Z",
+      "ReportedBy": "d2733deb-a65f-4913-8ab2-9ae7ccd14682",
+      "ReportedByAccountId": "d2733deb-a65f-4913-8ab2-9ae7ccd14682",
+      "CreatedAt": "2026-03-16T13:40:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5c62d04d-4d29-4f6c-8422-999052b614ef",
+      "EquipmentId": "74e7a44c-79e1-40b7-9bd8-c2f67c8018cf",
+      "IssueDescription": "Đèn tuýp LED ở cuối lớp học bị cháy.",
+      "Status": 0,
+      "ReportedAt": "2026-03-16T15:10:00Z",
+      "ReportedBy": "8b1372c9-1247-41d4-bad5-f925717b0ec6",
+      "ReportedByAccountId": "8b1372c9-1247-41d4-bad5-f925717b0ec6",
+      "CreatedAt": "2026-03-16T15:10:00Z",
+      "IsDeleted": false
+    }
+  ],
+  "RoomEquipmentHistories": [
+    {
+      "Id": "1a62d04e-4d29-4f6c-8422-999052b614e1",
+      "EquipmentId": "b1a929c1-cbe5-41df-8f9a-dc4b40de1bac",
+      "RoomId": "70226883-2d8e-4b26-8981-9f0ade0bd885",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Trang bị mới hoàn toàn đầu học kỳ.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2b62d04e-4d29-4f6c-8422-999052b614e2",
+      "EquipmentId": "0466ba7b-c57a-4036-a71a-f689291bae2a",
+      "RoomId": "f0882c96-03a4-44d1-bed0-c1d4cebfc4c9",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Chuyển từ tòa nhà Alpha sang.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3c62d04e-4d29-4f6c-8422-999052b614e3",
+      "EquipmentId": "93be90eb-5387-45e9-b618-fbc71b23602d",
+      "RoomId": "49522687-6dcd-4e83-b87e-fdb9f200b27e",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Thay thế thiết bị hỏng từ tháng trước.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4d62d04e-4d29-4f6c-8422-999052b614e4",
+      "EquipmentId": "2acac14b-b940-402d-b28a-4c6df84919b9",
+      "RoomId": "140687b9-8b35-4b0c-9436-fa8db27dc5ec",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Cấp phát theo yêu cầu của Khoa CNTT.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5e62d04e-4d29-4f6c-8422-999052b614e5",
+      "EquipmentId": "795e94c1-d94f-455c-b5c7-f98df00657e4",
+      "RoomId": "02b52001-d4ab-4268-8301-5a6fda381fd2",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Đã được bảo trì và gán lại cho phòng này.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "6f62d04e-4d29-4f6c-8422-999052b614e6",
+      "EquipmentId": "cb4579f9-d7d6-49fd-a706-28bb63a1aef6",
+      "RoomId": "01acf7f3-ff02-49c8-98e0-a74d96ae67ac",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Cài đặt lại hệ thống cáp mạng, trang bị bổ sung.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "7a62d04e-4d29-4f6c-8422-999052b614e7",
+      "EquipmentId": "058836bf-6b1a-4198-b326-86b7e9854bd6",
+      "RoomId": "61f9a77e-6834-4e7d-a654-78d908e50f47",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Dự án nâng cấp thiết bị năm học mới.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "8b62d04e-4d29-4f6c-8422-999052b614e8",
+      "EquipmentId": "2a13ce90-6b5a-4ada-83ae-f8e974a75911",
+      "RoomId": "ff7b5fbb-9f07-4f01-94e5-67486efcd21e",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Chuyển từ phòng họp giáo viên sang phòng học.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "9c62d04e-4d29-4f6c-8422-999052b614e9",
+      "EquipmentId": "85dec7f6-7644-4449-97bf-2890e6828ebd",
+      "RoomId": "80e64de4-df67-42d6-af38-cd1d966f4e75",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Phân bổ trang thiết bị tạm thời dùng trong tuần thi.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "0d62d04e-4d29-4f6c-8422-999052b614ea",
+      "EquipmentId": "88b29a1d-7919-44f9-9afd-99e58c244f84",
+      "RoomId": "08865b3f-de8b-482b-bc97-7aa1895719eb",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Gán thiết bị sau khi sửa chữa xong board mạch.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "1e62d04e-4d29-4f6c-8422-999052b614eb",
+      "EquipmentId": "92ab4899-72d1-4134-b517-b168ac4ba5c4",
+      "RoomId": "e78befe1-5017-407a-a65a-6674ba3544be",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Trang bị mới.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "2f62d04e-4d29-4f6c-8422-999052b614ec",
+      "EquipmentId": "6574b5f3-a13c-4943-b69c-e8ce3106bf49",
+      "RoomId": "8adaca1d-0371-4492-a376-7a18a319fc41",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Điều phối từ kho vật tư lên phòng học.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "3a62d04e-4d29-4f6c-8422-999052b614ed",
+      "EquipmentId": "4e5bec54-4596-40c7-be9f-c82eae33a3e2",
+      "RoomId": "4238146c-ea8b-4f9f-842d-cf10cdc635cb",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Trang bị lại sau sự cố mất cắp.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "4b62d04e-4d29-4f6c-8422-999052b614ee",
+      "EquipmentId": "33cd1a3b-ad54-40ac-84fb-0b3f0a1876d1",
+      "RoomId": "95d484eb-faf2-410b-b831-b8cee1dd115e",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Thiết bị tặng từ nhà tài trợ doanh nghiệp.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    },
+    {
+      "Id": "5c62d04e-4d29-4f6c-8422-999052b614ef",
+      "EquipmentId": "74e7a44c-79e1-40b7-9bd8-c2f67c8018cf",
+      "RoomId": "bd779e88-c041-4962-ad39-432b219a9adf",
+      "AssignedAt": "2026-03-15T12:00:00Z",
+      "Notes": "Thay thế thiết bị hết khấu hao 5 năm.",
+      "CreatedAt": "2026-03-15T12:00:00Z",
+      "IsDeleted": false
+    }
+  ]
+}
