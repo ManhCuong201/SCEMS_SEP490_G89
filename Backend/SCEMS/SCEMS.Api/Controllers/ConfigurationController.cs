@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SCEMS.Api.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ConfigurationController : ControllerBase
@@ -33,6 +33,7 @@ public class ConfigurationController : ControllerBase
         return Ok(setting);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{key}")]
     public async Task<IActionResult> UpdateSetting(string key, [FromBody] UpdateSettingRequest request)
     {
