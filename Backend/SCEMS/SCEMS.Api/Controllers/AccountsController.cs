@@ -20,12 +20,13 @@ public class AccountsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAccounts([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? sortBy = null)
+    public async Task<IActionResult> GetAccounts([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? role = null, [FromQuery] string? sortBy = null)
     {
-        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, SortBy = sortBy };
+        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, Role = role, SortBy = sortBy };
         var result = await _accountService.GetAccountsAsync(@params);
         return Ok(result);
     }
+
 
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]

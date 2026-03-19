@@ -6,7 +6,9 @@ public class PaginationParams
     public int PageSize { get; set; } = 10;
     public string? Search { get; set; }
     public string? SortBy { get; set; }
+    public string? Role { get; set; }
     public string? Status { get; set; }
     public Guid? RoomId { get; set; }
     public Guid? DepartmentId { get; set; }
 }
+

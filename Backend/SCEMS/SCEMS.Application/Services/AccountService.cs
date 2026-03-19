@@ -36,6 +36,15 @@ public class AccountService : IAccountService
             query = query.Where(a => a.FullName.ToLower().Contains(search) || a.Email.ToLower().Contains(search));
         }
 
+        if (!string.IsNullOrWhiteSpace(@params.Role))
+        {
+            if (Enum.TryParse<AccountRole>(@params.Role, true, out var roleEnum))
+            {
+                query = query.Where(a => a.Role == roleEnum);
+            }
+        }
+
+
         if (!string.IsNullOrWhiteSpace(@params.SortBy))
         {
             query = @params.SortBy.ToLowerInvariant() switch
