@@ -9,6 +9,7 @@ public class Booking : BaseEntity
     public DateTime TimeSlot { get; set; }
     public int Duration { get; set; }
     public string? Reason { get; set; }
+    public string? RejectReason { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
 
     public Room? Room { get; set; }

@@ -30,6 +30,8 @@ export const StaffBookingBoardPage: React.FC = () => {
     const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null)
     const [slotBookings, setSlotBookings] = useState<Booking[]>([])
     const [modalOpen, setModalOpen] = useState(false)
+    const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null)
+    const [rejectReason, setRejectReason] = useState('')
 
     const getLocalToday = () => {
         const now = new Date()
@@ -122,11 +124,13 @@ export const StaffBookingBoardPage: React.FC = () => {
         loadData()
     }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
 
-    const handleUpdateStatus = async (id: string, status: BookingStatus) => {
+    const handleUpdateStatus = async (id: string, status: BookingStatus, reason?: string) => {
         try {
-            await bookingService.updateStatus(id, status)
+            await bookingService.updateStatus(id, status, reason)
             setSuccessMsg(status === BookingStatus.Approved ? 'Duyệt yêu cầu thành công' : 'Từ chối yêu cầu thành công')
             setModalOpen(false)
+            setRejectingBookingId(null)
+            setRejectReason('')
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
@@ -480,51 +484,130 @@ export const StaffBookingBoardPage: React.FC = () => {
 
                                                 {booking.status === BookingStatus.Pending && user?.role !== 'Guard' && (
                                                     <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                                                        <button
-                                                            onClick={() => handleUpdateStatus(booking.id, BookingStatus.Rejected)}
-                                                            className="btn-status-reject"
-                                                            style={{
-                                                                padding: '0.6rem 1.25rem',
-                                                                borderRadius: '8px',
-                                                                border: '1px solid #fca5a5',
-                                                                background: 'white',
-                                                                color: '#b91c1c',
-                                                                cursor: 'pointer',
-                                                                fontWeight: 700,
-                                                                fontSize: '0.85rem',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.4rem'
-                                                            }}
-                                                        >
-                                                            <X size={16} /> Từ chối
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleUpdateStatus(booking.id, BookingStatus.Approved)}
-                                                            className="btn-status-approve"
-                                                            style={{
-                                                                padding: '0.6rem 1.25rem',
-                                                                borderRadius: '8px',
-                                                                border: 'none',
-                                                                background: isPending ? '#fb923c' : '#10b981',
-                                                                color: 'white',
-                                                                cursor: 'pointer',
-                                                                fontWeight: 700,
-                                                                fontSize: '0.85rem',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.4rem',
-                                                                boxShadow: '0 4px 10px rgba(251, 146, 60, 0.2)'
-                                                            }}
-                                                        >
-                                                            <Check size={16} /> Phê duyệt
-                                                        </button>
+                                                        {rejectingBookingId === booking.id ? (
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                                                                <textarea
+                                                                    placeholder="Lý do từ chối (bắt buộc)..."
+                                                                    value={rejectReason}
+                                                                    onChange={(e) => setRejectReason(e.target.value)}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        padding: '0.75rem',
+                                                                        borderRadius: '8px',
+                                                                        border: '2px solid #fee2e2',
+                                                                        fontSize: '0.9rem',
+                                                                        minHeight: '80px',
+                                                                        outline: 'none',
+                                                                        transition: 'border-color 0.2s',
+                                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                                                                    }}
+                                                                    onFocus={(e) => e.target.style.borderColor = '#fca5a5'}
+                                                                    onBlur={(e) => e.target.style.borderColor = '#fee2e2'}
+                                                                />
+                                                                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                                                    <button
+                                                                        onClick={() => setRejectingBookingId(null)}
+                                                                        style={{
+                                                                            padding: '0.5rem 1rem',
+                                                                            borderRadius: '6px',
+                                                                            border: '1px solid #e2e8f0',
+                                                                            background: 'white',
+                                                                            color: '#64748b',
+                                                                            fontWeight: 600,
+                                                                            cursor: 'pointer'
+                                                                        }}
+                                                                    >
+                                                                        Hủy
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleUpdateStatus(booking.id, BookingStatus.Rejected, rejectReason)}
+                                                                        disabled={!rejectReason.trim()}
+                                                                        style={{
+                                                                            padding: '0.5rem 1rem',
+                                                                            borderRadius: '6px',
+                                                                            border: 'none',
+                                                                            background: rejectReason.trim() ? '#ef4444' : '#fca5a5',
+                                                                            color: 'white',
+                                                                            fontWeight: 600,
+                                                                            cursor: rejectReason.trim() ? 'pointer' : 'not-allowed',
+                                                                            boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)'
+                                                                        }}
+                                                                    >
+                                                                        Xác nhận Từ chối
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => setRejectingBookingId(booking.id)}
+                                                                    className="btn-status-reject"
+                                                                    style={{
+                                                                        padding: '0.6rem 1.25rem',
+                                                                        borderRadius: '8px',
+                                                                        border: '1px solid #fca5a5',
+                                                                        background: 'white',
+                                                                        color: '#b91c1c',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: 700,
+                                                                        fontSize: '0.85rem',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '0.4rem'
+                                                                    }}
+                                                                >
+                                                                    <X size={16} /> Từ chối
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleUpdateStatus(booking.id, BookingStatus.Approved)}
+                                                                    className="btn-status-approve"
+                                                                    style={{
+                                                                        padding: '0.6rem 1.25rem',
+                                                                        borderRadius: '8px',
+                                                                        border: 'none',
+                                                                        background: isPending ? '#fb923c' : '#10b981',
+                                                                        color: 'white',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: 700,
+                                                                        fontSize: '0.85rem',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '0.4rem',
+                                                                        boxShadow: '0 4px 10px rgba(251, 146, 60, 0.2)'
+                                                                    }}
+                                                                >
+                                                                    <Check size={16} /> Phê duyệt
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 )}
 
                                                 {booking.status === BookingStatus.Approved && (
                                                     <div style={{ marginTop: '1rem', color: '#166534', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem', background: '#f0fdf4', borderRadius: '6px' }}>
                                                         <Check size={16} /> Đã phê duyệt yêu cầu này
+                                                    </div>
+                                                )}
+
+                                                {booking.status === BookingStatus.Rejected && (
+                                                    <div style={{ 
+                                                        marginTop: '1rem', 
+                                                        padding: '0.75rem', 
+                                                        background: '#fef2f2', 
+                                                        borderLeft: '4px solid #ef4444',
+                                                        borderRadius: '6px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '4px'
+                                                    }}>
+                                                        <div style={{ color: '#991b1b', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <X size={14} /> Đã từ chối
+                                                        </div>
+                                                        {booking.rejectReason && (
+                                                            <div style={{ color: '#b91c1c', fontSize: '0.85rem', fontWeight: 500, lineHeight: '1.4', paddingLeft: '20px' }}>
+                                                                Lý do: {booking.rejectReason}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

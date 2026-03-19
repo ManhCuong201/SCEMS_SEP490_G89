@@ -133,6 +133,7 @@ export interface Booking {
   endTime: string
   duration: number
   reason?: string
+  rejectReason?: string
   status: string // Changed from BookingStatus enum to string to support "Approved" etc.
   createdAt: string
   updatedAt?: string // Added optional updatedAt
@@ -150,16 +151,17 @@ export interface CreateBookingRequest {
 }
 
 export interface CreateRoomChangeRequest {
-  scheduleId: string
-  originalRoomId: string
-  newRoomId: string
-  timeSlot: string
-  duration: number
-  reason?: string
+  scheduleId: string;
+  originalRoomId: string;
+  newRoomId: string;
+  timeSlot: string;
+  duration: number;
+  reason: string;
 }
 
 export interface UpdateBookingStatusRequest {
   status: BookingStatus
+  rejectReason?: string
 }
 
 export interface ApiError {

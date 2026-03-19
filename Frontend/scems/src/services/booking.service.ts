@@ -19,8 +19,8 @@ export const bookingService = {
         return data
     },
 
-    async updateStatus(id: string, status: BookingStatus): Promise<Booking> {
-        const { data } = await api.patch<Booking>(`/booking/${id}/status`, { status })
+    async updateStatus(id: string, status: BookingStatus, rejectReason?: string): Promise<Booking> {
+        const { data } = await api.patch<Booking>(`/booking/${id}/status`, { status, rejectReason })
         return data
     },
 

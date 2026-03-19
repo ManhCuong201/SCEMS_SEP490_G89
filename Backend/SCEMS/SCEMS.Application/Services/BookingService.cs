@@ -44,8 +44,8 @@ public class BookingService : IBookingService
             query = query.Where(b => b.Room != null && b.Room.RoomName.ToLower().Contains(search));
         }
 
-        // Default sort by TimeSlot descending
-        query = query.OrderByDescending(b => b.TimeSlot);
+        // Default sort by CreatedAt descending (Show newest first)
+        query = query.OrderByDescending(b => b.CreatedAt);
 
         // Auto-reject expired pending bookings (ONLY after their end time has passed)
         var now = DateTime.Now;
@@ -99,7 +99,7 @@ public class BookingService : IBookingService
         return booking != null ? _mapper.Map<BookingResponseDto>(booking) : null;
     }
 
-    public async Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId, bool skipDurationCheck = false)
+    public async Task<BookingResponseDto> CreateBookingAsync(CreateBookingDto dto, Guid userId, bool skipDurationCheck = false, Guid? excludeScheduleId = null)
     {
         // 1. Validation: Constraints
         var errors = new List<string>();
@@ -198,8 +198,9 @@ public class BookingService : IBookingService
         if (room != null)
         {
             // Check conflicts in Bookings (other approved or pending bookings for same room)
+            // We ignore Rejected AND Cancelled bookings
             var conflictingBooking = _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == dto.RoomId && b.Status != BookingStatus.Rejected)
+                .Where(b => b.RoomId == dto.RoomId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
                 .ToList()
                 .Any(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart);
 
@@ -222,7 +223,7 @@ public class BookingService : IBookingService
 
         // 5. Check Lecturer/User Conflict (User cannot be in two places at once)
         var userHasClass = _unitOfWork.TeachingSchedules.GetAll()
-            .Where(ts => ts.LecturerId == userId.ToString() && ts.Date == date)
+            .Where(ts => ts.LecturerId == userId.ToString() && ts.Date == date && ts.Id != excludeScheduleId)
             .ToList()
             .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
 
@@ -232,7 +233,7 @@ public class BookingService : IBookingService
         }
 
         var userHasBooking = _unitOfWork.Bookings.GetAll()
-            .Where(b => b.RequestedBy == userId && b.Status == BookingStatus.Approved)
+            .Where(b => b.RequestedBy == userId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
             .ToList()
             .Any(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart);
 
@@ -262,7 +263,7 @@ public class BookingService : IBookingService
         return await GetBookingByIdAsync(booking.Id) ?? throw new InvalidOperationException("Failed to retrieve created booking");
     }
 
-    public async Task<BookingResponseDto?> UpdateStatusAsync(Guid id, BookingStatus status)
+    public async Task<BookingResponseDto?> UpdateStatusAsync(Guid id, BookingStatus status, string? rejectReason = null)
     {
         var booking = await _unitOfWork.Bookings.GetAll()
             .Include(b => b.Room)
@@ -270,6 +271,10 @@ public class BookingService : IBookingService
         if (booking == null) return null;
 
         booking.Status = status;
+        if (status == BookingStatus.Rejected && !string.IsNullOrEmpty(rejectReason))
+        {
+            booking.RejectReason = rejectReason;
+        }
         
         // If approved, reject all other pending requests for the same slot?
         if (status == BookingStatus.Approved || status == BookingStatus.CheckedIn)
@@ -289,40 +294,74 @@ public class BookingService : IBookingService
                  _unitOfWork.Bookings.Update(conflict);
              }
 
-             // Handle Schedule Change Request
-             if (!string.IsNullOrEmpty(booking.Reason) && booking.Reason.StartsWith("[Schedule Change Request] ScheduleId: "))
+             // Handle Change Requests (Room or Schedule)
+             if (!string.IsNullOrEmpty(booking.Reason) && 
+                (booking.Reason.StartsWith("[Schedule Change Request]") || booking.Reason.StartsWith("[Room Change Request]")))
              {
-                 var prefixLen = "[Schedule Change Request] ScheduleId: ".Length;
-                 var dotIndex = booking.Reason.IndexOf('.', prefixLen);
-                 if (dotIndex > prefixLen)
+                 // Format: "[Schedule Change Request] ScheduleId: {id}. Original: {room} on {date} Slot {slot}. New: {newRoom} on {newDate} Slot {newSlot}. Reason: {reason}"
+                 var scheduleIdMatch = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"ScheduleId:\s*([a-fA-F0-9-]+)");
+                 if (scheduleIdMatch.Success && Guid.TryParse(scheduleIdMatch.Groups[1].Value, out var scheduleId))
                  {
-                     var scheduleIdStr = booking.Reason.Substring(prefixLen, dotIndex - prefixLen).Trim();
-                     if (Guid.TryParse(scheduleIdStr, out var scheduleId))
+                     var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(scheduleId);
+                     if (schedule != null)
                      {
-                         var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(scheduleId);
-                         if (schedule != null)
+                         // Update Room
+                         schedule.RoomId = booking.RoomId;
+
+                         // Update Time if it's a Schedule Change
+                         if (booking.Reason.StartsWith("[Schedule Change Request]"))
                          {
-                             schedule.RoomId = booking.RoomId;
                              schedule.Date = booking.TimeSlot.Date;
-                             schedule.StartTime = booking.TimeSlot.TimeOfDay;
-                             schedule.EndTime = booking.TimeSlot.AddHours(booking.Duration).TimeOfDay;
-                             _unitOfWork.TeachingSchedules.Update(schedule);
-
-                             // Notify students in the class
-                             if (!string.IsNullOrEmpty(schedule.ClassCode))
+                             // Try to parse SlotType and NewSlot from the reason string
+                             var matchSlot = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"NewSlot:\s*(\d+)");
+                             var matchType = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"SlotType:\s*(New|Old)");
+                             
+                             if (matchSlot.Success && matchType.Success)
                              {
-                                 var studentIds = await _unitOfWork.ClassStudents.GetAll()
-                                     .Where(cs => cs.Class != null && cs.Class.ClassCode == schedule.ClassCode && cs.StudentId.HasValue)
-                                     .Select(cs => cs.StudentId.Value)
-                                     .ToListAsync();
-
-                                 foreach (var studentId in studentIds)
+                                 var newSlotVal = int.Parse(matchSlot.Groups[1].Value);
+                                 var slotTypeStr = matchType.Groups[1].Value;
+                                 
+                                 schedule.Slot = newSlotVal;
+                                 var times = SlotHelper.GetSlotTimes(slotTypeStr, newSlotVal);
+                                 schedule.StartTime = times.StartTime;
+                                 schedule.EndTime = times.EndTime;
+                             }
+                             else
+                             {
+                                 // Fallback for legacy requests without SlotType in Reason
+                                 var hour = booking.TimeSlot.Hour;
+                                 int fallBackSlot = hour switch
                                  {
-                                     await _notificationService.SendNotificationAsync(studentId, 
-                                         "Thay đổi lịch học", 
-                                         $"Lịch học môn {schedule.Subject} đã được đổi sang phòng {booking.Room?.RoomName} lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
-                                         "/schedule");
-                                 }
+                                     7 => 1,
+                                     10 => 2,
+                                     12 => 3,
+                                     15 => 4,
+                                     18 => 5,
+                                     20 => 6,
+                                     _ => 1
+                                 };
+                                 schedule.Slot = fallBackSlot;
+                                 schedule.StartTime = booking.TimeSlot.TimeOfDay;
+                                 schedule.EndTime = booking.TimeSlot.AddHours(booking.Duration).TimeOfDay;
+                             }
+                         }
+
+                         _unitOfWork.TeachingSchedules.Update(schedule);
+
+                         // Notify students in the class
+                         if (!string.IsNullOrEmpty(schedule.ClassCode))
+                         {
+                             var studentIds = await _unitOfWork.ClassStudents.GetAll()
+                                 .Where(cs => cs.Class != null && cs.Class.ClassCode == schedule.ClassCode && cs.StudentId.HasValue)
+                                 .Select(cs => cs.StudentId.Value)
+                                 .ToListAsync();
+
+                             foreach (var studentId in studentIds)
+                             {
+                                 await _notificationService.SendNotificationAsync(studentId, 
+                                     "Thay đổi lịch học (Phê duyệt)", 
+                                     $"Lịch học môn {schedule.Subject} đã được thay đổi sang phòng {booking.Room?.RoomName} vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
+                                     "/schedule");
                              }
                          }
                      }
@@ -440,18 +479,18 @@ public class BookingService : IBookingService
         var startOfDay = date.Date;
         var endOfDay = startOfDay.AddDays(1);
 
-        // 1. Fetch bookings targeting THIS day
-        var bookings = await _unitOfWork.Bookings.GetAll()
+        // 1. Fetch bookings that TARGET this day (TimeSlot is on this day)
+        // This covers: 
+        // - Standard bookings for this day
+        // - Change requests whose TARGET time is this day
+        var bookingsOnDay = await _unitOfWork.Bookings.GetAll()
             .Include(b => b.Room)
             .Include(b => b.RequestedByAccount)
-            .Where(b => b.TimeSlot >= startOfDay && b.TimeSlot < endOfDay && b.Status != BookingStatus.Rejected)
+            .Where(b => b.TimeSlot >= startOfDay && b.TimeSlot < endOfDay && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
             .ToListAsync();
 
-        // 2. Fetch "Outgoing" change requests: Pending bookings that might target OTHER days
-        // but were initiated from classes on THIS day.
-        // We find these by checking if any pending booking's reason contains a ScheduleId 
-        // belonging to a class on THIS day.
-        
+        // 2. Fetch "Outgoing" change requests: 
+        // Pending bookings that target OTHER days but were initiated from classes on THIS day.
         var schedulesToday = await _unitOfWork.TeachingSchedules.GetAll()
             .Where(ts => ts.Date == startOfDay)
             .Select(ts => ts.Id.ToString())
@@ -459,21 +498,21 @@ public class BookingService : IBookingService
 
         if (schedulesToday.Any())
         {
-            var outgoingRequests = await _unitOfWork.Bookings.GetAll()
+            var otherDayPendingBookings = await _unitOfWork.Bookings.GetAll()
                 .Include(b => b.Room)
                 .Include(b => b.RequestedByAccount)
                 .Where(b => b.Status == BookingStatus.Pending && !string.IsNullOrEmpty(b.Reason))
+                .Where(b => b.TimeSlot < startOfDay || b.TimeSlot >= endOfDay)
                 .ToListAsync();
 
-            var relevantOutgoing = outgoingRequests
+            var relevantOutgoing = otherDayPendingBookings
                 .Where(b => schedulesToday.Any(sid => b.Reason!.Contains(sid)))
-                .Where(b => !bookings.Any(existing => existing.Id == b.Id)) // Avoid duplicates
                 .ToList();
 
-            bookings.AddRange(relevantOutgoing);
+            bookingsOnDay.AddRange(relevantOutgoing);
         }
 
-        return _mapper.Map<List<BookingResponseDto>>(bookings.OrderBy(b => b.TimeSlot).ToList());
+        return _mapper.Map<List<BookingResponseDto>>(bookingsOnDay.OrderBy(b => b.TimeSlot).ToList());
     }
 
     public async Task<BookingResponseDto> CreateRoomChangeRequestAsync(CreateRoomChangeRequestDto dto, Guid userId)
@@ -489,10 +528,10 @@ public class BookingService : IBookingService
             RoomId = dto.NewRoomId,
             TimeSlot = dto.TimeSlot,
             Duration = dto.Duration,
-            Reason = $"[Room Change Request] From {dto.OriginalRoomId} to {dto.NewRoomId}. Reason: {dto.Reason}"
         };
+        bookingDto.Reason = $"[Room Change Request] ScheduleId: {dto.ScheduleId}. From {dto.OriginalRoomId} to {dto.NewRoomId}. Reason: {dto.Reason}";
 
-        return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true);
+        return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true, excludeScheduleId: dto.ScheduleId);
     }
 
     public async Task<BookingResponseDto> CreateScheduleChangeRequestAsync(CreateScheduleChangeRequestDto dto, Guid userId)
@@ -516,11 +555,11 @@ public class BookingService : IBookingService
             RoomId = dto.NewRoomId,
             TimeSlot = newStart,
             Duration = durationHrs,
-            Reason = dto.Reason.StartsWith("[Schedule Change Request]") ? dto.Reason : $"[Schedule Change Request] ScheduleId: {dto.ScheduleId}. Reason: {dto.Reason}"
+            Reason = $"[Schedule Change Request] ScheduleId: {dto.ScheduleId}. NewSlot: {dto.NewSlot}. SlotType: {dto.SlotType}. Reason: {dto.Reason}"
         };
 
         // Create the booking request using existing overlapping logic
-        return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true);
+        return await CreateBookingAsync(bookingDto, userId, skipDurationCheck: true, excludeScheduleId: dto.ScheduleId);
     }
 
     public async Task<bool> CancelBookingAsync(Guid bookingId, Guid userId)

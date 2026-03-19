@@ -135,7 +135,7 @@ public class BookingController : ControllerBase
     [Authorize(Roles = "Admin,BookingStaff,Guard")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateBookingStatusDto dto)
     {
-        var booking = await _bookingService.UpdateStatusAsync(id, dto.Status);
+        var booking = await _bookingService.UpdateStatusAsync(id, dto.Status, dto.RejectReason);
         if (booking == null) return NotFound();
         return Ok(booking);
     }

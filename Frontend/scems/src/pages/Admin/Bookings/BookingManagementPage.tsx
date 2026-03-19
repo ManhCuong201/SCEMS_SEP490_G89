@@ -74,7 +74,7 @@ export const BookingManagementPage: React.FC = () => {
     }
 
     const getSlotFromHour = (hour: number, type: string) => {
-        if (type === 'ScheduleChange') {
+        if (type === 'ScheduleChange' || type === 'RoomChange') {
             if (hour === 7) return "1";
             if (hour === 10) return "2";
             if (hour === 12) return "3";
@@ -127,7 +127,7 @@ export const BookingManagementPage: React.FC = () => {
                 const newDate = new Date(b.timeSlot).toLocaleDateString('vi-VN');
                 const isDateChanged = change.isChangeRequest && change.originalDate && change.originalDate !== newDate;
 
-                const newSlot = getSlotFromHour(new Date(b.timeSlot).getHours(), change.type);
+                const newSlot = change.newSlot || (change.type === 'RoomChange' ? change.originalSlot : null) || getSlotFromHour(new Date(b.timeSlot).getHours(), change.type);
                 const isSlotChanged = change.isChangeRequest && change.originalSlot && change.originalSlot !== newSlot;
 
                 const color = change.type === 'ScheduleChange' ? '#ec4899' : (change.type === 'RoomChange' ? '#8b5cf6' : 'var(--text-muted)');
@@ -204,6 +204,26 @@ export const BookingManagementPage: React.FC = () => {
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cleanDisplayReason(b.reason)}>
                             {cleanDisplayReason(b.reason)}
                         </div>
+                        
+                        {b.status === BookingStatus.Rejected && b.rejectReason && (
+                            <div style={{ 
+                                marginTop: '0.5rem',
+                                padding: '0.5rem', 
+                                background: '#fef2f2', 
+                                borderLeft: '3px solid #ef4444',
+                                borderRadius: '4px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px'
+                            }}>
+                                <div style={{ color: '#991b1b', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                    Lý do từ chối:
+                                </div>
+                                <div style={{ color: '#b91c1c', fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'normal', lineHeight: '1.4' }}>
+                                    {b.rejectReason}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             }

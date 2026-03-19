@@ -5,6 +5,9 @@ namespace SCEMS.Application.DTOs.Booking;
 public class CreateRoomChangeRequestDto
 {
     [Required]
+    public Guid ScheduleId { get; set; }
+
+    [Required]
     public Guid OriginalRoomId { get; set; }
     
     [Required]

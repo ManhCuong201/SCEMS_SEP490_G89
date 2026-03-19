@@ -6,9 +6,10 @@ import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Pagination } from '../../../components/Common/Pagination'
 import { SearchBar } from '../../../components/Common/SearchBar'
-import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle } from 'lucide-react'
+import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle, Trash2 } from 'lucide-react'
 import { parseChangeRequest, cleanDisplayReason } from '../../../helpers/booking.helper'
 import toast from 'react-hot-toast'
+import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
 export const UserBookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -18,6 +19,8 @@ export const UserBookingsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null)
 
   const fetchBookings = async (pageIndex: number) => {
     setLoading(true)
@@ -59,16 +62,23 @@ export const UserBookingsPage: React.FC = () => {
     return { label: 'Đặt phòng', color: 'var(--text-muted)', bg: 'rgba(148, 163, 184, 0.1)' };
   }
 
-  const handleCancelBooking = async (booking: Booking) => {
-    if (!window.confirm('Bạn có chắc chắn muốn huỷ yêu cầu này không?')) return;
+  const handleCancelBooking = async () => {
+    if (!bookingToCancel) return;
 
     try {
-      await bookingService.cancelBooking(booking.id);
+      await bookingService.cancelBooking(bookingToCancel.id);
       toast.success('Đã huỷ yêu cầu thành công');
+      setCancelModalOpen(false);
+      setBookingToCancel(null);
       fetchBookings(page);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Lỗi khi huỷ yêu cầu');
     }
+  }
+
+  const openCancelModal = (booking: Booking) => {
+    setBookingToCancel(booking);
+    setCancelModalOpen(true);
   }
 
   return (
@@ -159,11 +169,12 @@ export const UserBookingsPage: React.FC = () => {
                                         {change.type === 'ScheduleChange' ? 'Đổi lịch' : 'Đổi phòng'}
                                       </span>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {isRoomChanged ? (
-                                          <>
-                                            <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '2px', opacity: 0.7 }}>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          {isRoomChanged ? (
+                                            <>
+                                              <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '2px', opacity: 0.7 }}>
                                               <MapPin size={10} /> {change.originalRoomName}
                                             </div>
                                             <ArrowRight size={10} style={{ color: 'var(--text-muted)' }} />
@@ -219,8 +230,8 @@ export const UserBookingsPage: React.FC = () => {
                         <td>
                           {(() => {
                             const getSlotFromHour = (hour: number, type: string) => {
-                              // If it's a schedule change, use academic slot mapping (1-6)
-                              if (type === 'ScheduleChange') {
+                              // Apply academic slot mapping for all change requests
+                              if (type === 'ScheduleChange' || type === 'RoomChange') {
                                 if (hour === 7) return "1";
                                 if (hour === 10) return "2";
                                 if (hour === 12) return "3";
@@ -235,7 +246,7 @@ export const UserBookingsPage: React.FC = () => {
                             };
 
                             const changeDetails = parseChangeRequest(booking);
-                            const newSlot = getSlotFromHour(new Date(booking.timeSlot).getHours(), changeDetails.type);
+                            const newSlot = changeDetails.newSlot || (changeDetails.type === 'RoomChange' ? changeDetails.originalSlot : null) || getSlotFromHour(new Date(booking.timeSlot).getHours(), changeDetails.type);
                             const isSlotChanged = changeDetails.isChangeRequest && changeDetails.originalSlot && changeDetails.originalSlot !== newSlot;
 
                             if (!isSlotChanged) {
@@ -260,16 +271,38 @@ export const UserBookingsPage: React.FC = () => {
                             );
                           })()}
                         </td>
-                        <td style={{ maxWidth: '300px' }}>
-                          <div style={{
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            color: booking.reason ? 'var(--text-main)' : 'var(--text-muted)',
-                            fontStyle: 'italic',
-                            fontSize: '0.85rem'
-                          }} title={cleanDisplayReason(booking.reason)}>
-                            {cleanDisplayReason(booking.reason)}
+                        <td style={{ maxWidth: '300px', verticalAlign: 'top' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div style={{
+                              color: booking.reason ? 'var(--text-main)' : 'var(--text-muted)',
+                              fontStyle: booking.reason ? 'normal' : 'italic',
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4'
+                            }}>
+                              {(() => {
+                                const change = parseChangeRequest(booking);
+                                return cleanDisplayReason(change.isChangeRequest ? (change.displayReason || booking.reason) : booking.reason) || 'Không có lý do';
+                              })()}
+                            </div>
+                            
+                            {booking.status === 'Rejected' && booking.rejectReason && (
+                              <div style={{ 
+                                padding: '0.6rem 0.75rem', 
+                                background: '#fef2f2', 
+                                borderLeft: '4px solid #ef4444',
+                                borderRadius: '4px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '4px'
+                              }}>
+                                <div style={{ color: '#991b1b', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  Lý do từ chối:
+                                </div>
+                                <div style={{ color: '#b91c1c', fontSize: '0.85rem', fontWeight: 500, lineHeight: '1.4' }}>
+                                  {booking.rejectReason}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td>{getStatusBadge(booking.status)}</td>
@@ -286,7 +319,7 @@ export const UserBookingsPage: React.FC = () => {
                             if (canCancel) {
                               return (
                                 <button 
-                                  onClick={() => handleCancelBooking(booking)}
+                                  onClick={() => openCancelModal(booking)}
                                   className="btn btn-outline" 
                                   style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: 'var(--color-danger)', color: 'var(--color-danger)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
@@ -318,6 +351,20 @@ export const UserBookingsPage: React.FC = () => {
           </>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={cancelModalOpen}
+        title="Xác nhận huỷ yêu cầu"
+        message="Bạn có chắc chắn muốn huỷ yêu cầu đặt phòng này không? Hành động này không thể hoàn tác."
+        confirmText="Xác nhận huỷ"
+        cancelText="Để sau"
+        onConfirm={handleCancelBooking}
+        onCancel={() => {
+          setCancelModalOpen(false);
+          setBookingToCancel(null);
+        }}
+        isDanger={true}
+      />
     </div>
   )
 }

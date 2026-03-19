@@ -7,4 +7,5 @@ public class UpdateBookingStatusDto
 {
     [Required]
     public BookingStatus Status { get; set; }
+    public string? RejectReason { get; set; }
 }
