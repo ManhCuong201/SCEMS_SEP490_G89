@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using SCEMS.Domain.Entities;
 using SCEMS.Infrastructure.DbContext;
 
@@ -38,21 +38,59 @@ namespace SCEMS.Infrastructure.Data
             var data = JsonSerializer.Deserialize<ExtendedMockData>(jsonString, options);
 
             if (data == null) return;
+            
+            // Lấy danh sách ID hiện có để tránh lỗi FK Constraint
+            var existingBookingIds = context.Bookings.Select(b => b.Id).ToHashSet();
+            var existingRoomIds = context.Rooms.Select(r => r.Id).ToHashSet();
+            var existingEquipIds = context.Equipment.Select(e => e.Id).ToHashSet();
 
             if (!context.BookingHistories.Any() && data.BookingHistories.Any())
-                await context.BookingHistories.AddRangeAsync(data.BookingHistories);
+            {
+                var validHistories = data.BookingHistories
+                    .Where(bh => existingBookingIds.Contains(bh.BookingId))
+                    .ToList();
+                
+                if (validHistories.Any())
+                {
+                    await context.BookingHistories.AddRangeAsync(validHistories);
+                }
+            }
 
             if (!context.ClassroomReports.Any() && data.ClassroomReports.Any())
-                await context.ClassroomReports.AddRangeAsync(data.ClassroomReports);
+            {
+                var validReports = data.ClassroomReports
+                    .Where(cr => existingRoomIds.Contains(cr.RoomId))
+                    .ToList();
+                if (validReports.Any())
+                    await context.ClassroomReports.AddRangeAsync(validReports);
+            }
 
             if (!context.ClassroomStatuses.Any() && data.ClassroomStatuses.Any())
-                await context.ClassroomStatuses.AddRangeAsync(data.ClassroomStatuses);
+            {
+                var validStatuses = data.ClassroomStatuses
+                    .Where(cs => existingRoomIds.Contains(cs.RoomId))
+                    .ToList();
+                if (validStatuses.Any())
+                    await context.ClassroomStatuses.AddRangeAsync(validStatuses);
+            }
 
             if (!context.EquipmentReports.Any() && data.EquipmentReports.Any())
-                await context.EquipmentReports.AddRangeAsync(data.EquipmentReports);
+            {
+                var validReports = data.EquipmentReports
+                    .Where(er => existingEquipIds.Contains(er.EquipmentId))
+                    .ToList();
+                if (validReports.Any())
+                    await context.EquipmentReports.AddRangeAsync(validReports);
+            }
 
             if (!context.RoomEquipmentHistories.Any() && data.RoomEquipmentHistories.Any())
-                await context.RoomEquipmentHistories.AddRangeAsync(data.RoomEquipmentHistories);
+            {
+                var validHistories = data.RoomEquipmentHistories
+                    .Where(reh => existingRoomIds.Contains(reh.RoomId) && existingEquipIds.Contains(reh.EquipmentId))
+                    .ToList();
+                if (validHistories.Any())
+                    await context.RoomEquipmentHistories.AddRangeAsync(validHistories);
+            }
 
             // Lưu toàn bộ dữ liệu mới
             if (context.ChangeTracker.HasChanges())
