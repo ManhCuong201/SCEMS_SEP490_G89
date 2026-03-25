@@ -187,18 +187,6 @@ public class ImportService : IImportService
                     continue;
                 }
 
-                if (!processedClassCodes.Contains(classCode))
-                {
-                    await _unitOfWork.Classes.AddAsync(new Class
-                    {
-                        Id = Guid.NewGuid(),
-                        ClassCode = classCode,
-                        SubjectName = subject,
-                        LecturerId = lecturerAccount.Id
-                    });
-                    processedClassCodes.Add(classCode);
-                }
-
                 var fromCell = row.Cell(4);
                 if (!TryParseExcelDate(fromCell, out var fromDate))
                 {
@@ -222,6 +210,9 @@ public class ImportService : IImportService
                     result.Errors.Add($"Dòng {row.RowNumber()}: Ngày trong tuần không hợp lệ hoặc bị thiếu: {daysOfWeekStr}");
                     continue;
                 }
+
+                var rowHasErrors = false;
+                var rowSchedules = new List<Teaching_Schedule>();
 
                 if (!string.IsNullOrWhiteSpace(slotEntry))
                 {
@@ -274,6 +265,7 @@ public class ImportService : IImportService
                                 {
                                     result.FailureCount++;
                                     result.Errors.Add($"Dòng {row.RowNumber()} - Ngày {current:dd/MM/yyyy} - Slot {slot}: {string.Join(", ", slotConflicts)}.");
+                                    rowHasErrors = true;
                                     continue;
                                 }
 
@@ -291,13 +283,39 @@ public class ImportService : IImportService
                                     LecturerEmail = lecturerAccount.Email
                                 };
                                 
-                                await _unitOfWork.TeachingSchedules.AddAsync(schedule);
-                                existingSchedules.Add(schedule); // Add to local list to catch conflicts within the same file
-
-                                result.SuccessCount++;
+                                rowSchedules.Add(schedule);
                             }
                         }
                     }
+                }
+
+                // ONLY PERSIST IF NO ERRORS IN THIS ROW
+                if (!rowHasErrors && rowSchedules.Any())
+                {
+                    // Create class if it doesn't exist
+                    if (!processedClassCodes.Contains(classCode))
+                    {
+                        await _unitOfWork.Classes.AddAsync(new Class
+                        {
+                            Id = Guid.NewGuid(),
+                            ClassCode = classCode,
+                            SubjectName = subject,
+                            LecturerId = lecturerAccount.Id
+                        });
+                        processedClassCodes.Add(classCode);
+                    }
+
+                    foreach (var s in rowSchedules)
+                    {
+                        await _unitOfWork.TeachingSchedules.AddAsync(s);
+                        existingSchedules.Add(s);
+                        result.SuccessCount++;
+                    }
+                }
+                else if (rowHasErrors)
+                {
+                    // We already added errors to result.Errors inside the loop
+                    // Just ensure we don't increment SuccessCount erroneously
                 }
             }
             catch (Exception ex)

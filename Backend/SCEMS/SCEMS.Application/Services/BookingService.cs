@@ -232,6 +232,30 @@ public class BookingService : IBookingService
             errors.Add("Bạn đã có lịch dạy lớp khác vào thời gian này.");
         }
 
+        // 5.1 Check Student Class Conflict
+        var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
+        if (account?.Role == AccountRole.Student)
+        {
+            var enrolledClassCodes = await _unitOfWork.ClassStudents.GetAll()
+                .Where(cs => cs.StudentId == userId)
+                .Select(cs => cs.Class != null ? cs.Class.ClassCode : cs.PendingStudentIdentifier)
+                .Where(cc => cc != null)
+                .ToListAsync();
+
+            if (enrolledClassCodes.Any())
+            {
+                var studentHasClass = _unitOfWork.TeachingSchedules.GetAll()
+                    .Where(ts => enrolledClassCodes.Contains(ts.ClassCode) && ts.Date == date)
+                    .ToList()
+                    .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+
+                if (studentHasClass)
+                {
+                    errors.Add("Bạn đã có lịch học lớp khác vào thời gian này.");
+                }
+            }
+        }
+
         var userHasBooking = _unitOfWork.Bookings.GetAll()
             .Where(b => b.RequestedBy == userId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
             .ToList()
