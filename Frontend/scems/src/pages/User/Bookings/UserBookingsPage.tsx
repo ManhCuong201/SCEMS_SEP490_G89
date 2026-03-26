@@ -314,7 +314,7 @@ export const UserBookingsPage: React.FC = () => {
                             const reasonText = booking.reason || "";
                             const isChangeRequest = reasonText.startsWith("[Room Change Request]") || reasonText.startsWith("[Schedule Change Request]");
                             
-                            const canCancel = isPending || (isApproved && isFuture && !isChangeRequest);
+                            const canCancel = isPending;
 
                             if (canCancel) {
                               return (

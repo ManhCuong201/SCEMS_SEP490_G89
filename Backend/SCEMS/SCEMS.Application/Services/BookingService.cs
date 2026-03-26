@@ -199,10 +199,12 @@ public class BookingService : IBookingService
         {
             // Check conflicts in Bookings (other approved or pending bookings for same room)
             // We ignore Rejected AND Cancelled bookings
-            var conflictingBooking = _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == dto.RoomId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
-                .ToList()
-                .Any(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart);
+            var conflictingBooking = await _unitOfWork.Bookings.GetAll()
+                .AnyAsync(b => b.RoomId == dto.RoomId 
+                    && b.Status != BookingStatus.Rejected 
+                    && b.Status != BookingStatus.Cancelled
+                    && b.TimeSlot < newEnd 
+                    && b.TimeSlot.AddHours(b.Duration) > newStart);
 
             if (conflictingBooking)
             {
@@ -210,10 +212,12 @@ public class BookingService : IBookingService
             }
                 
             // Check conflicts in Teaching Schedule for the room
-            var hasClass = _unitOfWork.TeachingSchedules.GetAll()
-                 .Where(ts => ts.RoomId == dto.RoomId && ts.Date == date)
-                 .ToList()
-                 .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+            var hasClass = await _unitOfWork.TeachingSchedules.GetAll()
+                 .AnyAsync(ts => ts.RoomId == dto.RoomId 
+                    && ts.Date == date 
+                    && ts.Id != excludeScheduleId
+                    && ts.StartTime < reqEndTime 
+                    && ts.EndTime > reqStartTime);
 
             if (hasClass)
             {
@@ -222,10 +226,12 @@ public class BookingService : IBookingService
         }
 
         // 5. Check Lecturer/User Conflict (User cannot be in two places at once)
-        var userHasClass = _unitOfWork.TeachingSchedules.GetAll()
-            .Where(ts => ts.LecturerId == userId.ToString() && ts.Date == date && ts.Id != excludeScheduleId)
-            .ToList()
-            .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+        var userHasClass = await _unitOfWork.TeachingSchedules.GetAll()
+            .AnyAsync(ts => ts.LecturerId == userId.ToString() 
+                && ts.Date == date 
+                && ts.Id != excludeScheduleId
+                && ts.StartTime < reqEndTime 
+                && ts.EndTime > reqStartTime);
 
         if (userHasClass)
         {

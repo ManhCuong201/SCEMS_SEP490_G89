@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -23,7 +24,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    return (
+    return ReactDOM.createPortal(
         <div style={{
             position: 'fixed',
             top: 0,
@@ -34,7 +35,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 10000,
             backdropFilter: 'blur(4px)'
         }}>
             <div className="glass-panel" style={{
@@ -46,7 +47,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 color: '#1e293b', // Force dark text
                 boxShadow: 'var(--shadow-xl)',
                 position: 'relative',
-                zIndex: 1001
+                zIndex: 10001
             }}>
                 <h3 style={{ marginBottom: '1rem', color: '#0f172a', fontWeight: 'bold' }}>{title}</h3>
                 <p style={{ marginBottom: '2rem', color: '#475569', lineHeight: '1.6' }}>{message}</p>
@@ -64,6 +65,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
