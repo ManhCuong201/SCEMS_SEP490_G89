@@ -6,6 +6,7 @@ import { Alert } from '../../../components/Common/Alert';
 import { Calendar as CalendarIcon, ArrowLeft, ArrowRight, Download, Users, Clock, MapPin } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import '../../../styles/scheduler.css';
+import { formatDate } from '../../../helpers/booking.helper';
 
 export const AdminSchedulesPage: React.FC = () => {
     const { user } = useAuth();
@@ -153,7 +154,7 @@ export const AdminSchedulesPage: React.FC = () => {
                                 <ArrowLeft size={18} />
                             </button>
                             <span style={{ fontWeight: 600, minWidth: '180px', textAlign: 'center', fontSize: '0.9rem' }}>
-                                {weekStart.toLocaleDateString()} - {weekEnd.toLocaleDateString()}
+                                {formatDate(weekStart)} - {formatDate(weekEnd)}
                             </span>
                             <button className="btn btn-secondary btn-sm" onClick={handleNextWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '32px', width: '36px', padding: 0 }}>
                                 <ArrowRight size={18} />

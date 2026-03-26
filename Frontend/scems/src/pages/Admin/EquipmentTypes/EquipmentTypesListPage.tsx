@@ -8,6 +8,7 @@ import { SearchBar } from '../../../components/Common/SearchBar'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Edit, Trash2, Eye } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
+import { formatDate } from '../../../helpers/booking.helper'
 
 export const EquipmentTypesListPage: React.FC = () => {
   const [types, setTypes] = useState<EquipmentType[]>([])
@@ -106,7 +107,7 @@ export const EquipmentTypesListPage: React.FC = () => {
     },
     {
       header: 'Ngày tạo',
-      accessor: (item) => new Date(item.createdAt).toLocaleDateString()
+      accessor: (item) => formatDate(item.createdAt)
     },
     {
       header: 'Hành động',

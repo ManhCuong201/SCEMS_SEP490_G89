@@ -6,6 +6,7 @@ import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Edit, Trash2, ArrowLeft } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
+import { formatDate } from '../../../helpers/booking.helper'
 
 export const RoomDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -145,7 +146,7 @@ export const RoomDetailPage: React.FC = () => {
               Ngày tạo
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
-              {new Date(room.createdAt).toLocaleDateString()}
+              {formatDate(room.createdAt)}
             </div>
           </div>
 
@@ -154,7 +155,7 @@ export const RoomDetailPage: React.FC = () => {
               Cập nhật lần cuối
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
-              {new Date(room.updatedAt).toLocaleDateString()}
+              {formatDate(room.updatedAt)}
             </div>
           </div>
         </div>

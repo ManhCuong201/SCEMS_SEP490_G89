@@ -8,6 +8,7 @@ import { SearchBar } from '../../../components/Common/SearchBar'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Eye, Edit, Trash2, Calendar, FileDown, Upload } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
+import { formatDate } from '../../../helpers/booking.helper'
 
 export const RoomsListPage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([])
@@ -145,7 +146,7 @@ export const RoomsListPage: React.FC = () => {
     },
     {
       header: 'Ngày tạo',
-      accessor: (room) => new Date(room.createdAt).toLocaleDateString()
+      accessor: (room) => formatDate(room.createdAt)
     },
     {
       header: 'Hành động',

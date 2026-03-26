@@ -7,7 +7,7 @@ import { Loading } from '../../../components/Common/Loading'
 import { Pagination } from '../../../components/Common/Pagination'
 import { SearchBar } from '../../../components/Common/SearchBar'
 import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle, Trash2 } from 'lucide-react'
-import { parseChangeRequest, cleanDisplayReason } from '../../../helpers/booking.helper'
+import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
 import toast from 'react-hot-toast'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
@@ -198,7 +198,7 @@ export const UserBookingsPage: React.FC = () => {
                         <td>
                           {(() => {
                             const change = parseChangeRequest(booking);
-                            const newDate = new Date(booking.timeSlot).toLocaleDateString();
+                            const newDate = formatDate(booking.timeSlot);
 
                             const isDateChanged = change.isChangeRequest && change.originalDate && change.originalDate !== newDate;
 

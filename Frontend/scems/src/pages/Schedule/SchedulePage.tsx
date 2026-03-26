@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import {
-    Calendar as CalendarIcon,
-    ChevronLeft,
-    ChevronRight,
-    Search,
-    BookOpen,
-    MapPin,
-    Clock,
-    User as UserIcon,
-    Tag
-} from 'lucide-react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Search, BookOpen, MapPin, Clock, User as UserIcon, Tag, X, Info } from 'lucide-react'
+import { formatDate } from '../../helpers/booking.helper'
 import { scheduleService } from '../../services/teachingSchedule.service'
 import { ScheduleResponse } from '../../types/api'
 import { useAuth } from '../../context/AuthContext'
 import { format, startOfWeek, addDays, subWeeks, addWeeks, isSameDay, parseISO } from 'date-fns'
+import { vi } from 'date-fns/locale'
 import '../../styles/compact-calendar.css'
 import { createPortal } from 'react-dom'
 import { bookingService } from '../../services/booking.service'
 import { roomService } from '../../services/room.service'
 import { CreateScheduleChangeRequest, Room } from '../../types/api'
-import { X, Info } from 'lucide-react'
 
 export const SchedulePage: React.FC = () => {
     const { user } = useAuth()
@@ -166,7 +157,7 @@ export const SchedulePage: React.FC = () => {
                 newDate,
                 slotType,
                 newSlot,
-                reason: `[Schedule Change Request] Original: [Room: ${selectedSchedule.roomName}, Date: ${new Date(selectedSchedule.date).toLocaleDateString('vi-VN')}, Slot: ${selectedSchedule.slot}]. Reason: ${changeReason}`
+                reason: `[Schedule Change Request] Original: [Room: ${selectedSchedule.roomName}, Date: ${formatDate(selectedSchedule.date)}, Slot: ${selectedSchedule.slot}]. Reason: ${changeReason}`
             };
             await bookingService.createScheduleChangeRequest(request);
             setModalSuccess('Đã gửi yêu cầu đổi lịch học!');
@@ -230,8 +221,8 @@ export const SchedulePage: React.FC = () => {
             <div className="glass-panel compact-glass-panel">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
-                            {format(startDate, 'MMMM yyyy')}
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, textTransform: 'capitalize' }}>
+                            {format(startDate, 'MMMM yyyy', { locale: vi })}
                         </h2>
                         <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                             <button className="btn btn-secondary btn-sm" onClick={handlePrevWeek} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '28px', width: '32px', padding: 0 }}><ChevronLeft size={16} /></button>
@@ -240,7 +231,7 @@ export const SchedulePage: React.FC = () => {
                         </div>
                     </div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                        {format(startDate, 'MMM dd')} - {format(addDays(startDate, 6), 'MMM dd, yyyy')}
+                        {format(startDate, 'dd MMM', { locale: vi })} - {format(addDays(startDate, 6), 'dd MMM, yyyy', { locale: vi })}
                     </div>
                 </div>
 
@@ -257,8 +248,8 @@ export const SchedulePage: React.FC = () => {
                                         backgroundColor: isSameDay(day, new Date()) ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
                                         borderRadius: 'var(--radius-sm)'
                                     }}>
-                                        <div style={{ color: isSameDay(day, new Date()) ? 'var(--color-primary)' : 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase' }}>
-                                            {format(day, 'EEE')}
+                                        <div style={{ color: isSameDay(day, new Date()) ? 'var(--color-primary)' : 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'capitalize' }}>
+                                            {format(day, 'EEEE', { locale: vi })}
                                         </div>
                                         <div style={{ fontSize: '1rem', fontWeight: 700 }}>
                                             {format(day, 'dd/MM')}
@@ -379,7 +370,7 @@ export const SchedulePage: React.FC = () => {
                             </div>
                             <div className="modal-info-row">
                                 <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                <span>Thời gian ban đầu: <strong>{new Date(selectedSchedule.date).toLocaleDateString('vi-VN')} (Ca {selectedSchedule.slot}: {selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
+                                <span>Thời gian ban đầu: <strong>{formatDate(selectedSchedule.date)} (Ca {selectedSchedule.slot}: {selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
                             </div>
                             <div className="modal-info-row">
                                 <Info size={14} style={{ color: '#0f172a' }} />

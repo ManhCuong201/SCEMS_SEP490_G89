@@ -6,6 +6,7 @@ import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Edit, Trash2, ArrowLeft } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
+import { formatDate } from '../../../helpers/booking.helper'
 
 export const EquipmentTypeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -142,7 +143,7 @@ export const EquipmentTypeDetailPage: React.FC = () => {
               Ngày tạo
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
-              {new Date(type.createdAt).toLocaleDateString()}
+              {formatDate(type.createdAt)}
             </div>
           </div>
 
@@ -151,7 +152,7 @@ export const EquipmentTypeDetailPage: React.FC = () => {
               Cập nhật lần cuối
             </label>
             <div style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
-              {new Date(type.updatedAt).toLocaleDateString()}
+              {formatDate(type.updatedAt)}
             </div>
           </div>
         </div>

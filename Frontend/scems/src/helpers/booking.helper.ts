@@ -13,6 +13,17 @@ export interface ChangeRequestDetails {
     displayReason?: string;
 }
 
+export const formatDate = (date: Date | string | number): string => {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+    // Force vi-VN for dd/MM/yyyy
+    return d.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
 export const parseChangeRequest = (booking: Booking): ChangeRequestDetails => {
     const reason = booking.reason || '';
 

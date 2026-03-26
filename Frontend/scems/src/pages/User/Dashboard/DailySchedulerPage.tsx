@@ -14,6 +14,7 @@ import '../../../styles/scheduler.css'
 import { useAuth } from '../../../context/AuthContext'
 import { departmentService } from '../../../services/department.service'
 import { Department } from '../../../types/api'
+import { formatDate } from '../../../helpers/booking.helper'
 
 /* --- Portal Tooltip Component --- */
 interface PortalTooltipProps {
@@ -93,6 +94,19 @@ export const DailySchedulerPage: React.FC = () => {
     const [isChangeRequest, setIsChangeRequest] = useState(false)
     const [selectedSchedule, setSelectedSchedule] = useState<ScheduleResponse | null>(null)
     const [newRoomId, setNewRoomId] = useState('')
+    const [newDate, setNewDate] = useState('')
+    const [slotType, setSlotType] = useState('New')
+    const [newSlot, setNewSlot] = useState(1)
+
+    const getSlotTimes = (type: string, slotNumber: number) => {
+        if (type === 'Old') {
+            const times = { 1: '07:30 - 09:00', 2: '09:10 - 10:40', 3: '10:50 - 12:20', 4: '12:50 - 14:20', 5: '14:30 - 16:00', 6: '16:10 - 17:40', 7: '18:00 - 19:30', 8: '19:45 - 21:15' };
+            return times[slotNumber as keyof typeof times] || '';
+        } else {
+            const times = { 1: '07:30 - 09:50', 2: '10:00 - 12:20', 3: '12:50 - 15:10', 4: '15:20 - 17:40', 5: '18:00 - 20:20', 6: '20:00 - 22:20' };
+            return times[slotNumber as keyof typeof times] || '';
+        }
+    }
 
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
 
@@ -155,7 +169,10 @@ export const DailySchedulerPage: React.FC = () => {
             setSelectedSlot({ date: sDate, hour: sh })
             setSelectedRoom(room)
             setSelectedSchedule(classSchedule)
-            setNewRoomId('')
+            setNewRoomId(room.id)
+            setNewDate(sDate)
+            setSlotType('New')
+            setNewSlot(classSchedule.slot || 1)
             setReason('')
             setDuration(dur > 0 ? dur : 1)
         } else {
@@ -202,15 +219,25 @@ export const DailySchedulerPage: React.FC = () => {
                     return
                 }
 
-                await bookingService.createRoomChangeRequest({
+                const targetSlotEndHour = slotType === 'New' ? (newSlot === 1 ? 10 : newSlot === 2 ? 12 : newSlot === 3 ? 15 : newSlot === 4 ? 18 : newSlot === 5 ? 20 : 22) : (newSlot + 8);
+                const [y1, m1, d1] = newDate.split('-').map(Number);
+                const targetEndTime = new Date(y1, m1 - 1, d1, targetSlotEndHour, 30, 0);
+
+                if (targetEndTime < new Date()) {
+                    setModalError('Không thể đổi lịch sang thời gian đã qua.');
+                    setSubmitting(false);
+                    return;
+                }
+
+                await bookingService.createScheduleChangeRequest({
                     scheduleId: selectedSchedule.id,
-                    originalRoomId: selectedRoom.id,
                     newRoomId: newRoomId,
-                    timeSlot: isoLocal,
-                    duration: duration,
-                    reason: `[Room Change Request] Original: [Room: ${selectedRoom.roomCode}, Date: ${new Date(selectedSchedule.date).toLocaleDateString('vi-VN')}, Slot: ${selectedSchedule.slot}]. Reason: ${reason}`
+                    newDate: newDate,
+                    slotType: slotType,
+                    newSlot: newSlot,
+                    reason: `[Schedule Change Request] Original: [Room: ${selectedSchedule.roomName}, Date: ${formatDate(selectedSchedule.date)}, Slot: ${selectedSchedule.slot}]. Reason: ${reason}`
                 })
-                setModalSuccess('Đã gửi yêu cầu đổi phòng!')
+                setModalSuccess('Đã gửi yêu cầu đổi lịch học!')
             } else {
                 await bookingService.createBooking({
                     roomId: selectedRoom.id,
@@ -304,7 +331,7 @@ export const DailySchedulerPage: React.FC = () => {
                             { label: 'Lớp', value: classInSlot.classCode },
                             { label: 'Giảng viên', value: getTeacherId(classInSlot.lecturerName, (classInSlot as any).lecturerEmail) },
                             { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` },
-                            isMyClass ? { label: 'Hành động', value: 'Nhấn để đổi phòng' } : { label: 'Trạng thái', value: 'Đang bận' }
+                            isMyClass ? { label: 'Hành động', value: 'Nhấn để đổi phòng' } : { label: 'Trạng thái', value: 'Đang có lớp' }
                         ],
                         targetRect: e.currentTarget.getBoundingClientRect()
                     })}
@@ -521,7 +548,7 @@ export const DailySchedulerPage: React.FC = () => {
                     <div className="modal-panel-premium">
                         <div className="modal-header-premium">
                             <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> {isChangeRequest ? 'Yêu cầu Đổi phòng' : 'Yêu cầu Mượn phòng'}
+                                <CalendarIcon size={18} /> {isChangeRequest ? 'Yêu cầu Đổi lịch học' : 'Yêu cầu Mượn phòng'}
                             </h3>
                             <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
                                 <X size={20} />
@@ -546,71 +573,147 @@ export const DailySchedulerPage: React.FC = () => {
                                             </div>
                                         )}
 
-                                        <div className="modal-info-row">
-                                            <MapPin size={14} style={{ color: '#0f172a' }} />
-                                            <span>Phòng hiện tại: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
-                                        </div>
-                                        <div className="modal-info-row">
-                                            <Clock size={14} style={{ color: '#0f172a' }} />
-                                            <span>Thời gian: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + duration}:00</strong></span>
-                                        </div>
-                                        <div className="modal-info-row">
-                                            <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                            <span>Ngày: <strong>{new Date(selectedSlot.date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
-                                        </div>
+                                        {isChangeRequest && selectedSchedule ? (
+                                            <>
+                                                <div className="modal-info-row">
+                                                    <MapPin size={14} style={{ color: '#0f172a' }} />
+                                                    <span>Phòng ban đầu: <strong>{selectedSchedule.roomName || 'Đang cập nhật...'}</strong></span>
+                                                </div>
+                                                <div className="modal-info-row">
+                                                    <CalendarIcon size={14} style={{ color: '#0f172a' }} />
+                                                    <span>Thời gian ban đầu: <strong>{formatDate(selectedSchedule.date)} (Ca {selectedSchedule.slot}: {selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
+                                                </div>
+                                                <div className="modal-info-row">
+                                                    <Info size={14} style={{ color: '#0f172a' }} />
+                                                    <span>Lớp: <strong>{selectedSchedule.subject} - {selectedSchedule.classCode}</strong></span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="modal-info-row">
+                                                    <MapPin size={14} style={{ color: '#0f172a' }} />
+                                                    <span>Phòng hiện tại: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
+                                                </div>
+                                                <div className="modal-info-row">
+                                                    <Clock size={14} style={{ color: '#0f172a' }} />
+                                                    <span>Thời gian: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + duration}:00</strong></span>
+                                                </div>
+                                                 <div className="modal-info-row">
+                                                     <CalendarIcon size={14} style={{ color: '#0f172a' }} />
+                                                     <span>Ngày: <strong>{new Date(selectedSlot.date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
+                                                 </div>
+                                            </>
+                                        )}
                                     </div>
 
                                     <div className="modal-body-premium">
                                         <div className="modal-input-group">
-                                            {isChangeRequest && (
+                                            {isChangeRequest ? (
                                                 <>
-                                                    <label className="modal-label-premium">
-                                                        <MapPin size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                        Chọn phòng mới
-                                                    </label>
+                                                    <label className="modal-label-premium">Phòng mới</label>
                                                     <select
                                                         className="form-input"
                                                         style={{ width: '100%', marginBottom: '1rem' }}
                                                         value={newRoomId}
                                                         onChange={(e) => setNewRoomId(e.target.value)}
                                                     >
-                                                        <option value="">-- Chọn phòng --</option>
-                                                        {rooms.filter(r => r.id !== selectedRoom.id).map(r => (
+                                                        {rooms.some(r => r.id === selectedSchedule?.roomId) ? null : (
+                                                            <option value={selectedSchedule?.roomId}>{selectedSchedule?.roomName} (Hiện tại)</option>
+                                                        )}
+                                                        {rooms.map(r => (
                                                             <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>
                                                         ))}
                                                     </select>
+                                                    
+                                                    <label className="modal-label-premium">Ngày mới</label>
+                                                    <input
+                                                        type="date"
+                                                        className="form-input"
+                                                        style={{ width: '100%', marginBottom: '1rem' }}
+                                                        value={newDate}
+                                                        onChange={e => setNewDate(e.target.value)}
+                                                    />
+
+                                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <label className="modal-label-premium">Loại Ca học</label>
+                                                            <select
+                                                                className="form-input"
+                                                                style={{ width: '100%' }}
+                                                                value={slotType}
+                                                                onChange={e => {
+                                                                    setSlotType(e.target.value);
+                                                                    setNewSlot(1);
+                                                                }}
+                                                            >
+                                                                <option value="New">Ca mới (10 tuần)</option>
+                                                                <option value="Old">Ca cũ (3 tuần)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <label className="modal-label-premium">Ca học</label>
+                                                            <select
+                                                                className="form-input"
+                                                                style={{ width: '100%' }}
+                                                                value={newSlot}
+                                                                onChange={e => setNewSlot(Number(e.target.value))}
+                                                            >
+                                                                {Array.from({ length: slotType === 'New' ? 6 : 8 }, (_, i) => i + 1).map(n => (
+                                                                    <option key={n} value={n}>Ca {n}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <Clock size={16} className="text-primary" />
+                                                        <span style={{ fontSize: '0.9rem' }}>
+                                                            Thời gian đã chọn: <strong>{getSlotTimes(slotType, newSlot)}</strong>
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <label className="modal-label-premium">Lý do Đổi lịch</label>
+                                                    <textarea
+                                                        className="modal-textarea-premium"
+                                                        value={reason}
+                                                        onChange={(e) => setReason(e.target.value)}
+                                                        placeholder="Giải thích ngắn gọn lý do cần đổi lịch học này..."
+                                                        rows={3}
+                                                    />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <label className="modal-label-premium">
+                                                        <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                                        Thời lượng (Giờ)
+                                                    </label>
+                                                    <select
+                                                        className="form-input"
+                                                        style={{ width: '100%', marginBottom: '1rem' }}
+                                                        value={duration}
+                                                        onChange={(e) => setDuration(Number(e.target.value))}
+                                                    >
+                                                        {durationOptions.map(h => (
+                                                            <option key={h} value={h}>{h} {h === 1 ? 'Giờ' : 'Giờ'}</option>
+                                                        ))}
+                                                    </select>
+
+                                                    <label className="modal-label-premium">
+                                                        <MessageSquare size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                                        Mục đích Mượn phòng
+                                                    </label>
+                                                    <textarea
+                                                        className="modal-textarea-premium"
+                                                        value={reason}
+                                                        onChange={(e) => setReason(e.target.value)}
+                                                        placeholder={`Giải thích ngắn gọn lý do bạn cần phòng này... (Không bắt buộc)`}
+                                                        rows={3}
+                                                    />
+                                                    <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Info size={10} /> Yêu cầu của bạn sẽ được nhân viên quản lý phòng xem xét.
+                                                    </div>
                                                 </>
                                             )}
-
-                                            <label className="modal-label-premium">
-                                                <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                Thời lượng (Giờ)
-                                            </label>
-                                            <select
-                                                className="form-input"
-                                                style={{ width: '100%', marginBottom: '1rem' }}
-                                                value={duration}
-                                                onChange={(e) => setDuration(Number(e.target.value))}
-                                            >
-                                                {durationOptions.map(h => (
-                                                    <option key={h} value={h}>{h} {h === 1 ? 'Giờ' : 'Giờ'}</option>
-                                                ))}
-                                            </select>
-
-                                            <label className="modal-label-premium">
-                                                <MessageSquare size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                Mục đích mượn phòng
-                                            </label>
-                                            <textarea
-                                                className="modal-textarea-premium"
-                                                value={reason}
-                                                onChange={(e) => setReason(e.target.value)}
-                                                placeholder="Giải thích ngắn gọn lý do bạn cần phòng này... (Không bắt buộc)"
-                                                rows={3}
-                                            />
-                                            <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <Info size={10} /> Yêu cầu của bạn sẽ được nhân viên quản lý phòng xem xét.
-                                            </div>
                                         </div>
                                     </div>
                                 </>

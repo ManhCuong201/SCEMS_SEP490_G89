@@ -13,7 +13,7 @@ import '../../../styles/scheduler.css'
 import { useAuth } from '../../../context/AuthContext'
 import { departmentService } from '../../../services/department.service'
 import { Department } from '../../../types/api'
-import { parseChangeRequest } from '../../../helpers/booking.helper'
+import { parseChangeRequest, formatDate } from '../../../helpers/booking.helper'
 
 export const StaffBookingBoardPage: React.FC = () => {
     const { user } = useAuth()
@@ -462,7 +462,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                                     <MapPin size={14} /> {booking.room?.roomName}
                                                                 </div>
                                                                 <div style={{ fontSize: '0.75rem', color: 'var(--color-primary)', opacity: 0.8, marginTop: '2px', paddingLeft: '20px', fontWeight: 600 }}>
-                                                                    {new Date(booking.timeSlot).toLocaleDateString('vi-VN')} - Ca {selectedSlotHour && (selectedSlotHour - 6 > 0 ? (selectedSlotHour - 6) : 1)}
+                                                                    {formatDate(booking.timeSlot)} - Ca {selectedSlotHour && (selectedSlotHour - 6 > 0 ? (selectedSlotHour - 6) : 1)}
                                                                 </div>
                                                             </div>
                                                         </div>

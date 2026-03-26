@@ -6,7 +6,7 @@ import { Pagination } from '../../../components/Common/Pagination'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Check, X, ArrowRight, MapPin, Calendar, Clock, BookOpen } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
-import { parseChangeRequest, cleanDisplayReason } from '../../../helpers/booking.helper'
+import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
 
 export const BookingManagementPage: React.FC = () => {
     const [bookings, setBookings] = useState<Booking[]>([])
@@ -124,7 +124,7 @@ export const BookingManagementPage: React.FC = () => {
             header: 'Thời gian Đổi (FROM -> TO)',
             accessor: (b: Booking) => {
                 const change = parseChangeRequest(b);
-                const newDate = new Date(b.timeSlot).toLocaleDateString('vi-VN');
+                const newDate = formatDate(b.timeSlot);
                 const isDateChanged = change.isChangeRequest && change.originalDate && change.originalDate !== newDate;
 
                 const newSlot = change.newSlot || (change.type === 'RoomChange' ? change.originalSlot : null) || getSlotFromHour(new Date(b.timeSlot).getHours(), change.type);
