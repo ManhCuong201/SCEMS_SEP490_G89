@@ -53,10 +53,18 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 SP25_SEP490-G89-*.docx
-*.py
+generate_report.py
+read_excel.py
+manage_equipment_test.csv
 .agent
 *.txt
 *.log
 *.xlsx
 Data_SEP
 unit_test_cases.json
+
+# Python exclusions
+AutomationTests/venv/
+AutomationTests/__pycache__/
+*.pyc
+.pytest_cache/

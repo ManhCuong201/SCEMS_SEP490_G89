@@ -13,7 +13,7 @@ import '../../../styles/scheduler.css'
 import { useAuth } from '../../../context/AuthContext'
 import { departmentService } from '../../../services/department.service'
 import { Department } from '../../../types/api'
-import { parseChangeRequest, formatDate } from '../../../helpers/booking.helper'
+import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
 
 export const StaffBookingBoardPage: React.FC = () => {
     const { user } = useAuth()
@@ -434,7 +434,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                         <div style={{ fontWeight: 600 }}>{booking.duration} Giờ</div>
 
                                                         <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do:</div>
-                                                        <div style={{ fontStyle: 'italic', color: '#475569', lineHeight: 1.5 }}>"{booking.reason || 'Không có lý do'}"</div>
+                                                        <div style={{ fontStyle: 'italic', color: '#475569', lineHeight: 1.5 }}>"{cleanDisplayReason(booking.reason)}"</div>
                                                     </div>
                                                 ) : (
                                                     // Change Request Display (Restored comparison view)
@@ -473,7 +473,7 @@ export const StaffBookingBoardPage: React.FC = () => {
 
                                                             <div style={{ color: '#64748b', fontWeight: 600 }}>Lớp/Môn học:</div>
                                                             <div style={{ fontWeight: 700, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                <BookOpen size={14} /> {booking.reason?.match(/Môn học: (.*?) -/)?.[1] || 'Lịch giảng dạy'}
+                                                                <BookOpen size={14} /> {change.subject && change.classCode ? `${change.subject} - Lớp: ${change.classCode}` : 'Lịch giảng dạy'}
                                                             </div>
 
                                                             <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do chi tiết:</div>

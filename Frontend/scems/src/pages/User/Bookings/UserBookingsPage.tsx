@@ -6,7 +6,7 @@ import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
 import { Pagination } from '../../../components/Common/Pagination'
 import { SearchBar } from '../../../components/Common/SearchBar'
-import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle, Trash2 } from 'lucide-react'
+import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle, Trash2, BookOpen } from 'lucide-react'
 import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
 import toast from 'react-hot-toast'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
@@ -273,36 +273,48 @@ export const UserBookingsPage: React.FC = () => {
                         </td>
                         <td style={{ maxWidth: '300px', verticalAlign: 'top' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div style={{
-                              color: booking.reason ? 'var(--text-main)' : 'var(--text-muted)',
-                              fontStyle: booking.reason ? 'normal' : 'italic',
-                              fontSize: '0.85rem',
-                              lineHeight: '1.4'
-                            }}>
-                              {(() => {
-                                const change = parseChangeRequest(booking);
-                                return cleanDisplayReason(change.isChangeRequest ? (change.displayReason || booking.reason) : booking.reason) || 'Không có lý do';
-                              })()}
-                            </div>
-                            
-                            {booking.status === 'Rejected' && booking.rejectReason && (
-                              <div style={{ 
-                                padding: '0.6rem 0.75rem', 
-                                background: '#fef2f2', 
-                                borderLeft: '4px solid #ef4444',
-                                borderRadius: '4px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '4px'
-                              }}>
-                                <div style={{ color: '#991b1b', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                  Lý do từ chối:
-                                </div>
-                                <div style={{ color: '#b91c1c', fontSize: '0.85rem', fontWeight: 500, lineHeight: '1.4' }}>
-                                  {booking.rejectReason}
-                                </div>
-                              </div>
-                            )}
+                            {(() => {
+                              const change = parseChangeRequest(booking);
+                              return (
+                                <>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    {change.isChangeRequest && change.subject && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.85rem' }}>
+                                        <BookOpen size={14} /> {change.subject} ({change.classCode})
+                                      </div>
+                                    )}
+                                    <div style={{
+                                      color: booking.reason ? 'var(--text-main)' : 'var(--text-muted)',
+                                      fontStyle: booking.reason ? 'normal' : 'italic',
+                                      fontSize: '0.85rem',
+                                      lineHeight: '1.4'
+                                    }}>
+                                      {change.displayReason || 'Không có lý do'}
+                                    </div>
+                                  </div>
+
+                                  {booking.status === BookingStatus.Rejected && booking.rejectReason && (
+                                    <div style={{
+                                      padding: '0.6rem 0.75rem',
+                                      background: '#fef2f2',
+                                      borderLeft: '4px solid #ef4444',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '4px',
+                                      marginTop: '0.25rem'
+                                    }}>
+                                      <div style={{ color: '#991b1b', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Lý do từ chối:
+                                      </div>
+                                      <div style={{ color: '#b91c1c', fontSize: '0.85rem', fontWeight: 500, lineHeight: '1.4' }}>
+                                        {booking.rejectReason}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </td>
                         <td>{getStatusBadge(booking.status)}</td>

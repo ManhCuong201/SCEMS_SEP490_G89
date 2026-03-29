@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="4" tests="8" time="140.564" timestamp="2026-03-29T18:27:36.087495+07:00" hostname="MSI"><testcase classname="AutomationTests.test_change_room" name="test_change_room_normal_flow" time="24.356"><failure message="selenium.common.exceptions.TimeoutException: Message: &#10;Stacktrace:&#10;&#09;chromedriver!GetHandleVerifier [0x113cdf3+10b03]&#10;&#09;chromedriver!GetHandleVerifier [0x113cf24+10c34]&#10;&#09;chromedriver!(No symbol) [0xf22120]&#10;&#09;chromedriver!(No symbol) [0xf6abca]&#10;&#09;chromedriver!(No symbol) [0xf6ae6b]&#10;&#09;chromedriver!(No symbol) [0xfad0b2]&#10;&#09;chromedriver!(No symbol) [0xf8db54]&#10;&#09;chromedriver!(No symbol) [0xfaa9a5]&#10;&#09;chromedriver!(No symbol) [0xf8d8a6]&#10;&#09;chromedriver!(No symbol) [0xf60229]&#10;&#09;chromedriver!(No symbol) [0xf60fe4]&#10;&#09;chromedriver!GetHandleVerifier [0x13a48b9+2785c9]&#10;&#09;chromedriver!GetHandleVerifier [0x139feb5+273bc5]&#10;&#09;chromedriver!GetHandleVerifier [0x13be06b+291d7b]&#10;&#09;chromedriver!GetHandleVerifier [0x1155cc8+299d8]&#10;&#09;chromedriver!GetHandleVerifier [0x115d9fd+3170d]&#10;&#09;chromedriver!GetHandleVerifier [0x11458c8+195d8]&#10;&#09;chromedriver!GetHandleVerifier [0x1145a92+197a2]&#10;&#09;chromedriver!GetHandleVerifier [0x112ee9a+2baa]&#10;&#09;KERNEL32!BaseThreadInitThunk [0x75275d49+19]&#10;&#09;ntdll!RtlInitializeExceptionChain [0x7736d81b+6b]&#10;&#09;ntdll!RtlGetAppContainerNamedObjectPath [0x7736d7a1+231]">browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session="6fffa51e854ab8ed6c4fd7a6f4fa5ae3")&gt;
+login = &lt;function login.&lt;locals&gt;._login at 0x00000201B2280670&gt;
+step_wait = &lt;function step_wait.&lt;locals&gt;._wait at 0x00000201B289B9A0&gt;
+
+    def test_change_room_normal_flow(browser, login, step_wait):
+        # 1. Login as Lecturer
+        login("lecturer@fpt.edu.vn", "Password123!")
+        step_wait()
+    
+        # 2. Navigate to Schedule Page
+        browser.get("http://localhost:5173/schedule")
+        step_wait()
+    
+        # Click 'Next Week' to find the seeded tomorrow slot (since Sunday/Monday boundary)
+        wait = WebDriverWait(browser, 10)
+        try:
+            next_week_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn-secondary svg.lucide-chevron-right")))
+            # The svg is inside the button
+            next_week_btn.find_element(By.XPATH, "./..").click()
+            step_wait()
+        except:
+            pass # If we are already in the correct week
+    
+        # 3. Click on a scheduled slot to request change
+        time.sleep(2) # wait for grid rendering
+&gt;       scheduled_slot = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".compact-schedule-card.clickable-card")))
+
+AutomationTests\test_change_room.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;selenium.webdriver.support.wait.WebDriverWait (session="6fffa51e854ab8ed6c4fd7a6f4fa5ae3")&gt;
+method = &lt;function element_to_be_clickable.&lt;locals&gt;._predicate at 0x00000201B282EB90&gt;
+message = ''
+
+    def until(self, method: Callable[[D], Literal[False] | T], message: str = "") -&gt; T:
+        """Wait until the method returns a value that is not False.
+    
+        Calls the method provided with the driver as an argument until the
+        return value does not evaluate to ``False``.
+    
+        Args:
+            method: A callable object that takes a WebDriver instance as an
+                argument.
+            message: Optional message for TimeoutException.
+    
+        Returns:
+            The result of the last call to `method`.
+    
+        Raises:
+            TimeoutException: If 'method' does not return a truthy value within
+                the WebDriverWait object's timeout.
+    
+        Example:
+            &gt;&gt;&gt; from selenium.webdriver.common.by import By
+            &gt;&gt;&gt; from selenium.webdriver.support.ui import WebDriverWait
+            &gt;&gt;&gt; from selenium.webdriver.support import expected_conditions as EC
+            &gt;&gt;&gt;
+            &gt;&gt;&gt; # Wait until an element is visible on the page
+            &gt;&gt;&gt; wait = WebDriverWait(driver, 10)
+            &gt;&gt;&gt; element = wait.until(EC.visibility_of_element_located((By.ID, "exampleId")))
+            &gt;&gt;&gt; print(element.text)
+        """
+        screen = None
+        stacktrace = None
+    
+        end_time = time.monotonic() + self._timeout
+        while True:
+            try:
+                value = method(self._driver)
+                if value:
+                    return value
+            except self._ignored_exceptions as exc:
+                screen = getattr(exc, "screen", None)
+                stacktrace = getattr(exc, "stacktrace", None)
+            if time.monotonic() &gt; end_time:
+                break
+            time.sleep(self._poll)
+&gt;       raise TimeoutException(message, screen, stacktrace)
+E       selenium.common.exceptions.TimeoutException: Message: 
+E       Stacktrace:
+E       	chromedriver!GetHandleVerifier [0x113cdf3+10b03]
+E       	chromedriver!GetHandleVerifier [0x113cf24+10c34]
+E       	chromedriver!(No symbol) [0xf22120]
+E       	chromedriver!(No symbol) [0xf6abca]
+E       	chromedriver!(No symbol) [0xf6ae6b]
+E       	chromedriver!(No symbol) [0xfad0b2]
+E       	chromedriver!(No symbol) [0xf8db54]
+E       	chromedriver!(No symbol) [0xfaa9a5]
+E       	chromedriver!(No symbol) [0xf8d8a6]
+E       	chromedriver!(No symbol) [0xf60229]
+E       	chromedriver!(No symbol) [0xf60fe4]
+E       	chromedriver!GetHandleVerifier [0x13a48b9+2785c9]
+E       	chromedriver!GetHandleVerifier [0x139feb5+273bc5]
+E       	chromedriver!GetHandleVerifier [0x13be06b+291d7b]
+E       	chromedriver!GetHandleVerifier [0x1155cc8+299d8]
+E       	chromedriver!GetHandleVerifier [0x115d9fd+3170d]
+E       	chromedriver!GetHandleVerifier [0x11458c8+195d8]
+E       	chromedriver!GetHandleVerifier [0x1145a92+197a2]
+E       	chromedriver!GetHandleVerifier [0x112ee9a+2baa]
+E       	KERNEL32!BaseThreadInitThunk [0x75275d49+19]
+E       	ntdll!RtlInitializeExceptionChain [0x7736d81b+6b]
+E       	ntdll!RtlGetAppContainerNamedObjectPath [0x7736d7a1+231]
+
+AutomationTests\venv\lib\site-packages\selenium\webdriver\support\wait.py:121: TimeoutException</failure></testcase><testcase classname="AutomationTests.test_change_room" name="test_change_room_abnormal_reject" time="25.415"><skipped type="pytest.skip" message="Could not find the expected rejection text. Staff rejection might have failed or the state is unclean.">C:\Users\TGDD\Downloads\RoomManagement\AutomationTests\test_change_room.py:108: Could not find the expected rejection text. Staff rejection might have failed or the state is unclean.</skipped></testcase><testcase classname="AutomationTests.test_import_schedule" name="test_import_schedule_valid" time="17.343"><failure message="selenium.common.exceptions.TimeoutException: Message: &#10;Stacktrace:&#10;&#09;chromedriver!GetHandleVerifier [0x113cdf3+10b03]&#10;&#09;chromedriver!GetHandleVerifier [0x113cf24+10c34]&#10;&#09;chromedriver!(No symbol) [0xf22120]&#10;&#09;chromedriver!(No symbol) [0xf6abca]&#10;&#09;chromedriver!(No symbol) [0xf6ae6b]&#10;&#09;chromedriver!(No symbol) [0xfad0b2]&#10;&#09;chromedriver!(No symbol) [0xf8db54]&#10;&#09;chromedriver!(No symbol) [0xfaa9a5]&#10;&#09;chromedriver!(No symbol) [0xf8d8a6]&#10;&#09;chromedriver!(No symbol) [0xf60229]&#10;&#09;chromedriver!(No symbol) [0xf60fe4]&#10;&#09;chromedriver!GetHandleVerifier [0x13a48b9+2785c9]&#10;&#09;chromedriver!GetHandleVerifier [0x139feb5+273bc5]&#10;&#09;chromedriver!GetHandleVerifier [0x13be06b+291d7b]&#10;&#09;chromedriver!GetHandleVerifier [0x1155cc8+299d8]&#10;&#09;chromedriver!GetHandleVerifier [0x115d9fd+3170d]&#10;&#09;chromedriver!GetHandleVerifier [0x11458c8+195d8]&#10;&#09;chromedriver!GetHandleVerifier [0x1145a92+197a2]&#10;&#09;chromedriver!GetHandleVerifier [0x112ee9a+2baa]&#10;&#09;KERNEL32!BaseThreadInitThunk [0x75275d49+19]&#10;&#09;ntdll!RtlInitializeExceptionChain [0x7736d81b+6b]&#10;&#09;ntdll!RtlGetAppContainerNamedObjectPath [0x7736d7a1+231]">browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session="6fffa51e854ab8ed6c4fd7a6f4fa5ae3")&gt;
+login = &lt;function login.&lt;locals&gt;._login at 0x00000201B293A440&gt;
+step_wait = &lt;function step_wait.&lt;locals&gt;._wait at 0x00000201B31B15A0&gt;
+
+    def test_import_schedule_valid(browser, login, step_wait):
+        # 1. Login as BookingStaff
+        login("bookingstaff@fpt.edu.vn", "Password123!")
+        step_wait()
+    
+        # 2. Navigate to Schedules Page
+        browser.get("http://localhost:5173/admin/schedules")
+        step_wait()
+    
+        # Wait for page load
+        wait = WebDriverWait(browser, 10)
+        time.sleep(2)
+    
+        # 3. Upload Excel file
+        file_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='file']")))
+    
+        # Use the generated Valid_Import_Schedule.xlsx
+        file_path = os.path.join(os.path.dirname(__file__), "Valid_Import_Schedule.xlsx")
+        file_input.send_keys(file_path)
+        step_wait()
+    
+        # 4. Verify success
+        # It auto-submits on change, so wait for success alert
+        try:
+            success_msg = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "alert-success")))
+            assert success_msg.is_displayed()
+            step_wait()
+        except Exception as e:
+            # Check for error alert explicitly if import fails
+            error_msg = browser.find_elements(By.CLASS_NAME, "alert-error")
+            if error_msg:
+                print(f"Import failed with error: {error_msg[0].text}")
+&gt;           raise e
+
+AutomationTests\test_import_schedule.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+AutomationTests\test_import_schedule.py:32: in test_import_schedule_valid
+    success_msg = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "alert-success")))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;selenium.webdriver.support.wait.WebDriverWait (session="6fffa51e854ab8ed6c4fd7a6f4fa5ae3")&gt;
+method = &lt;function visibility_of_element_located.&lt;locals&gt;._predicate at 0x00000201B31B1510&gt;
+message = ''
+
+    def until(self, method: Callable[[D], Literal[False] | T], message: str = "") -&gt; T:
+        """Wait until the method returns a value that is not False.
+    
+        Calls the method provided with the driver as an argument until the
+        return value does not evaluate to ``False``.
+    
+        Args:
+            method: A callable object that takes a WebDriver instance as an
+                argument.
+            message: Optional message for TimeoutException.
+    
+        Returns:
+            The result of the last call to `method`.
+    
+        Raises:
+            TimeoutException: If 'method' does not return a truthy value within
+                the WebDriverWait object's timeout.
+    
+        Example:
+            &gt;&gt;&gt; from selenium.webdriver.common.by import By
+            &gt;&gt;&gt; from selenium.webdriver.support.ui import WebDriverWait
+            &gt;&gt;&gt; from selenium.webdriver.support import expected_conditions as EC
+            &gt;&gt;&gt;
+            &gt;&gt;&gt; # Wait until an element is visible on the page
+            &gt;&gt;&gt; wait = WebDriverWait(driver, 10)
+            &gt;&gt;&gt; element = wait.until(EC.visibility_of_element_located((By.ID, "exampleId")))
+            &gt;&gt;&gt; print(element.text)
+        """
+        screen = None
+        stacktrace = None
+    
+        end_time = time.monotonic() + self._timeout
+        while True:
+            try:
+                value = method(self._driver)
+                if value:
+                    return value
+            except self._ignored_exceptions as exc:
+                screen = getattr(exc, "screen", None)
+                stacktrace = getattr(exc, "stacktrace", None)
+            if time.monotonic() &gt; end_time:
+                break
+            time.sleep(self._poll)
+&gt;       raise TimeoutException(message, screen, stacktrace)
+E       selenium.common.exceptions.TimeoutException: Message: 
+E       Stacktrace:
+E       	chromedriver!GetHandleVerifier [0x113cdf3+10b03]
+E       	chromedriver!GetHandleVerifier [0x113cf24+10c34]
+E       	chromedriver!(No symbol) [0xf22120]
+E       	chromedriver!(No symbol) [0xf6abca]
+E       	chromedriver!(No symbol) [0xf6ae6b]
+E       	chromedriver!(No symbol) [0xfad0b2]
+E       	chromedriver!(No symbol) [0xf8db54]
+E       	chromedriver!(No symbol) [0xfaa9a5]
+E       	chromedriver!(No symbol) [0xf8d8a6]
+E       	chromedriver!(No symbol) [0xf60229]
+E       	chromedriver!(No symbol) [0xf60fe4]
+E       	chromedriver!GetHandleVerifier [0x13a48b9+2785c9]
+E       	chromedriver!GetHandleVerifier [0x139feb5+273bc5]
+E       	chromedriver!GetHandleVerifier [0x13be06b+291d7b]
+E       	chromedriver!GetHandleVerifier [0x1155cc8+299d8]
+E       	chromedriver!GetHandleVerifier [0x115d9fd+3170d]
+E       	chromedriver!GetHandleVerifier [0x11458c8+195d8]
+E       	chromedriver!GetHandleVerifier [0x1145a92+197a2]
+E       	chromedriver!GetHandleVerifier [0x112ee9a+2baa]
+E       	KERNEL32!BaseThreadInitThunk [0x75275d49+19]
+E       	ntdll!RtlInitializeExceptionChain [0x7736d81b+6b]
+E       	ntdll!RtlGetAppContainerNamedObjectPath [0x7736d7a1+231]
+
+AutomationTests\venv\lib\site-packages\selenium\webdriver\support\wait.py:121: TimeoutException</failure></testcase><testcase classname="AutomationTests.test_import_schedule" name="test_import_schedule_invalid" time="5.703" /><testcase classname="AutomationTests.test_manage_equipment" name="test_manage_equipment_normal_flow" time="15.851"><skipped type="pytest.skip" message="Could not find Add Equipment button. Checking page functionality.">C:\Users\TGDD\Downloads\RoomManagement\AutomationTests\test_manage_equipment.py:27: Could not find Add Equipment button. Checking page functionality.</skipped></testcase><testcase classname="AutomationTests.test_manage_equipment" name="test_manage_equipment_validation_error" time="13.668"><skipped type="pytest.skip" message="Test skipped due to missing elements mapping.">C:\Users\TGDD\Downloads\RoomManagement\AutomationTests\test_manage_equipment.py:78: Test skipped due to missing elements mapping.</skipped></testcase><testcase classname="AutomationTests.test_manual_booking" name="test_manual_booking_normal_flow" time="18.514" /><testcase classname="AutomationTests.test_manual_booking" name="test_manual_booking_abnormal_conflict" time="19.389"><skipped type="pytest.skip" message="No pre-booked slot available for conflict test in this run.">C:\Users\TGDD\Downloads\RoomManagement\AutomationTests\test_manual_booking.py:92: No pre-booked slot available for conflict test in this run.</skipped></testcase></testsuite></testsuites>

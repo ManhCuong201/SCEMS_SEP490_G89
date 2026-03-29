@@ -50,10 +50,10 @@ export const BookingManagementPage: React.FC = () => {
         setRejectId(id)
     }
 
-    const handleConfirmReject = async () => {
+    const handleConfirmReject = async (reason: string) => {
         if (rejectId) {
             try {
-                await bookingService.updateStatus(rejectId, BookingStatus.Rejected)
+                await bookingService.updateStatus(rejectId, BookingStatus.Rejected, reason)
                 setSuccess('Đã từ chối yêu cầu')
                 loadBookings()
             } catch (err: any) {
@@ -192,13 +192,13 @@ export const BookingManagementPage: React.FC = () => {
             header: 'Lý do & Lớp',
             accessor: (b: Booking) => {
                 const change = parseChangeRequest(b);
-                const isClass = b.reason?.includes('ScheduleId: ') || b.reason?.includes('[Room Change Request]');
+                const isClass = change.isChangeRequest && (change.subject || b.reason?.includes('ScheduleId: '));
 
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         {isClass && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.85rem' }}>
-                                <BookOpen size={12} /> {b.reason?.match(/Môn học: (.*?) -/)?.[1] || 'Lịch dạy học'}
+                                <BookOpen size={12} /> {change.subject && change.classCode ? `${change.subject} (${change.classCode})` : 'Lịch giảng dạy'}
                             </div>
                         )}
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cleanDisplayReason(b.reason)}>
@@ -315,10 +315,12 @@ export const BookingManagementPage: React.FC = () => {
                 isOpen={!!rejectId}
                 title="Từ chối Yêu cầu"
                 message="Bạn có chắc chắn muốn từ chối yêu cầu này không?"
-                onConfirm={handleConfirmReject}
+                onConfirm={() => {}}
                 onCancel={() => setRejectId(null)}
                 isDanger
                 confirmText="Từ chối"
+                showInput
+                onConfirmWithReason={handleConfirmReject}
             />
         </div>
     )

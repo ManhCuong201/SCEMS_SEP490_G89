@@ -157,7 +157,7 @@ export const SchedulePage: React.FC = () => {
                 newDate,
                 slotType,
                 newSlot,
-                reason: `[Schedule Change Request] Original: [Room: ${selectedSchedule.roomName}, Date: ${formatDate(selectedSchedule.date)}, Slot: ${selectedSchedule.slot}]. Reason: ${changeReason}`
+                reason: `[Schedule Change Request] Môn học: ${selectedSchedule.subject} - Lớp: ${selectedSchedule.classCode}. Original: [Room: ${selectedSchedule.roomName}, Date: ${formatDate(selectedSchedule.date)}, Slot: ${selectedSchedule.slot}]. Reason: ${changeReason}`
             };
             await bookingService.createScheduleChangeRequest(request);
             setModalSuccess('Đã gửi yêu cầu đổi lịch học!');

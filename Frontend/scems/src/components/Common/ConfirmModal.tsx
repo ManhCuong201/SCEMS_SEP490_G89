@@ -10,6 +10,8 @@ interface ConfirmModalProps {
     confirmText?: string;
     cancelText?: string;
     isDanger?: boolean;
+    showInput?: boolean;
+    onConfirmWithReason?: (reason: string) => void;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -20,9 +22,21 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onCancel,
     confirmText = 'Xác nhận',
     cancelText = 'Hủy',
-    isDanger = false
+    isDanger = false,
+    showInput = false,
+    onConfirmWithReason
 }) => {
+    const [reason, setReason] = React.useState('');
+
     if (!isOpen) return null;
+
+    const handleConfirm = () => {
+        if (showInput && onConfirmWithReason) {
+            onConfirmWithReason(reason);
+        } else {
+            onConfirm();
+        }
+    };
 
     return ReactDOM.createPortal(
         <div style={{
@@ -50,7 +64,30 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 zIndex: 10001
             }}>
                 <h3 style={{ marginBottom: '1rem', color: '#0f172a', fontWeight: 'bold' }}>{title}</h3>
-                <p style={{ marginBottom: '2rem', color: '#475569', lineHeight: '1.6' }}>{message}</p>
+                <p style={{ marginBottom: showInput ? '1rem' : '2rem', color: '#475569', lineHeight: '1.6' }}>{message}</p>
+
+                {showInput && (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <textarea
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0',
+                                backgroundColor: '#f8fafc',
+                                color: '#1e293b',
+                                fontSize: '0.9rem',
+                                minHeight: '80px',
+                                resize: 'none',
+                                outline: 'none'
+                            }}
+                            placeholder="Nhập lý do tại đây..."
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                )}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                     <button className="btn btn-secondary" onClick={onCancel}>
@@ -59,7 +96,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <button
                         className={`btn ${isDanger ? 'btn-danger' : 'btn-primary'}`}
                         style={isDanger ? { backgroundColor: 'var(--color-danger)', color: 'white' } : {}}
-                        onClick={onConfirm}
+                        onClick={handleConfirm}
                     >
                         {confirmText}
                     </button>

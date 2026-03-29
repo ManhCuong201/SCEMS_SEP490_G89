@@ -11,6 +11,8 @@ export interface ChangeRequestDetails {
     slotType?: string;
     scheduleId?: string;
     displayReason?: string;
+    subject?: string;
+    classCode?: string;
 }
 
 export const formatDate = (date: Date | string | number): string => {
@@ -33,7 +35,8 @@ export const parseChangeRequest = (booking: Booking): ChangeRequestDetails => {
     const scheduleIdRegex = /\bScheduleId:\s*([a-f0-9-]{36})/i;
     const newSlotRegex = /\bNewSlot:\s*(\d+)/i;
     const slotTypeRegex = /\bSlotType:\s*(New|Old)/i;
-    const reasonRegex = /\bReason:\s*(.*)$/i;
+    const subjectRegex = /Môn học:\s*(.*?)\s*(?:-|$|Original:|Reason:)/i;
+    const classRegex = /Lớp:\s*(.*?)\s*(?:-|$|Original:|Reason:|\.)/i;
 
     const isScheduleChange = reason.includes('[Schedule Change Request]');
     const isRoomChange = reason.includes('[Room Change Request]');
@@ -45,7 +48,8 @@ export const parseChangeRequest = (booking: Booking): ChangeRequestDetails => {
         const scheduleIdMatch = reason.match(scheduleIdRegex);
         const newSlotMatch = reason.match(newSlotRegex);
         const slotTypeMatch = reason.match(slotTypeRegex);
-        const reasonMatch = reason.match(reasonRegex);
+        const subjectMatch = reason.match(subjectRegex);
+        const classMatch = reason.match(classRegex);
 
         return {
             isChangeRequest: true,
@@ -56,7 +60,9 @@ export const parseChangeRequest = (booking: Booking): ChangeRequestDetails => {
             newSlot: newSlotMatch ? newSlotMatch[1].trim() : undefined,
             slotType: slotTypeMatch ? slotTypeMatch[1].trim() : undefined,
             scheduleId: scheduleIdMatch ? scheduleIdMatch[1] : undefined,
-            displayReason: reasonMatch ? reasonMatch[1].trim() : reason.split(/Reason:\s*/i).pop()?.trim()
+            subject: subjectMatch ? subjectMatch[1].trim() : undefined,
+            classCode: classMatch ? classMatch[1].trim() : undefined,
+            displayReason: cleanDisplayReason(reason)
         };
     }
 
@@ -73,18 +79,23 @@ export const parseChangeRequest = (booking: Booking): ChangeRequestDetails => {
 export const cleanDisplayReason = (reason?: string): string => {
     if (!reason) return '-';
 
-    // Split by the delimiter and take THE LAST part to handle nested/redundant prefixes
-    const parts = reason.split(/Reason:\s*/i);
-    if (parts.length > 1) {
-        return parts[parts.length - 1].trim() || '-';
+    // Remove the core technical prefixes if they exist
+    let cleaned = reason;
+    
+    // Check if it follows the "Reason: ..." format and take the content after it
+    const reasonSplit = cleaned.split(/Reason:\s*/i);
+    if (reasonSplit.length > 1) {
+        cleaned = reasonSplit.pop()?.trim() || '-';
     }
 
-    // Fallback cleaning for legacy or malformed strings
-    let cleaned = reason.replace(/\[.*?\]\s*/g, '');
+    // Additional cleaning for nested or legacy prefixes
+    cleaned = cleaned.replace(/^\[.*?\]\s*/g, '');
     cleaned = cleaned.replace(/ScheduleId: .*?\.\s*/g, '');
     cleaned = cleaned.replace(/Original: \[.*?\]\.\s*/g, '');
     cleaned = cleaned.replace(/From .*? to .*?\.\s*/g, '');
-    cleaned = cleaned.replace(/Môn học: .*? - .*?\.\s*/g, '');
+    cleaned = cleaned.replace(/Môn học: .*? - Lớp: .*?\.\s*/g, '');
+    cleaned = cleaned.replace(/Môn học: .*?\s*(?:-|$|Original:)/g, '');
+    cleaned = cleaned.replace(/Lớp: .*?\s*(?:-|$|Original:)/g, '');
 
     return cleaned.trim() || '-';
 };
