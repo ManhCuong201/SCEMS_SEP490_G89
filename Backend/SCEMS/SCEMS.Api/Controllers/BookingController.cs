@@ -54,9 +54,10 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet("day")]
-    public async Task<IActionResult> GetBookingsByDay([FromQuery] DateTime date)
+    public async Task<IActionResult> GetBookingsByDay([FromQuery] DateTime? date)
     {
-        var result = await _bookingService.GetBookingsByDateAsync(date);
+        var targetDate = date ?? DateTime.Today;
+        var result = await _bookingService.GetBookingsByDateAsync(targetDate);
         return Ok(result);
     }
 

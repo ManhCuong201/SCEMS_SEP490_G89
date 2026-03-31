@@ -170,7 +170,7 @@ public class BookingService : IBookingService
         var endOfWeek = startOfWeek.AddDays(7);
         
         var weeklyBookingCount = await _unitOfWork.Bookings.GetAll()
-            .CountAsync(b => b.RequestedBy == userId && b.CreatedAt >= startOfWeek && b.CreatedAt < endOfWeek && b.Status != BookingStatus.Rejected);
+            .CountAsync(b => b.RequestedBy == userId && b.CreatedAt >= startOfWeek && b.CreatedAt < endOfWeek && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled);
             
         if (weeklyBookingCount >= maxPerWeek)
         {
@@ -199,12 +199,22 @@ public class BookingService : IBookingService
         {
             // Check conflicts in Bookings (other approved or pending bookings for same room)
             // We ignore Rejected AND Cancelled bookings
-            var conflictingBooking = await _unitOfWork.Bookings.GetAll()
-                .AnyAsync(b => b.RoomId == dto.RoomId 
+            var conflictingBooking = _unitOfWork.Bookings.GetAll()
+                .Where(b => b.RoomId == dto.RoomId 
                     && b.Status != BookingStatus.Rejected 
                     && b.Status != BookingStatus.Cancelled
                     && b.TimeSlot < newEnd 
-                    && b.TimeSlot.AddHours(b.Duration) > newStart);
+                    && b.TimeSlot.AddHours(b.Duration) > newStart)
+                .ToList()
+                .Any(b => {
+                    // If this is a change request, ignore existing bookings that ARE for the same scheduleId
+                    if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
+                    {
+                        if (b.Reason.Contains(excludeScheduleId.ToString()!))
+                            return false;
+                    }
+                    return true;
+                });
 
             if (conflictingBooking)
             {
@@ -265,7 +275,18 @@ public class BookingService : IBookingService
         var userHasBooking = _unitOfWork.Bookings.GetAll()
             .Where(b => b.RequestedBy == userId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
             .ToList()
-            .Any(b => b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart);
+            .Any(b => {
+                var overlaps = b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart;
+                if (!overlaps) return false;
+                
+                // If this is a change request, ignore existing bookings that ARE for the same schedule
+                if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
+                {
+                    if (b.Reason.Contains(excludeScheduleId.ToString()!))
+                        return false;
+                }
+                return true;
+            });
 
         if (userHasBooking)
         {
@@ -415,9 +436,16 @@ public class BookingService : IBookingService
             BookingStatus.Cancelled => "đã huỷ",
             _ => status.ToString().ToLower()
         };
+
+        var notificationMessage = $"{requestTypeStr} cho phòng {booking.Room?.RoomName} vào {booking.TimeSlot:dd/MM/yyyy} đã {statusStr}.";
+        if (status == BookingStatus.Rejected && !string.IsNullOrEmpty(booking.RejectReason))
+        {
+            notificationMessage += $" Lý do: {booking.RejectReason}";
+        }
+
         await _notificationService.SendNotificationAsync(booking.RequestedBy, 
             $"Kết quả: {requestTypeStr}", 
-            $"{requestTypeStr} cho phòng {booking.Room?.RoomName} vào {booking.TimeSlot:dd/MM/yyyy} đã {statusStr}.",
+            notificationMessage,
             "/my-bookings");
 
         // Audit Log for Admin
@@ -553,6 +581,28 @@ public class BookingService : IBookingService
             throw new UnauthorizedAccessException("Only Lecturers can request room changes.");
         }
 
+        var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(dto.ScheduleId);
+        if (schedule == null)
+            throw new InvalidOperationException("Không tìm thấy lịch dạy gốc.");
+
+        // 1. Validation: No Change
+        // Check if the new request is identical to current schedule
+        if (schedule.RoomId == dto.NewRoomId && schedule.Date == dto.TimeSlot.Date && schedule.StartTime == dto.TimeSlot.TimeOfDay)
+        {
+            throw new InvalidOperationException("Yêu cầu này trùng khớp hoàn toàn với lịch hiện tại. Vui lòng chọn phòng hoặc thời gian khác.");
+        }
+
+        // 2. Validation: Duplicate Pending Request
+        var hasPending = await _unitOfWork.Bookings.GetAll()
+            .AnyAsync(b => b.Status == BookingStatus.Pending 
+                && b.Reason != null 
+                && b.Reason.Contains($"ScheduleId: {dto.ScheduleId}"));
+        
+        if (hasPending)
+        {
+            throw new InvalidOperationException("Lịch dạy này đã có một yêu cầu đang chờ duyệt. Vui lòng chờ kết quả hoặc huỷ yêu cầu cũ trước khi tạo yêu cầu mới.");
+        }
+
         var bookingDto = new CreateBookingDto
         {
             RoomId = dto.NewRoomId,
@@ -574,11 +624,28 @@ public class BookingService : IBookingService
 
         var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(dto.ScheduleId);
         if (schedule == null)
-            throw new InvalidOperationException("Original schedule not found.");
+            throw new InvalidOperationException("Không tìm thấy lịch dạy gốc.");
 
         var newTimes = SlotHelper.GetSlotTimes(dto.SlotType, dto.NewSlot);
         var newStart = dto.NewDate.Date + newTimes.StartTime;
         var durationHrs = (int)Math.Round((newTimes.EndTime - newTimes.StartTime).TotalHours);
+
+        // 1. Validation: No Change
+        if (schedule.RoomId == dto.NewRoomId && schedule.Date == dto.NewDate.Date && schedule.StartTime == newTimes.StartTime)
+        {
+            throw new InvalidOperationException("Yêu cầu này trùng khớp hoàn toàn với lịch hiện tại. Vui lòng chọn phòng hoặc thời gian khác.");
+        }
+
+        // 2. Validation: Duplicate Pending Request
+        var hasPending = await _unitOfWork.Bookings.GetAll()
+            .AnyAsync(b => b.Status == BookingStatus.Pending 
+                && b.Reason != null 
+                && b.Reason.Contains($"ScheduleId: {dto.ScheduleId}"));
+        
+        if (hasPending)
+        {
+            throw new InvalidOperationException("Lịch dạy này đã có một yêu cầu đang chờ duyệt. Vui lòng chờ kết quả hoặc huỷ yêu cầu cũ trước khi tạo yêu cầu mới.");
+        }
 
         var bookingDto = new CreateBookingDto
         {

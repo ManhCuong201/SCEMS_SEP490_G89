@@ -11,6 +11,11 @@ from selenium.webdriver.common.by import By
 def pytest_addoption(parser):
     parser.addoption("--step-delay", action="store", default=0.5, help="Delay in seconds after each test step")
 
+@pytest.fixture(autouse=True)
+def wait_after_test():
+    yield
+    time.sleep(5)
+
 @pytest.fixture(scope="session")
 def step_delay(request):
     return float(request.config.getoption("--step-delay"))
@@ -26,10 +31,16 @@ def step_wait(step_delay):
 def browser():
     chrome_options = Options()
     # chrome_options.add_argument("--headless") # Uncomment for headless execution
-    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--start-maximized")
     
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver.maximize_window()
     driver.implicitly_wait(10)
+    
+    # Give user 5 seconds to arrange windows side-by-side
+    print("\n[INFO] BROWSER LAUNCHED: Waiting 5 seconds for you to arrange your windows...")
+    time.sleep(5)
+    
     yield driver
     driver.quit()
 

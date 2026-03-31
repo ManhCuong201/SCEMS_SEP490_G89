@@ -59,10 +59,25 @@ export const EditEquipmentPage: React.FC = () => {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
+    const validateForm = () => {
+        if (!form.name || !form.name.trim()) {
+            setError('Tên thiết bị là bắt buộc');
+            return false;
+        }
+        if (!form.roomId) {
+            setError('Phòng là bắt buộc');
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!id) return;
         setError('');
+
+        if (!validateForm()) return;
+
         setSubmitting(true);
 
         try {
@@ -85,8 +100,16 @@ export const EditEquipmentPage: React.FC = () => {
             <div className="card" style={{ maxWidth: '500px' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Tên</label>
-                        <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} disabled={submitting} />
+                        <label className="form-label">Tên / Số sê-ri <span style={{ color: 'red' }}>*</span></label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            className="form-input" 
+                            value={form.name} 
+                            onChange={handleChange} 
+                            disabled={submitting} 
+                            required 
+                        />
                     </div>
 
                     <div className="form-group">

@@ -67,4 +67,9 @@ unit_test_cases.json
 AutomationTests/venv/
 AutomationTests/__pycache__/
 *.pyc
-.pytest_cache/
+.pytest_cache/
+
+# Explicit test files allowed
+!AutomationTests/Conflict_Import_Schedule.xlsx
+!AutomationTests/requirements.txt
+!AutomationTests/Valid_Import_Schedule.xlsx

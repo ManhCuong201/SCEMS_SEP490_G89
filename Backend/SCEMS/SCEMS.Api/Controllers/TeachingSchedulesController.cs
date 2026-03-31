@@ -29,9 +29,10 @@ public class TeachingSchedulesController : ControllerBase
     }
 
     [HttpGet("day")]
-    public async Task<ActionResult<List<ScheduleResponseDto>>> GetSchedulesByDay([FromQuery] DateTime date)
+    public async Task<ActionResult<List<ScheduleResponseDto>>> GetSchedulesByDay([FromQuery] DateTime? date)
     {
-        var schedules = await _teachingScheduleService.GetSchedulesByDateAsync(date);
+        var targetDate = date ?? DateTime.Today;
+        var schedules = await _teachingScheduleService.GetSchedulesByDateAsync(targetDate);
         return Ok(schedules);
     }
 

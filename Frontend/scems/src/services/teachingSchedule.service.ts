@@ -42,7 +42,9 @@ export const scheduleService = {
     },
 
     async getSchedulesByDay(date: string): Promise<ScheduleResponse[]> {
-        const { data } = await api.get<ScheduleResponse[]>(`/teaching-schedules/day?date=${date}`);
+        const { data } = await api.get<ScheduleResponse[]>('/teaching-schedules/day', {
+            params: { date }
+        });
         return data;
     }
 };

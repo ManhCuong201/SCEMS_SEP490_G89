@@ -121,6 +121,13 @@ export const DailySchedulerPage: React.FC = () => {
     }, [])
 
     const loadData = async () => {
+        if (!selectedDate) {
+            setRooms([])
+            setSchedules([])
+            setBookings([])
+            setLoading(false)
+            return
+        }
         setLoading(true)
         try {
             const allRooms = await roomService.getAllRoomsBatched(undefined, 50, debouncedSearch || undefined, selectedDepartment || undefined)
@@ -150,6 +157,7 @@ export const DailySchedulerPage: React.FC = () => {
     }
 
     useEffect(() => {
+        if (!selectedDate) return;
         loadData()
     }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
 
@@ -401,7 +409,7 @@ export const DailySchedulerPage: React.FC = () => {
         )
     }
 
-    const timeSlotsArray = Array.from({ length: 16 }, (_, i) => {
+    const timeSlotsArray = Array.from({ length: 15 }, (_, i) => {
         const h = i + 7
         const start = `${h.toString().padStart(2, '0')}:00`
         return { hour: h, label: start }

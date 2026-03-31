@@ -43,9 +43,28 @@ export const CreateEquipmentPage: React.FC = () => {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
+    const validateForm = () => {
+        if (!form.name.trim()) {
+            setError('Tên thiết bị (Định danh) là bắt buộc');
+            return false;
+        }
+        if (!form.equipmentTypeId) {
+            setError('Loại thiết bị là bắt buộc');
+            return false;
+        }
+        if (!form.roomId) {
+            setError('Phòng là bắt buộc');
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        
+        if (!validateForm()) return;
+        
         setLoading(true);
 
         try {
@@ -66,8 +85,17 @@ export const CreateEquipmentPage: React.FC = () => {
             <div className="card" style={{ maxWidth: '500px' }}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Tên (Ví dụ: Số sê-ri)</label>
-                        <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} placeholder="Định danh tùy chọn" disabled={loading} />
+                        <label className="form-label">Tên / Số sê-ri <span style={{ color: 'red' }}>*</span></label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            className="form-input" 
+                            value={form.name} 
+                            onChange={handleChange} 
+                            placeholder="Ví dụ: LCD-001 hoặc Serial Number" 
+                            disabled={loading} 
+                            required
+                        />
                     </div>
 
                     <div className="form-group">

@@ -122,6 +122,15 @@ public class EquipmentService : IEquipmentService
 
         var equipment = _mapper.Map<Equipment>(dto);
         
+        // Check for duplicate name in room (prevent accidental doubles)
+        if (!string.IsNullOrWhiteSpace(equipment.Name))
+        {
+            var isDuplicate = await _unitOfWork.Equipment.GetAll()
+                .AnyAsync(e => e.RoomId == equipment.RoomId && e.Name.ToLower() == equipment.Name.ToLower());
+            if (isDuplicate)
+                throw new InvalidOperationException($"Thiết bị '{equipment.Name}' đã tồn tại trong phòng {room.RoomName}.");
+        }
+        
         await _unitOfWork.Equipment.AddAsync(equipment);
         
         // Track history
@@ -143,12 +152,32 @@ public class EquipmentService : IEquipmentService
         var equipment = await _unitOfWork.Equipment.GetByIdAsync(id);
         if (equipment == null) return null;
 
-        if (!string.IsNullOrEmpty(dto.Name)) equipment.Name = dto.Name;
+        if (dto.Name != null && dto.Name != equipment.Name)
+        {
+            var targetRoomId = dto.RoomId ?? equipment.RoomId;
+            var isDuplicate = await _unitOfWork.Equipment.GetAll()
+                .AnyAsync(e => e.Id != id && e.RoomId == targetRoomId && e.Name.ToLower() == dto.Name.ToLower());
+            if (isDuplicate)
+                throw new InvalidOperationException($"Thiết bị '{dto.Name}' đã tồn tại trong phòng mục tiêu.");
+            
+            equipment.Name = dto.Name;
+        }
+
         if (dto.RoomId.HasValue && dto.RoomId.Value != equipment.RoomId)
         {
             var targetRoom = await _unitOfWork.Rooms.GetByIdAsync(dto.RoomId.Value);
             if (targetRoom == null)
                 throw new KeyNotFoundException($"Room with ID '{dto.RoomId}' not found.");
+             
+             // Check if the current name (either old or new) conflicts in the NEW room if RoomId changed but Name didn't (already handled by Name check above if both change, but if ONLY RoomId changes we need this check)
+             if (dto.Name == null) // If Name didn't change in this request, check current equipment.Name against NEW room
+             {
+                 var isDuplicate = await _unitOfWork.Equipment.GetAll()
+                    .AnyAsync(e => e.Id != id && e.RoomId == dto.RoomId.Value && e.Name.ToLower() == equipment.Name.ToLower());
+                 if (isDuplicate)
+                    throw new InvalidOperationException($"Thiết bị '{equipment.Name}' đã tồn tại trong phòng mục tiêu.");
+             }
+
              // Close previous history
              var lastHistory = await _unitOfWork.RoomEquipmentHistories.GetAll()
                 .Where(h => h.EquipmentId == equipment.Id && h.UnassignedAt == null)

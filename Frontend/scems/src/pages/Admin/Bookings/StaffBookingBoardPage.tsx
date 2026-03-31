@@ -273,7 +273,7 @@ export const StaffBookingBoardPage: React.FC = () => {
         return <div className="scheduler-cell slot-empty-staff"></div>
     }
 
-    const timeSlotsArray = Array.from({ length: 16 }, (_, i) => {
+    const timeSlotsArray = Array.from({ length: 15 }, (_, i) => {
         const h = i + 7
         return { hour: h, label: `${h.toString().padStart(2, '0')}:00` }
     })
