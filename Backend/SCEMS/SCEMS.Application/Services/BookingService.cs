@@ -28,6 +28,7 @@ public class BookingService : IBookingService
     public async Task<PaginatedResult<BookingResponseDto>> GetBookingsAsync(PaginationParams @params, Guid? userId = null)
     {
         var query = _unitOfWork.Bookings.GetAll()
+            .AsNoTracking()
             .Include(b => b.Room)
             .Include(b => b.RequestedByAccount)
             .AsQueryable();
@@ -39,37 +40,17 @@ public class BookingService : IBookingService
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
-            // Search by Room Name
-            var search = @params.Search.ToLowerInvariant();
+            var search = @params.Search.ToLower();
             query = query.Where(b => b.Room != null && b.Room.RoomName.ToLower().Contains(search));
         }
 
-        // Default sort by CreatedAt descending (Show newest first)
         query = query.OrderByDescending(b => b.CreatedAt);
 
-        // Auto-reject expired pending bookings (ONLY after their end time has passed)
-        var now = DateTime.Now;
-        var expiredPendingGeneral = await _unitOfWork.Bookings.GetAll()
-            .Where(b => b.Status == BookingStatus.Pending)
-            .ToListAsync();
-        
-        var toReject = expiredPendingGeneral.Where(b => b.TimeSlot.AddHours(b.Duration) < now).ToList();
-
-        if (toReject.Any())
-        {
-            foreach(var b in toReject)
-            {
-                b.Status = BookingStatus.Rejected;
-                _unitOfWork.Bookings.Update(b);
-            }
-            await _unitOfWork.SaveChangesAsync();
-        }
-
-        var total = query.Count();
-        var items = query
+        var total = await query.CountAsync();
+        var items = await query
             .Skip((@params.PageIndex - 1) * @params.PageSize)
             .Take(@params.PageSize)
-            .ToList();
+            .ToListAsync();
 
         var dtos = _mapper.Map<List<BookingResponseDto>>(items);
 
@@ -85,16 +66,10 @@ public class BookingService : IBookingService
     public async Task<BookingResponseDto?> GetBookingByIdAsync(Guid id)
     {
         var booking = await _unitOfWork.Bookings.GetAll()
+            .AsNoTracking()
             .Include(b => b.Room)
             .Include(b => b.RequestedByAccount)
             .FirstOrDefaultAsync(b => b.Id == id);
-
-        if (booking != null && booking.Status == BookingStatus.Pending && booking.TimeSlot.AddHours(booking.Duration) < DateTime.Now)
-        {
-            booking.Status = BookingStatus.Rejected;
-            _unitOfWork.Bookings.Update(booking);
-            await _unitOfWork.SaveChangesAsync();
-        }
 
         return booking != null ? _mapper.Map<BookingResponseDto>(booking) : null;
     }
@@ -474,24 +449,8 @@ public class BookingService : IBookingService
 
     public async Task<List<BookingResponseDto>> GetRoomScheduleAsync(Guid roomId, DateTime startDate, DateTime endDate)
     {
-        var now = DateTime.Now;
-        var pendingRoom = await _unitOfWork.Bookings.GetAll()
-            .Where(b => b.RoomId == roomId && b.Status == BookingStatus.Pending)
-            .ToListAsync();
-
-        var toReject = pendingRoom.Where(b => b.TimeSlot.AddHours(b.Duration) < now).ToList();
-
-        if (toReject.Any())
-        {
-            foreach(var b in toReject)
-            {
-                b.Status = BookingStatus.Rejected;
-                _unitOfWork.Bookings.Update(b);
-            }
-            await _unitOfWork.SaveChangesAsync();
-        }
-
         var bookings = await _unitOfWork.Bookings.GetAll()
+            .AsNoTracking()
             .Where(b => b.RoomId == roomId && b.TimeSlot >= startDate && b.TimeSlot <= endDate && b.Status != BookingStatus.Rejected)
             .Include(b => b.RequestedByAccount)
             .OrderBy(b => b.TimeSlot)
@@ -537,35 +496,49 @@ public class BookingService : IBookingService
         var startOfDay = date.Date;
         var endOfDay = startOfDay.AddDays(1);
 
-        // 1. Fetch bookings that TARGET this day (TimeSlot is on this day)
-        // This covers: 
-        // - Standard bookings for this day
-        // - Change requests whose TARGET time is this day
-        var bookingsOnDay = await _unitOfWork.Bookings.GetAll()
+        // 1. Get direct bookings for this day
+        var query = _unitOfWork.Bookings.GetAll()
+            .AsNoTracking()
             .Include(b => b.Room)
             .Include(b => b.RequestedByAccount)
-            .Where(b => b.TimeSlot >= startOfDay && b.TimeSlot < endOfDay && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
-            .ToListAsync();
+            .Where(b => b.TimeSlot >= startOfDay && b.TimeSlot < endOfDay 
+                && b.Status != BookingStatus.Rejected 
+                && b.Status != BookingStatus.Cancelled);
 
-        // 2. Fetch "Outgoing" change requests: 
-        // Pending bookings that target OTHER days but were initiated from classes on THIS day.
-        var schedulesToday = await _unitOfWork.TeachingSchedules.GetAll()
+        var bookingsOnDay = await query.ToListAsync();
+
+        // 2. Get today's schedules to check for outgoing change requests
+        var todayScheduleIds = await _unitOfWork.TeachingSchedules.GetAll()
+            .AsNoTracking()
             .Where(ts => ts.Date == startOfDay)
             .Select(ts => ts.Id.ToString())
             .ToListAsync();
 
-        if (schedulesToday.Any())
+        if (todayScheduleIds.Any())
         {
-            var otherDayPendingBookings = await _unitOfWork.Bookings.GetAll()
+            // Optimization: Filter for pending change requests that reference today's schedules
+            // instead of loading all pending bookings across the entire system.
+            var relevantOutgoing = new List<Booking>();
+            
+            // We can't easily do a deep 'Contains' check for every ID in a single query with SQL reasonably 
+            // without complex raw SQL, but we can at least filter for [Room Change] or [Schedule Change] first.
+            var pendingRequests = await _unitOfWork.Bookings.GetAll()
+                .AsNoTracking()
                 .Include(b => b.Room)
                 .Include(b => b.RequestedByAccount)
-                .Where(b => b.Status == BookingStatus.Pending && !string.IsNullOrEmpty(b.Reason))
-                .Where(b => b.TimeSlot < startOfDay || b.TimeSlot >= endOfDay)
+                .Where(b => b.Status == BookingStatus.Pending 
+                    && b.Reason != null 
+                    && (b.Reason.Contains("[Room Change Request]") || b.Reason.Contains("[Schedule Change Request]"))
+                    && (b.TimeSlot < startOfDay || b.TimeSlot >= endOfDay))
                 .ToListAsync();
 
-            var relevantOutgoing = otherDayPendingBookings
-                .Where(b => schedulesToday.Any(sid => b.Reason!.Contains(sid)))
-                .ToList();
+            foreach (var req in pendingRequests)
+            {
+                if (todayScheduleIds.Any(sid => req.Reason!.Contains(sid)))
+                {
+                    relevantOutgoing.Add(req);
+                }
+            }
 
             bookingsOnDay.AddRange(relevantOutgoing);
         }

@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { Alert } from '../../../components/Common/Alert'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Pagination } from '../../../components/Common/Pagination'
+import { SearchBar } from '../../../components/Common/SearchBar'
 import { Edit, Trash2, Eye, FileDown, Upload, Search, Filter } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
@@ -21,13 +22,14 @@ export const AccountsListPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const loadAccounts = async () => {
+  const loadAccounts = async (page: number, searchQuery: string, role: string) => {
     setLoading(true)
     setError('')
     try {
-      const result = await accountService.getAccounts(currentPage, 10, search, roleFilter)
+      const result = await accountService.getAccounts(page, 10, searchQuery, role)
       setAccounts(result.items)
       setTotal(result.total)
+      setCurrentPage(page)
     } catch (err: any) {
       setError('Tải danh sách tài khoản thất bại')
     } finally {
@@ -36,12 +38,14 @@ export const AccountsListPage: React.FC = () => {
   }
 
   useEffect(() => {
-    setCurrentPage(1)
+    loadAccounts(1, search, roleFilter)
   }, [search, roleFilter])
 
   useEffect(() => {
-    loadAccounts()
-  }, [currentPage, search, roleFilter])
+    if (currentPage !== 1) {
+      loadAccounts(currentPage, search, roleFilter)
+    }
+  }, [currentPage])
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -53,7 +57,7 @@ export const AccountsListPage: React.FC = () => {
       try {
         await accountService.deleteAccount(deleteId)
         setSuccess('Đã xóa tài khoản')
-        loadAccounts()
+        loadAccounts(currentPage, search, roleFilter)
       } catch (err: any) {
         setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
@@ -67,7 +71,7 @@ export const AccountsListPage: React.FC = () => {
       const statusValue = newStatus === AccountStatus.Active ? 0 : 1;
       await accountService.updateStatus(id, statusValue)
       setSuccess('Đã cập nhật trạng thái')
-      loadAccounts()
+      loadAccounts(currentPage, search, roleFilter)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Cập nhật trạng thái thất bại')
     }
@@ -169,7 +173,7 @@ export const AccountsListPage: React.FC = () => {
             </div>
           )
         }
-        loadAccounts()
+        loadAccounts(currentPage, search, roleFilter)
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Nhập tài khoản thất bại')
@@ -207,15 +211,7 @@ export const AccountsListPage: React.FC = () => {
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên, email hoặc mã sinh viên..."
-              className="form-input"
-              style={{ paddingLeft: '2.5rem', width: '100%' }}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <SearchBar onSearch={setSearch} placeholder="Tìm kiếm theo tên, email hoặc mã sinh viên..." />
           </div>
           <div style={{ position: 'relative', width: '200px' }}>
             <Filter size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
@@ -247,7 +243,7 @@ export const AccountsListPage: React.FC = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={Math.ceil(total / 10)}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => loadAccounts(p, search, roleFilter)}
             total={total}
             pageSize={10}
           />

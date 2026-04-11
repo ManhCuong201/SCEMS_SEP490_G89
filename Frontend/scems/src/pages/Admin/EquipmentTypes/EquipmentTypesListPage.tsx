@@ -21,17 +21,18 @@ export const EquipmentTypesListPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const loadTypes = async () => {
+  const loadTypes = async (page: number, searchQuery: string) => {
     setLoading(true)
     setError('')
     try {
-      const result = await equipmentTypeService.getEquipmentTypes(currentPage, 10, search || undefined)
+      const result = await equipmentTypeService.getEquipmentTypes(page, 10, searchQuery || undefined)
       let filtered = result.items
       if (statusFilter) {
         filtered = result.items.filter(t => t.status === statusFilter)
       }
       setTypes(filtered)
       setTotal(result.total)
+      setCurrentPage(page)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
     } finally {
@@ -40,12 +41,14 @@ export const EquipmentTypesListPage: React.FC = () => {
   }
 
   useEffect(() => {
-    setCurrentPage(1)
+    loadTypes(1, search)
   }, [search, statusFilter])
 
   useEffect(() => {
-    loadTypes()
-  }, [currentPage, search, statusFilter])
+    if (currentPage !== 1) {
+      loadTypes(currentPage, search)
+    }
+  }, [currentPage])
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -57,7 +60,7 @@ export const EquipmentTypesListPage: React.FC = () => {
       try {
         await equipmentTypeService.deleteEquipmentType(deleteId)
         setSuccess('Đã xóa')
-        loadTypes()
+        loadTypes(currentPage, search)
       } catch (err: any) {
         setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
@@ -72,7 +75,7 @@ export const EquipmentTypesListPage: React.FC = () => {
       const statusValue = newStatus === 'Active' ? 0 : 1
       await equipmentTypeService.updateStatus(id, statusValue)
       setSuccess('Đã cập nhật trạng thái')
-      loadTypes()
+      loadTypes(currentPage, search)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Cập nhật thất bại')
     }
@@ -183,7 +186,7 @@ export const EquipmentTypesListPage: React.FC = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={Math.ceil(total / 10)}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => loadTypes(p, search)}
             total={total}
             pageSize={10}
           />

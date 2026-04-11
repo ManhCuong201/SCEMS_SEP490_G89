@@ -22,10 +22,10 @@ export const UserBookingsPage: React.FC = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null)
 
-  const fetchBookings = async (pageIndex: number) => {
+  const fetchBookings = async (pageIndex: number, searchQuery: string) => {
     setLoading(true)
     try {
-      const data = await bookingService.getBookings(pageIndex, 10, search || undefined)
+      const data = await bookingService.getBookings(pageIndex, 10, searchQuery || undefined)
       setBookings(data.items)
       setTotalPages(Math.ceil(data.total / data.pageSize))
       setTotal(data.total)
@@ -38,12 +38,14 @@ export const UserBookingsPage: React.FC = () => {
   }
 
   useEffect(() => {
-    setPage(1)
+    fetchBookings(1, search)
   }, [search])
 
   useEffect(() => {
-    fetchBookings(page)
-  }, [page, search])
+    if (page !== 1) {
+        fetchBookings(page, search)
+    }
+  }, [page])
 
   const getStatusBadge = (status: string) => {
     let className = 'badge-secondary'
@@ -70,7 +72,7 @@ export const UserBookingsPage: React.FC = () => {
       toast.success('Đã huỷ yêu cầu thành công');
       setCancelModalOpen(false);
       setBookingToCancel(null);
-      fetchBookings(page);
+      fetchBookings(page, search);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Lỗi khi huỷ yêu cầu');
     }
@@ -354,7 +356,7 @@ export const UserBookingsPage: React.FC = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  onPageChange={fetchBookings}
+                  onPageChange={(p) => fetchBookings(p, search)}
                   total={total}
                   pageSize={10}
                 />

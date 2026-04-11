@@ -17,13 +17,14 @@ export const BookingManagementPage: React.FC = () => {
     const [total, setTotal] = useState(0)
     const [rejectId, setRejectId] = useState<string | null>(null)
 
-    const loadBookings = async () => {
+    const loadBookings = async (page: number) => {
         setLoading(true)
         setError('')
         try {
-            const result = await bookingService.getBookings(currentPage, 10)
+            const result = await bookingService.getBookings(page, 10)
             setBookings(result.items)
             setTotal(result.total)
+            setCurrentPage(page)
         } catch (err: any) {
             setError('Tải danh sách yêu cầu thất bại')
         } finally {
@@ -32,14 +33,14 @@ export const BookingManagementPage: React.FC = () => {
     }
 
     useEffect(() => {
-        loadBookings()
+        loadBookings(currentPage)
     }, [currentPage])
 
     const handleStatusUpdate = async (id: string, newStatus: BookingStatus) => {
         try {
             await bookingService.updateStatus(id, newStatus)
             setSuccess('Cập nhật trạng thái thành công')
-            loadBookings()
+            loadBookings(currentPage)
         } catch (err: any) {
             setError('Cập nhật trạng thái thất bại')
         }
@@ -55,7 +56,7 @@ export const BookingManagementPage: React.FC = () => {
             try {
                 await bookingService.updateStatus(rejectId, BookingStatus.Rejected, reason)
                 setSuccess('Đã từ chối yêu cầu')
-                loadBookings()
+                loadBookings(currentPage)
             } catch (err: any) {
                 setError('Từ chối yêu cầu thất bại')
             } finally {
@@ -303,7 +304,7 @@ export const BookingManagementPage: React.FC = () => {
                         <Pagination
                             currentPage={currentPage}
                             totalPages={Math.ceil(total / 10)}
-                            onPageChange={setCurrentPage}
+                            onPageChange={(p) => loadBookings(p)}
                             total={total}
                             pageSize={10}
                         />

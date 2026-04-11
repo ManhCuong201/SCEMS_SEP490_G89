@@ -24,16 +24,16 @@ export const RoomsListPage: React.FC = () => {
   const [departments, setDepartments] = useState<any[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const loadRooms = async () => {
+  const loadRooms = async (page: number, searchQuery: string, sort: string, dept: string) => {
     setLoading(true)
     setError('')
     try {
       const result = await roomService.getRooms(
-        currentPage,
+        page,
         10,
-        search || undefined,
-        sortBy || undefined,
-        departmentFilter || undefined
+        searchQuery || undefined,
+        sort || undefined,
+        dept || undefined
       )
       let filtered = result.items
       if (statusFilter) {
@@ -41,6 +41,7 @@ export const RoomsListPage: React.FC = () => {
       }
       setRooms(filtered)
       setTotal(result.total)
+      setCurrentPage(page)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Tải danh sách phòng thất bại')
     } finally {
@@ -65,16 +66,13 @@ export const RoomsListPage: React.FC = () => {
   // Single effect: when filters change, reset to page 1 and reload.
   // When only currentPage changes (user clicked pagination), just reload.
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1)
-      // The state update above will re-trigger this effect with currentPage===1
-      return
-    }
-    loadRooms()
+    loadRooms(1, search, sortBy, departmentFilter)
   }, [search, statusFilter, departmentFilter, sortBy])
 
   useEffect(() => {
-    loadRooms()
+    if (currentPage !== 1) {
+      loadRooms(currentPage, search, sortBy, departmentFilter)
+    }
   }, [currentPage])
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
@@ -87,7 +85,7 @@ export const RoomsListPage: React.FC = () => {
       try {
         await roomService.deleteRoom(deleteId)
         setSuccess('Đã xóa phòng')
-        loadRooms()
+        loadRooms(currentPage, search, sortBy, departmentFilter)
       } catch (err: any) {
         setError(err.response?.data?.message || 'Xóa thất bại')
       } finally {
@@ -102,7 +100,7 @@ export const RoomsListPage: React.FC = () => {
       const statusValue = newStatus === 'Available' ? 0 : newStatus === 'Hidden' ? 1 : 2
       await roomService.updateStatus(id, statusValue)
       setSuccess('Đã cập nhật trạng thái')
-      loadRooms()
+      loadRooms(currentPage, search, sortBy, departmentFilter)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Cập nhật thất bại')
     }
@@ -218,7 +216,7 @@ export const RoomsListPage: React.FC = () => {
                       </div>
                     )
                   }
-                  loadRooms()
+                  loadRooms(currentPage, search, sortBy, departmentFilter)
                 }
               } catch (err: any) {
                 setError(err.response?.data?.message || 'Import thất bại')
@@ -289,7 +287,7 @@ export const RoomsListPage: React.FC = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={Math.ceil(total / 10)}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => loadRooms(p, search, sortBy, departmentFilter)}
             total={total}
             pageSize={10}
           />

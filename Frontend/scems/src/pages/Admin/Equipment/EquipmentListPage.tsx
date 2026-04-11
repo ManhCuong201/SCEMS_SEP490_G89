@@ -25,13 +25,14 @@ export const EquipmentListPage: React.FC = () => {
     const [historyData, setHistoryData] = useState<EquipmentHistory[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
 
-    const loadEquipment = async () => {
+    const loadEquipment = async (p: number, s: string, f: string) => {
         setLoading(true);
         setError('');
         try {
-            const result = await equipmentService.getAll(currentPage, 10, search || undefined, undefined, statusFilter || undefined);
+            const result = await equipmentService.getAll(p, 10, s || undefined, undefined, f || undefined);
             setEquipment(result.items);
             setTotal(result.total);
+            setCurrentPage(p);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Tải danh sách thiết bị thất bại');
         } finally {
@@ -40,12 +41,14 @@ export const EquipmentListPage: React.FC = () => {
     };
 
     useEffect(() => {
-        setCurrentPage(1);
+        loadEquipment(1, search, statusFilter);
     }, [search, statusFilter]);
 
     useEffect(() => {
-        loadEquipment();
-    }, [currentPage, search, statusFilter]);
+        if (currentPage !== 1) {
+            loadEquipment(currentPage, search, statusFilter);
+        }
+    }, [currentPage]);
 
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -59,7 +62,7 @@ export const EquipmentListPage: React.FC = () => {
             try {
                 await equipmentService.delete(deleteId);
                 setSuccess('Đã xóa thiết bị');
-                loadEquipment();
+                loadEquipment(currentPage, search, statusFilter);
             } catch (err: any) {
                 setError(err.response?.data?.message || 'Xóa thất bại');
             } finally {
@@ -180,7 +183,7 @@ export const EquipmentListPage: React.FC = () => {
                                                 </div>
                                             );
                                         }
-                                        loadEquipment();
+                                        loadEquipment(currentPage, search, statusFilter);
                                     }
                                 } catch (err: any) {
                                     setError(err.response?.data?.message || 'Nhập thiết bị thất bại');
@@ -232,7 +235,7 @@ export const EquipmentListPage: React.FC = () => {
                     <Pagination
                         currentPage={currentPage}
                         totalPages={Math.ceil(total / 10)}
-                        onPageChange={setCurrentPage}
+                        onPageChange={(p) => loadEquipment(p, search, statusFilter)}
                         total={total}
                         pageSize={10}
                     />

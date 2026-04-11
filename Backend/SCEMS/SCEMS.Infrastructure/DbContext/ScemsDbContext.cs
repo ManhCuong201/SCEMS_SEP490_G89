@@ -74,6 +74,16 @@ public class ScemsDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasForeignKey(reh => reh.RoomId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Performance Indexes
+        modelBuilder.Entity<Booking>()
+            .HasIndex(b => b.RequestedBy);
+            
+        modelBuilder.Entity<Booking>()
+            .HasIndex(b => new { b.TimeSlot, b.Status });
+
+        modelBuilder.Entity<Teaching_Schedule>()
+            .HasIndex(ts => new { ts.Date, ts.StartTime, ts.EndTime });
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ScemsDbContext).Assembly);
 
         var deletableEntityTypes = modelBuilder.Model.GetEntityTypes()

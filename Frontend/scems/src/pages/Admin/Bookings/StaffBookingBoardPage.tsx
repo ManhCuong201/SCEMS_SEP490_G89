@@ -49,11 +49,10 @@ export const StaffBookingBoardPage: React.FC = () => {
     const [departments, setDepartments] = useState<Department[]>([])
     const [selectedDepartment, setSelectedDepartment] = useState('')
 
-    const loadData = async () => {
+    const loadDependencies = async () => {
         setLoading(true)
         setError('')
         try {
-            // First, load non-room dependencies
             const [typesData, schedulesData, bookingsData, deptsData] = await Promise.all([
                 roomTypeService.getAll(),
                 scheduleService.getSchedulesByDay(selectedDate),
@@ -65,63 +64,55 @@ export const StaffBookingBoardPage: React.FC = () => {
             setRoomTypes(typesData)
             setSchedules(schedulesData)
             
-            // Filter out pending bookings if user is Guard
             const visibleBookings = user?.role === 'Guard' 
                 ? bookingsData.filter(b => b.status !== BookingStatus.Pending)
                 : bookingsData;
             setBookings(visibleBookings)
+            
+            // Core data done
+            setLoading(false)
 
-            // Then, load rooms INCREMENTALLY
-            await roomService.getAllRoomsBatched(
-                (batchRooms) => {
-                    // Filter rooms by type if selected (frontend filter)
-                    const filteredRooms = selectedType
-                        ? batchRooms.filter(r => r.roomTypeId === selectedType)
-                        : batchRooms;
-
-                    // Sort rooms with Intelligent Prioritization:
-                    // Priority 1: Rooms with PENDING bookings for THIS DAY (Staff only)
-                    // Priority 2: Rooms with any OTHER booking ACTIVITY (Approved/Rejected/Classes)
-                    // Priority 3: All other rooms (Empty)
-                    // Within each group, sort by roomName
-
-                    const sortedRooms = [...filteredRooms].sort((a, b) => {
-                        if (user?.role !== 'Guard') {
-                            // Check for Pending status in overlaps on this day
-                            const aHasPending = visibleBookings.some(bk => bk.roomId === a.id && bk.status === BookingStatus.Pending);
-                            const bHasPending = visibleBookings.some(bk => bk.roomId === b.id && bk.status === BookingStatus.Pending);
-
-                            if (aHasPending && !bHasPending) return -1;
-                            if (!aHasPending && bHasPending) return 1;
-                        }
-
-                        // Check for ANY Handled activity (Approved/Rejected or Schedules)
-                        const aHasActivity = visibleBookings.some(bk => bk.roomId === a.id) || schedulesData.some(s => s.roomId === a.id);
-                        const bHasActivity = visibleBookings.some(bk => bk.roomId === b.id) || schedulesData.some(s => s.roomId === b.id);
-
-                        if (aHasActivity && !bHasActivity) return -1;
-                        if (!aHasActivity && bHasActivity) return 1;
-
-                        // Alphabetical fallback
-                        return a.roomName.localeCompare(b.roomName);
-                    });
-
-                    setRooms(sortedRooms)
-                    setLoading(false)
-                },
-                50,
-                debouncedSearch || undefined,
-                selectedDepartment || undefined
-            )
+            // Now load rooms incrementally in background
+            loadRoomsBatched(visibleBookings, schedulesData)
         } catch (err: any) {
             setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
-        } finally {
             setLoading(false)
         }
     }
 
+    const loadRoomsBatched = async (visibleBookings: Booking[], schedulesData: ScheduleResponse[]) => {
+        await roomService.getAllRoomsBatched(
+            (batchRooms) => {
+                const filteredRooms = selectedType
+                    ? batchRooms.filter(r => r.roomTypeId === selectedType)
+                    : batchRooms;
+
+                const sortedRooms = [...filteredRooms].sort((a, b) => {
+                    if (user?.role !== 'Guard') {
+                        const aHasPending = visibleBookings.some(bk => bk.roomId === a.id && bk.status === BookingStatus.Pending);
+                        const bHasPending = visibleBookings.some(bk => bk.roomId === b.id && bk.status === BookingStatus.Pending);
+                        if (aHasPending && !bHasPending) return -1;
+                        if (!aHasPending && bHasPending) return 1;
+                    }
+
+                    const aHasActivity = visibleBookings.some(bk => bk.roomId === a.id) || schedulesData.some(s => s.roomId === a.id);
+                    const bHasActivity = visibleBookings.some(bk => bk.roomId === b.id) || schedulesData.some(s => s.roomId === b.id);
+                    if (aHasActivity && !bHasActivity) return -1;
+                    if (!aHasActivity && bHasActivity) return 1;
+
+                    return a.roomName.localeCompare(b.roomName);
+                });
+
+                setRooms(sortedRooms)
+            },
+            50,
+            debouncedSearch || undefined,
+            selectedDepartment || undefined
+        )
+    }
+
     useEffect(() => {
-        loadData()
+        loadDependencies()
     }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
 
     const handleUpdateStatus = async (id: string, status: BookingStatus, reason?: string) => {
@@ -131,7 +122,7 @@ export const StaffBookingBoardPage: React.FC = () => {
             setModalOpen(false)
             setRejectingBookingId(null)
             setRejectReason('')
-            loadData()
+            loadDependencies()
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
             setError(err.response?.data?.message || 'Cập nhật yêu cầu thất bại')

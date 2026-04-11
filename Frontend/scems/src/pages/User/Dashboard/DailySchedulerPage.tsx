@@ -120,46 +120,46 @@ export const DailySchedulerPage: React.FC = () => {
             .catch(err => console.error("Failed to load departments", err))
     }, [])
 
-    const loadData = async () => {
-        if (!selectedDate) {
-            setRooms([])
-            setSchedules([])
-            setBookings([])
-            setLoading(false)
-            return
-        }
-        setLoading(true)
+    const loadRooms = async () => {
         try {
             const allRooms = await roomService.getAllRoomsBatched(undefined, 50, debouncedSearch || undefined, selectedDepartment || undefined)
+            // Sort rooms alphabetically by roomName
+            const sortedRooms = allRooms.sort((a, b) => a.roomName.localeCompare(b.roomName))
+            setRooms(sortedRooms)
+        } catch (err: any) {
+            console.error("Failed to load rooms", err)
+        }
+    }
+
+    const loadSchedulesAndBookings = async () => {
+        if (!selectedDate) return
+        setLoading(true)
+        try {
             const [typesData, schedulesData, bookingsData] = await Promise.all([
                 roomTypeService.getAll(),
                 scheduleService.getSchedulesByDay(selectedDate),
                 bookingService.getBookingsByDay(selectedDate)
             ])
 
-            // Apply remaining client-side filters
-            let filtered = allRooms;
-            if (selectedDepartment) {
-                filtered = filtered.filter(r => r.departmentId === selectedDepartment);
-            }
-            // Sort rooms alphabetically by roomName
-            const sortedRooms = filtered.sort((a, b) => a.roomName.localeCompare(b.roomName))
-            setRooms(sortedRooms)
             setRoomTypes(typesData)
             setSchedules(schedulesData)
             setBookings(bookingsData)
-        } catch (err: unknown) {
-            const error = err as any;
-            setError(error.response?.data?.message || 'Tải dữ liệu thất bại')
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Tải dữ liệu thất bại')
         } finally {
             setLoading(false)
         }
     }
 
     useEffect(() => {
-        if (!selectedDate) return;
-        loadData()
-    }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
+        loadRooms()
+    }, [debouncedSearch, selectedDepartment])
+
+    useEffect(() => {
+        if (selectedDate) {
+            loadSchedulesAndBookings()
+        }
+    }, [selectedDate])
 
     const handleBookClick = (room: Room, hour: number, alreadyRequested: boolean, classSchedule?: ScheduleResponse) => {
         if (alreadyRequested) return
@@ -256,7 +256,7 @@ export const DailySchedulerPage: React.FC = () => {
                 setModalSuccess('Đã gửi yêu cầu mượn phòng!')
             }
 
-            loadData()
+            loadSchedulesAndBookings()
             setTimeout(() => {
                 setModalOpen(false)
                 setModalSuccess('')

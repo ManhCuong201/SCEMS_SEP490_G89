@@ -84,6 +84,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddInfrastructureServices(connectionString);
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddHostedService<BookingCleanupWorker>();
 
 // Register SignalR and Notification Dispatcher
 builder.Services.AddSignalR();

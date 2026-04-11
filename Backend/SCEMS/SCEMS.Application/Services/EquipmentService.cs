@@ -28,12 +28,13 @@ public class EquipmentService : IEquipmentService
     public async Task<PaginatedEquipmentDto> GetEquipmentAsync(PaginationParams @params)
     {
         IQueryable<Equipment> query = _unitOfWork.Equipment.GetAll()
+            .AsNoTracking()
             .Include(e => e.EquipmentType)
             .Include(e => e.Room);
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
-            var search = @params.Search.ToLowerInvariant();
+            var search = @params.Search.ToLower();
             query = query.Where(e => e.EquipmentType.Name.ToLower().Contains(search) || e.Room.RoomName.ToLower().Contains(search));
         }
 
@@ -63,19 +64,11 @@ public class EquipmentService : IEquipmentService
             query = query.OrderByDescending(e => e.CreatedAt);
         }
 
-        var total = query.Count();
-        var items = query
+        var total = await query.CountAsync();
+        var items = await query
             .Skip((@params.PageIndex - 1) * @params.PageSize)
             .Take(@params.PageSize)
-            .ToList();
-
-        // Ensure navigation properties are loaded; strict repo might require explicit Include.
-        // Assuming lazy loading or auto-include, but explicit checks safer in complex apps.
-        // For now relying on standard behavior, if nav props null need to fix repo.
-        // Wait, typical generic repo doesn't include nav props by default.
-        // I might need to update repository or just live with it for a sec.
-        // Let's rely on Mapper to handle basic mapping, but if Entity Framework lazy loading is off, this fails.
-        // Given existing code, I'll follow standard pattern.
+            .ToListAsync();
         
         var dtos = _mapper.Map<List<EquipmentResponseDto>>(items);
 
@@ -91,6 +84,7 @@ public class EquipmentService : IEquipmentService
     public async Task<EquipmentResponseDto?> GetEquipmentByIdAsync(Guid id)
     {
         var equipment = await _unitOfWork.Equipment.GetAll()
+            .AsNoTracking()
             .Include(e => e.EquipmentType)
             .Include(e => e.Room)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -364,6 +358,7 @@ public class EquipmentService : IEquipmentService
     public async Task<List<EquipmentHistoryResponseDto>> GetEquipmentHistoryAsync(Guid equipmentId)
     {
         var history = await _unitOfWork.RoomEquipmentHistories.GetAll()
+            .AsNoTracking()
             .Where(h => h.EquipmentId == equipmentId)
             .Include(h => h.Room)
             .OrderByDescending(h => h.AssignedAt)

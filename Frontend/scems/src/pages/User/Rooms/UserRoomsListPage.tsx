@@ -17,13 +17,14 @@ export const UserRoomsListPage: React.FC = () => {
   const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
 
-  const loadRooms = async () => {
+  const loadRooms = async (page: number, searchQuery: string) => {
     setLoading(true)
     setError('')
     try {
-      const result = await roomService.getRooms(currentPage, 9, search || undefined) // Load 9 per page for better grid alignment
+      const result = await roomService.getRooms(page, 9, searchQuery || undefined) // Load 9 per page for better grid alignment
       setRooms(result.items)
       setTotal(result.total)
+      setCurrentPage(page)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Tải danh sách phòng thất bại')
     } finally {
@@ -32,12 +33,14 @@ export const UserRoomsListPage: React.FC = () => {
   }
 
   useEffect(() => {
-    setCurrentPage(1)
+    loadRooms(1, search)
   }, [search])
 
   useEffect(() => {
-    loadRooms()
-  }, [currentPage, search])
+    if (currentPage !== 1) {
+        loadRooms(currentPage, search)
+    }
+  }, [currentPage])
 
   // Handle click outside to collapse
   useEffect(() => {
@@ -158,7 +161,7 @@ export const UserRoomsListPage: React.FC = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={Math.ceil(total / 9)}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => loadRooms(p, search)}
             total={total}
             pageSize={9}
           />

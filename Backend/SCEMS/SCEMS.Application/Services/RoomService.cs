@@ -95,6 +95,7 @@ public class RoomService : IRoomService
     public async Task<RoomResponseDto?> GetRoomByIdAsync(Guid id)
     {
         var room = await _unitOfWork.Rooms.GetAll()
+            .AsNoTracking()
             .Include(r => r.Bookings)
             .Include(r => r.Equipment)
             .Include(r => r.RoomType)
@@ -352,15 +353,19 @@ public class RoomService : IRoomService
         var now = DateTime.Now;
         var today = DateTime.Today;
 
-        var rooms = await _unitOfWork.Rooms.GetAll().ToListAsync();
+        var rooms = await _unitOfWork.Rooms.GetAll()
+            .AsNoTracking()
+            .ToListAsync();
         
         var activeBookings = await _unitOfWork.Bookings.GetAll()
+            .AsNoTracking()
             .Include(b => b.RequestedByAccount)
             .Where(b => b.TimeSlot.Date == today && 
                         (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn))
             .ToListAsync();
 
         var activeSchedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .AsNoTracking()
             .Where(ts => ts.Date == today)
             .ToListAsync();
 

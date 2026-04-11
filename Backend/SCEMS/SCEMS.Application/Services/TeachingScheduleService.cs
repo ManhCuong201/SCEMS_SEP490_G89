@@ -70,6 +70,7 @@ public class TeachingScheduleService : ITeachingScheduleService
     public async Task<List<ScheduleResponseDto>> GetAllSchedulesAsync(DateTime start, DateTime end)
     {
         var schedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .AsNoTracking()
             .Include(ts => ts.Room)
             .Where(ts => ts.Date >= start.Date && ts.Date <= end.Date)
             .OrderBy(ts => ts.Date).ThenBy(ts => ts.Slot)
@@ -99,6 +100,7 @@ public class TeachingScheduleService : ITeachingScheduleService
     public async Task<List<ScheduleResponseDto>> GetSchedulesByDateAsync(DateTime date)
     {
         var schedules = await _unitOfWork.TeachingSchedules.GetAll()
+            .AsNoTracking()
             .Include(ts => ts.Room)
             .Where(ts => ts.Date == date.Date)
             .OrderBy(ts => ts.Slot)

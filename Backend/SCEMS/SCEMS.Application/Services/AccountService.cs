@@ -10,6 +10,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace SCEMS.Application.Services;
 
@@ -28,11 +29,11 @@ public class AccountService : IAccountService
 
     public async Task<PaginatedAccountsDto> GetAccountsAsync(PaginationParams @params)
     {
-        var query = _unitOfWork.Accounts.GetAll();
+        var query = _unitOfWork.Accounts.GetAll().AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(@params.Search))
         {
-            var search = @params.Search.ToLowerInvariant();
+            var search = @params.Search.ToLower();
             query = query.Where(a => a.FullName.ToLower().Contains(search) || a.Email.ToLower().Contains(search));
         }
 
@@ -60,11 +61,11 @@ public class AccountService : IAccountService
             query = query.OrderByDescending(a => a.CreatedAt);
         }
 
-        var total = query.Count();
-        var items = query
+        var total = await query.CountAsync();
+        var items = await query
             .Skip((@params.PageIndex - 1) * @params.PageSize)
             .Take(@params.PageSize)
-            .ToList();
+            .ToListAsync();
 
         var dtos = _mapper.Map<List<AccountResponseDto>>(items);
 

@@ -25,6 +25,7 @@ public class IssueReportService : IIssueReportService
     public async Task<PaginatedResult<IssueReportResponseDto>> GetReportsAsync(PaginationParams @params, Guid? userId = null, IssueReportStatus? status = null)
     {
         var query = _unitOfWork.IssueReports.GetAll()
+            .AsNoTracking()
             .Include(ir => ir.CreatedByAccount)
             .Include(ir => ir.Room)
             .Include(ir => ir.Equipment)
@@ -72,6 +73,7 @@ public class IssueReportService : IIssueReportService
     public async Task<IssueReportResponseDto?> GetReportByIdAsync(Guid id)
     {
         var report = await _unitOfWork.IssueReports.GetAll()
+            .AsNoTracking()
             .Include(ir => ir.CreatedByAccount)
             .Include(ir => ir.Room)
             .Include(ir => ir.Equipment)
