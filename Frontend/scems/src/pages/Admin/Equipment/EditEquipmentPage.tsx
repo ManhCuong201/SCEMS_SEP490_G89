@@ -82,7 +82,7 @@ export const EditEquipmentPage: React.FC = () => {
 
         try {
             await equipmentService.update(id, form);
-            navigate('/admin/equipment');
+            navigate('/admin/equipment', { state: { successMessage: 'Cập nhật thiết bị thành công' } });
         } catch (err: any) {
             setError(err.response?.data?.message || 'Cập nhật thất bại');
         } finally {

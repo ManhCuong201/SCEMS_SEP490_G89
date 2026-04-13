@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { equipmentService } from '../../../services/equipmentService';
 import { Equipment, EquipmentStatus } from '../../../types/equipment';
 import { Alert } from '../../../components/Common/Alert';
@@ -19,6 +19,8 @@ export const EquipmentListPage: React.FC = () => {
     const [search, setSearch] = useState('');
     const [total, setTotal] = useState(0);
     const [statusFilter, setStatusFilter] = useState('');
+
+    const location = useLocation();
 
     // History states
     const [historyItemId, setHistoryItemId] = useState<string | null>(null);
@@ -41,6 +43,11 @@ export const EquipmentListPage: React.FC = () => {
     };
 
     useEffect(() => {
+        if (location.state?.successMessage) {
+            setSuccess(location.state.successMessage);
+            // Clear location state to prevent message from reappearing on refresh
+            window.history.replaceState({}, document.title);
+        }
         loadEquipment(1, search, statusFilter);
     }, [search, statusFilter]);
 

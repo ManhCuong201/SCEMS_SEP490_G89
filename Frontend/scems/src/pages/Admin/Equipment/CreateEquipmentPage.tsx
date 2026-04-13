@@ -69,7 +69,7 @@ export const CreateEquipmentPage: React.FC = () => {
 
         try {
             await equipmentService.create(form);
-            navigate('/admin/equipment');
+            navigate('/admin/equipment', { state: { successMessage: 'Thêm thiết bị thành công' } });
         } catch (err: any) {
             setError(err.response?.data?.message || 'Thêm thiết bị thất bại');
         } finally {

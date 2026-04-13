@@ -64,11 +64,11 @@ RoomManagement/
 ### Backend Setup
 1. **Configure Connection**: Update `Backend/SCEMS/SCEMS.Api/appsettings.json` with your MySQL connection string.
 2. **Restore & Run**:
-   ```bash
-   cd Backend/SCEMS
-   dotnet restore
-   dotnet run --project SCEMS.Api
-   ```
+```bash
+cd Backend/SCEMS
+dotnet restore
+dotnet run --project SCEMS.Api
+```
 
 ### Database Migrations
 ```bash
