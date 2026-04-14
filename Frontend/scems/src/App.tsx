@@ -65,40 +65,160 @@ const AppContent: React.FC = () => {
     <Routes>
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/admin/*" element={
-        <PrivateRoute>
+        <PrivateRoute allowedRoles={['Admin', 'AssetStaff', 'BookingStaff', 'Guard']}>
           <AdminLayout>
             <Routes>
               <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="accounts" element={<AccountsListPage />} />
-              <Route path="accounts/create" element={<CreateAccountPage />} />
-              <Route path="accounts/:id" element={<AccountDetailPage />} />
-              <Route path="accounts/:id/edit" element={<EditAccountPage />} />
-              <Route path="rooms" element={<RoomsListPage />} />
-              <Route path="rooms/create" element={<CreateRoomPage />} />
-              <Route path="rooms/:id" element={<RoomDetailPage />} />
-              <Route path="rooms/:id/edit" element={<EditRoomPage />} />
-              <Route path="room-types" element={<RoomTypesListPage />} />
-              <Route path="room-types/create" element={<CreateRoomTypePage />} />
-              <Route path="room-types/:id/edit" element={<EditRoomTypePage />} />
-              <Route path="departments" element={<DepartmentsListPage />} />
-              <Route path="departments/create" element={<CreateDepartmentPage />} />
-              <Route path="departments/:id/edit" element={<EditDepartmentPage />} />
-              <Route path="booking-board" element={<StaffBookingBoardPage />} />
-              <Route path="bookings" element={<BookingManagementPage />} />
-              <Route path="classes" element={<AdminClassesPage />} />
-              <Route path="classes/:id/students" element={<ClassStudentsPage />} />
-              <Route path="schedules" element={<AdminSchedulesPage />} />
-              <Route path="equipment-types" element={<EquipmentTypesListPage />} />
-              <Route path="equipment-types/create" element={<CreateEquipmentTypePage />} />
-              <Route path="equipment-types/:id" element={<EquipmentTypeDetailPage />} />
-              <Route path="equipment-types/:id/edit" element={<EditEquipmentTypePage />} />
-              <Route path="equipment" element={<EquipmentListPage />} />
-              <Route path="equipment/create" element={<CreateEquipmentPage />} />
-              <Route path="equipment/:id/edit" element={<EditEquipmentPage />} />
-              <Route path="issue-reports" element={<AdminIssueReportsPage />} />
-              <Route path="live-status" element={<LiveStatusPage />} />
-              <Route path="security-checks" element={<SecurityDashboardPage />} />
-              <Route path="settings" element={<SystemSettingsPage />} />
+              <Route path="accounts" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <AccountsListPage />
+                </PrivateRoute>
+              } />
+              <Route path="accounts/create" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <CreateAccountPage />
+                </PrivateRoute>
+              } />
+              <Route path="accounts/:id" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <AccountDetailPage />
+                </PrivateRoute>
+              } />
+              <Route path="accounts/:id/edit" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <EditAccountPage />
+                </PrivateRoute>
+              } />
+              <Route path="rooms" element={
+                <PrivateRoute allowedRoles={['Admin', 'AssetStaff']}>
+                  <RoomsListPage />
+                </PrivateRoute>
+              } />
+              <Route path="rooms/create" element={
+                <PrivateRoute allowedRoles={['Admin', 'AssetStaff']}>
+                  <CreateRoomPage />
+                </PrivateRoute>
+              } />
+              <Route path="rooms/:id" element={
+                <PrivateRoute allowedRoles={['Admin', 'AssetStaff', 'Guard']}>
+                  <RoomDetailPage />
+                </PrivateRoute>
+              } />
+              <Route path="rooms/:id/edit" element={
+                <PrivateRoute allowedRoles={['Admin', 'AssetStaff']}>
+                  <EditRoomPage />
+                </PrivateRoute>
+              } />
+              <Route path="room-types" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <RoomTypesListPage />
+                </PrivateRoute>
+              } />
+              <Route path="room-types/create" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <CreateRoomTypePage />
+                </PrivateRoute>
+              } />
+              <Route path="room-types/:id/edit" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <EditRoomTypePage />
+                </PrivateRoute>
+              } />
+              <Route path="departments" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <DepartmentsListPage />
+                </PrivateRoute>
+              } />
+              <Route path="departments/create" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <CreateDepartmentPage />
+                </PrivateRoute>
+              } />
+              <Route path="departments/:id/edit" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <EditDepartmentPage />
+                </PrivateRoute>
+              } />
+              <Route path="booking-board" element={
+                <PrivateRoute allowedRoles={['BookingStaff', 'Guard']}>
+                  <StaffBookingBoardPage />
+                </PrivateRoute>
+              } />
+              <Route path="bookings" element={
+                <PrivateRoute allowedRoles={['BookingStaff']}>
+                  <BookingManagementPage />
+                </PrivateRoute>
+              } />
+              <Route path="classes" element={
+                <PrivateRoute allowedRoles={['BookingStaff']}>
+                  <AdminClassesPage />
+                </PrivateRoute>
+              } />
+              <Route path="classes/:id/students" element={
+                <PrivateRoute allowedRoles={['BookingStaff']}>
+                  <ClassStudentsPage />
+                </PrivateRoute>
+              } />
+              <Route path="schedules" element={
+                <PrivateRoute allowedRoles={['BookingStaff', 'Guard']}>
+                  <AdminSchedulesPage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment-types" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <EquipmentTypesListPage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment-types/create" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <CreateEquipmentTypePage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment-types/:id" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <EquipmentTypeDetailPage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment-types/:id/edit" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <EditEquipmentTypePage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment" element={
+                <PrivateRoute allowedRoles={['AssetStaff']}>
+                  <EquipmentListPage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment/create" element={
+                <PrivateRoute allowedRoles={['AssetStaff']}>
+                  <CreateEquipmentPage />
+                </PrivateRoute>
+              } />
+              <Route path="equipment/:id/edit" element={
+                <PrivateRoute allowedRoles={['AssetStaff']}>
+                  <EditEquipmentPage />
+                </PrivateRoute>
+              } />
+              <Route path="issue-reports" element={
+                <PrivateRoute allowedRoles={['Admin', 'AssetStaff', 'Guard']}>
+                  <AdminIssueReportsPage />
+                </PrivateRoute>
+              } />
+              <Route path="live-status" element={
+                <PrivateRoute allowedRoles={['Guard']}>
+                  <LiveStatusPage />
+                </PrivateRoute>
+              } />
+              <Route path="security-checks" element={
+                <PrivateRoute allowedRoles={['Guard']}>
+                  <SecurityDashboardPage />
+                </PrivateRoute>
+              } />
+              <Route path="settings" element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <SystemSettingsPage />
+                </PrivateRoute>
+              } />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </AdminLayout>
@@ -139,7 +259,7 @@ const AppContent: React.FC = () => {
         </PrivateRoute>
       } />
       <Route path="/teacher/*" element={
-        <PrivateRoute>
+        <PrivateRoute allowedRoles={['Lecturer']}>
           <UserLayout>
             <Routes>
               <Route path="classes" element={<TeacherClassesPage />} />
@@ -150,7 +270,7 @@ const AppContent: React.FC = () => {
         </PrivateRoute>
       } />
       <Route path="/issue-reports" element={
-        <PrivateRoute>
+        <PrivateRoute allowedRoles={['Lecturer', 'Student']}>
           <UserLayout>
             <UserIssueReportsPage />
           </UserLayout>
