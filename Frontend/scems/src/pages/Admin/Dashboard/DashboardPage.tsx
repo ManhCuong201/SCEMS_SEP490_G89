@@ -4,11 +4,16 @@ import { accountService } from '../../../services/account.service'
 import { roomService } from '../../../services/room.service'
 import { equipmentTypeService } from '../../../services/equipment-type.service'
 import { bookingService } from '../../../services/booking.service'
+import { departmentService } from '../../../services/department.service'
+import classService from '../../../services/class.service'
+import { scheduleService } from '../../../services/teachingSchedule.service'
+import { roomCheckService } from '../../../services/roomCheck.service'
+import { issueReportService } from '../../../services/issueReport.service'
 import { Loading } from '../../../components/Common/Loading'
 import { useAuth } from '../../../context/AuthContext'
 import api from '../../../services/api'
 
-import { ArrowRight, Box, Home, Users, Layers, Calendar, Clock, CheckCircle, BookOpen, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { ArrowRight, Box, Home, Users, Layers, Calendar, Clock, CheckCircle, BookOpen, ShieldCheck, AlertTriangle, Building2 } from 'lucide-react'
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth()
@@ -16,8 +21,13 @@ export const DashboardPage: React.FC = () => {
     totalAccounts: 0,
     totalRooms: 0,
     totalEquipmentTypes: 0,
+    totalDepartments: 0,
     pendingBookings: 0,
-    approvedToday: 0
+    approvedToday: 0,
+    totalClasses: 0,
+    schedulesToday: 0,
+    pendingIssueReports: 0,
+    pendingRoomChecks: 0
   })
   const [loading, setLoading] = useState(true)
 
@@ -25,34 +35,102 @@ export const DashboardPage: React.FC = () => {
     const loadStats = async () => {
       try {
         setLoading(true)
-        const [accounts, rooms, types, pendingRes, approvedTodayRes] = await Promise.all([
-          accountService.getAccounts(1, 1),
-          roomService.getRooms(1, 1),
-          equipmentTypeService.getEquipmentTypes(1, 1),
-          api.get(`/booking?pageIndex=1&pageSize=1&status=Pending`),
-          api.get(`/booking?pageIndex=1&pageSize=1&status=Approved&date=${new Date().toISOString().split('T')[0]}`)
-        ])
+        // Correct way to get local YYYY-MM-DD
+        const today = new Date().toLocaleDateString('sv');
+        
+        const newStats = {
+          totalAccounts: 0,
+          totalRooms: 0,
+          totalEquipmentTypes: 0,
+          totalDepartments: 0,
+          pendingBookings: 0,
+          approvedToday: 0,
+          totalClasses: 0,
+          schedulesToday: 0,
+          pendingIssueReports: 0,
+          pendingRoomChecks: 0
+        };
 
-        setStats({
-          totalAccounts: accounts.total,
-          totalRooms: rooms.total,
-          totalEquipmentTypes: types.total,
-          pendingBookings: pendingRes.data.total,
-          approvedToday: approvedTodayRes.data.total
-        })
-      } catch (err) {
-        console.error("Failed to load dashboard stats", err)
+        const promises: Promise<void>[] = [];
+
+        // Admin specifically needs building and accounts
+        if (user?.role === 'Admin') {
+          promises.push(
+            Promise.all([
+              accountService.getAccounts(1, 1).catch(() => ({ total: 0 })),
+              departmentService.getAll().catch(() => [])
+            ]).then(([accounts, departments]) => {
+              newStats.totalAccounts = accounts.total || 0;
+              newStats.totalDepartments = departments.length || 0;
+            })
+          );
+        }
+
+        // Shared stats for Admin and AssetStaff
+        if (user?.role === 'Admin' || user?.role === 'AssetStaff') {
+          promises.push(
+            Promise.all([
+              roomService.getRooms(1, 1).catch(() => ({ total: 0 })),
+              equipmentTypeService.getEquipmentTypes(1, 1).catch(() => ({ total: 0 }))
+            ]).then(([rooms, types]) => {
+              newStats.totalRooms = rooms.total || 0;
+              newStats.totalEquipmentTypes = types.total || 0;
+            })
+          );
+        }
+
+        // BookingStaff specific stats
+        if (user?.role === 'BookingStaff') {
+          // Calculate start and end of current week (Monday to Sunday)
+          const now = new Date();
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          const monday = new Date(new Date(now).setDate(diff)).toLocaleDateString('sv');
+          const sunday = new Date(new Date(now).setDate(diff + 6)).toLocaleDateString('sv');
+
+          promises.push(
+            Promise.all([
+              api.get(`/booking?pageIndex=1&pageSize=1&status=Pending`).catch(() => ({ data: { total: 0 } })),
+              api.get(`/booking?pageIndex=1&pageSize=1&status=Approved&date=${today}`).catch(() => ({ data: { total: 0 } })),
+              classService.getAllClasses().catch(() => []),
+              scheduleService.getAllSchedules(monday, sunday).catch(() => [])
+            ]).then(([pendingRes, approvedTodayRes, classes, schedules]) => {
+              newStats.pendingBookings = pendingRes.data?.total || 0;
+              newStats.approvedToday = approvedTodayRes.data?.total || 0;
+              newStats.totalClasses = classes.length || 0;
+              newStats.schedulesToday = schedules.length || 0;
+            })
+          );
+        }
+
+        // Guard specific stats
+        if (user?.role === 'Guard') {
+          promises.push(
+            Promise.all([
+              issueReportService.getIssueReports(1, 1, undefined, 'Open' as any).catch(() => ({ total: 0 })),
+              roomCheckService.getPendingChecks().catch(() => [])
+            ]).then(([issueReports, roomChecks]) => {
+              newStats.pendingIssueReports = issueReports.total || 0;
+              newStats.pendingRoomChecks = roomChecks.length || 0;
+            })
+          );
+        }
+
+        await Promise.all(promises);
+        setStats(newStats);
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error)
       } finally {
         setLoading(false)
       }
     }
 
     loadStats()
-  }, [])
+  }, [user?.role])
 
-  const StatCard: React.FC<{ title: string; value: number; href: string; icon: React.ReactNode; color: string; bgColor?: string }> = ({ title, value, href, icon, color, bgColor }) => (
+  const StatCard: React.FC<{ title: string; value: number; href?: string; icon: React.ReactNode; color: string; trend?: string }> = ({ title, value, href, icon, color, trend }) => (
     <Link
-      to={href}
+      to={href || '#'}
       style={{
         padding: '1.75rem',
         textDecoration: 'none',
@@ -60,20 +138,18 @@ export const DashboardPage: React.FC = () => {
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: 'var(--radius-lg)', // Restoring rounded corners
-        // Restore distinctive left accent "shadow" (border)
+        borderRadius: 'var(--radius-lg)',
         borderLeft: `5px solid ${color}`,
         borderTop: `1px solid ${color}30`,
         borderRight: `1px solid ${color}30`,
         borderBottom: `1px solid ${color}30`,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        // Make background distinct solid darker gray
         background: 'var(--slate-100)',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)' // Refined shadow
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-5px)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-xl)'; // Deeper hover shadow
+        e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
@@ -90,7 +166,7 @@ export const DashboardPage: React.FC = () => {
           </h2>
         </div>
         <div style={{
-          background: `${color}15`, // 10-15% opacity of the color
+          background: `${color}15`,
           color: color,
           padding: '0.75rem',
           borderRadius: '12px',
@@ -103,20 +179,11 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: color, fontWeight: 600 }}>
-        Xem chi tiết
-        <div style={{
-          background: `${color}20`,
-          borderRadius: '50%',
-          width: '20px',
-          height: '20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <ArrowRight size={12} />
+      {trend && (
+        <div style={{ marginTop: 'auto', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+          {trend}
         </div>
-      </div>
+      )}
     </Link>
   )
 
@@ -132,83 +199,120 @@ export const DashboardPage: React.FC = () => {
       {loading ? (
         <Loading />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-          {(user?.role === 'Admin') && (
-            <StatCard
-              title="Tổng số tài khoản"
-              value={stats.totalAccounts}
-              href="/admin/accounts"
-              icon={<Users size={48} />}
-              color="var(--primary-400)"
-            />
-          )}
-          {(user?.role === 'Admin' || user?.role === 'AssetStaff') && (
-            <>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+          {user?.role === 'Admin' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
               <StatCard
-                title="Tổng số phòng"
+                title="Tòa nhà & Cơ sở"
+                value={stats.totalDepartments}
+                icon={<Building2 size={24} />}
+                trend="Hệ thống"
+                color="var(--color-primary)"
+              />
+              <StatCard
+                title="Tổng số Tài khoản"
+                value={stats.totalAccounts}
+                href="/admin/accounts"
+                icon={<Users size={24} />}
+                trend="Người dùng"
+                color="#8b5cf6"
+              />
+              <StatCard
+                title="Tổng số Phòng"
                 value={stats.totalRooms}
                 href="/admin/rooms"
-                icon={<Home size={48} />}
-                color="var(--color-success)"
+                icon={<Home size={24} />}
+                trend="Cơ sở vật chất"
+                color="#ec4899"
               />
               <StatCard
-                title="Loại thiết bị"
+                title="Loại Thiết bị"
                 value={stats.totalEquipmentTypes}
                 href="/admin/equipment-types"
-                icon={<Layers size={48} />}
-                color="var(--color-warning)"
+                icon={<Layers size={24} />}
+                trend="Quản lý"
+                color="#f59e0b"
               />
-            </>
+            </div>
           )}
+
+          {user?.role === 'AssetStaff' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              <StatCard
+                title="Tổng số Phòng"
+                value={stats.totalRooms}
+                href="/admin/rooms"
+                icon={<Home size={24} />}
+                trend="Cơ sở vật chất"
+                color="#ec4899"
+              />
+              <StatCard
+                title="Loại Thiết bị"
+                value={stats.totalEquipmentTypes}
+                href="/admin/equipment-types"
+                icon={<Layers size={24} />}
+                trend="Quản lý"
+                color="#f59e0b"
+              />
+            </div>
+          )}
+          
           {(user?.role === 'BookingStaff') && (
-            <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
               <StatCard
                 title="Yêu cầu đang chờ"
                 value={stats.pendingBookings}
-                href="/admin/booking-board"
-                icon={<Clock size={48} />}
-                color="var(--color-warning)"
+                href="/admin/bookings"
+                icon={<Clock size={24} />}
+                trend="Cần phê duyệt"
+                color="#f59e0b"
               />
               <StatCard
                 title="Đã duyệt hôm nay"
                 value={stats.approvedToday}
                 href="/admin/bookings"
-                icon={<CheckCircle size={48} />}
-                color="var(--color-success)"
+                icon={<CheckCircle size={24} />}
+                trend="Hôm nay"
+                color="#10b981"
               />
               <StatCard
                 title="Quản lý Lớp học"
-                value={0} // Just a link
-                href="/teacher/classes"
-                icon={<Users size={48} />}
-                color="var(--primary-400)"
+                value={stats.totalClasses}
+                href="/admin/classes"
+                icon={<BookOpen size={24} />}
+                trend="Hệ thống"
+                color="#3b82f6"
               />
               <StatCard
                 title="Quản lý Lịch trình"
-                value={0}
-                href="/schedule"
-                icon={<BookOpen size={48} />}
-                color="var(--color-info)"
+                value={stats.schedulesToday}
+                href="/admin/schedules"
+                icon={<Calendar size={24} />}
+                trend="Tuần này"
+                color="#8b5cf6"
               />
-            </>
+            </div>
           )}
+
           {(user?.role === 'Guard') && (
-            <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
               <StatCard
                 title="Kiểm tra an ninh"
-                value={0}
+                value={stats.pendingRoomChecks}
                 href="/admin/security-checks"
-                icon={<ShieldCheck size={48} />}
-                color="var(--color-success)"
+                icon={<ShieldCheck size={24} />}
+                trend="Cần thực hiện"
+                color="var(--color-primary)"
               />
               <StatCard
                 title="Báo cáo sự cố"
-                value={0}
+                value={stats.pendingIssueReports}
                 href="/admin/issue-reports"
-                icon={<AlertTriangle size={48} />}
-                color="var(--color-warning)"
+                icon={<AlertTriangle size={24} />}
+                trend="Yêu cầu mới"
+                color="var(--color-danger)"
               />
-            </>
+            </div>
           )}
         </div>
       )}

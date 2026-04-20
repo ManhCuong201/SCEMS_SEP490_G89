@@ -44,6 +44,18 @@ public class BookingService : IBookingService
             query = query.Where(b => b.Room != null && b.Room.RoomName.ToLower().Contains(search));
         }
 
+        if (!string.IsNullOrWhiteSpace(@params.Status) && Enum.TryParse<BookingStatus>(@params.Status, true, out var status))
+        {
+            query = query.Where(b => b.Status == status);
+        }
+
+        if (@params.Date.HasValue)
+        {
+            var startDate = @params.Date.Value.Date;
+            var endDate = startDate.AddDays(1);
+            query = query.Where(b => b.TimeSlot >= startDate && b.TimeSlot < endDate);
+        }
+
         query = query.OrderByDescending(b => b.CreatedAt);
 
         var total = await query.CountAsync();
@@ -176,8 +188,7 @@ public class BookingService : IBookingService
             // We ignore Rejected AND Cancelled bookings
             var conflictingBooking = _unitOfWork.Bookings.GetAll()
                 .Where(b => b.RoomId == dto.RoomId 
-                    && b.Status != BookingStatus.Rejected 
-                    && b.Status != BookingStatus.Cancelled
+                    && (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
                     && b.TimeSlot < newEnd 
                     && b.TimeSlot.AddHours(b.Duration) > newStart)
                 .ToList()
@@ -193,7 +204,7 @@ public class BookingService : IBookingService
 
             if (conflictingBooking)
             {
-                errors.Add("Phòng này đã có người khác mượn hoặc đang chờ duyệt trong thời gian này.");
+                errors.Add("Phòng này đã được người khác mượn trong thời gian này.");
             }
                 
             // Check conflicts in Teaching Schedule for the room
@@ -265,7 +276,7 @@ public class BookingService : IBookingService
 
         if (userHasBooking)
         {
-            errors.Add("Bạn đã có một yêu cầu mượn phòng khác được phê duyệt vào thời gian này.");
+            errors.Add("Bạn đã có một yêu cầu mượn phòng khác trong thời gian này.");
         }
 
         if (errors.Any())

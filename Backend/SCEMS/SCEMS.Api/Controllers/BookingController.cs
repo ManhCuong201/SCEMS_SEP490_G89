@@ -20,7 +20,7 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetBookings([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> GetBookings([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] DateTime? date = null)
     {
         var userId = GetCurrentUserId();
         // If Admin, show all. If Staff/User, show theirs? 
@@ -36,7 +36,7 @@ public class BookingController : ControllerBase
             filterUserId = userId;
         }
 
-        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search };
+        var @params = new PaginationParams { PageIndex = pageIndex, PageSize = pageSize, Search = search, Status = status, Date = date };
         var result = await _bookingService.GetBookingsAsync(@params, filterUserId);
         return Ok(result);
     }

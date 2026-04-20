@@ -8,7 +8,7 @@ namespace SCEMS.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Guard")]
+[Authorize(Roles = "Guard,Admin,AssetStaff")]
 public class RoomChecksController : ControllerBase
 {
     private readonly IRoomCheckService _roomCheckService;

@@ -72,4 +72,4 @@ AutomationTests/__pycache__/
 # Explicit test files allowed
 !AutomationTests/Conflict_Import_Schedule.xlsx
 !AutomationTests/requirements.txt
-!AutomationTests/Valid_Import_Schedule.xlsx
+!AutomationTests/Valid_Import_Schedule.xlsx
