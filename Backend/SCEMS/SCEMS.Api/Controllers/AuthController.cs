@@ -17,13 +17,23 @@ public class AuthController : ControllerBase
     private readonly IJwtService _jwtService;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IClassService _classService;
+    private readonly IConfigurationService _configurationService;
+    private readonly INotificationDispatcher _notificationDispatcher;
 
-    public AuthController(IUnitOfWork unitOfWork, IJwtService jwtService, IPasswordHasher passwordHasher, IClassService classService)
+    public AuthController(
+        IUnitOfWork unitOfWork, 
+        IJwtService jwtService, 
+        IPasswordHasher passwordHasher, 
+        IClassService classService,
+        IConfigurationService configurationService,
+        INotificationDispatcher notificationDispatcher)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _passwordHasher = passwordHasher;
         _classService = classService;
+        _configurationService = configurationService;
+        _notificationDispatcher = notificationDispatcher;
     }
 
     [HttpPost("login")]
@@ -43,6 +53,27 @@ public class AuthController : ControllerBase
         if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)
         {
              return Unauthorized(new { message = "Account is blocked" });
+        }
+
+        // Handle Single Session for BookingStaff
+        if (account.Role == SCEMS.Domain.Enums.AccountRole.BookingStaff)
+        {
+            var newSessionId = Guid.NewGuid().ToString();
+            
+            // Send ForceLogout to previous active session if exists
+            var previousActiveStaffIdStr = await _configurationService.GetValueAsync("Security.ActiveBookingStaffId", "");
+            if (Guid.TryParse(previousActiveStaffIdStr, out var previousId) && previousId != Guid.Empty)
+            {
+                await _notificationDispatcher.DispatchLogoutSignalAsync(previousId);
+            }
+
+            // Update Global Session and Active Staff ID
+            await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffSessionId", newSessionId);
+            await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffId", account.Id.ToString());
+
+            account.CurrentSessionId = newSessionId;
+            _unitOfWork.Accounts.Update(account);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         var token = _jwtService.GenerateToken(account);
@@ -135,6 +166,25 @@ public class AuthController : ControllerBase
             if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)
             {
                 return Unauthorized(new { message = "Account is blocked" });
+            }
+
+            // Handle Single Session for BookingStaff
+            if (account.Role == SCEMS.Domain.Enums.AccountRole.BookingStaff)
+            {
+                var newSessionId = Guid.NewGuid().ToString();
+                
+                var previousActiveStaffIdStr = await _configurationService.GetValueAsync("Security.ActiveBookingStaffId", "");
+                if (Guid.TryParse(previousActiveStaffIdStr, out var previousId) && previousId != Guid.Empty)
+                {
+                    await _notificationDispatcher.DispatchLogoutSignalAsync(previousId);
+                }
+
+                await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffSessionId", newSessionId);
+                await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffId", account.Id.ToString());
+
+                account.CurrentSessionId = newSessionId;
+                _unitOfWork.Accounts.Update(account);
+                await _unitOfWork.SaveChangesAsync();
             }
 
             var token = _jwtService.GenerateToken(account);

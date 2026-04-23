@@ -107,6 +107,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                             },
                         });
                     });
+
+                    connection.on('ForceLogout', (message: string) => {
+                        toast.error(message, { duration: 5000 });
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        setTimeout(() => {
+                            window.location.href = '/auth/login';
+                        }, 2000);
+                    });
                 })
                 .catch(e => console.log('SignalR Connection Error: ', e));
 

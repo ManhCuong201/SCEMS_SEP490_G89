@@ -12,6 +12,8 @@ public class Account : BaseEntity
     public AccountRole Role { get; set; }
     public AccountStatus Status { get; set; } = AccountStatus.Active;
     
+    public string? CurrentSessionId { get; set; }
+    
     // Navigation properties will be added via fluent API or here
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

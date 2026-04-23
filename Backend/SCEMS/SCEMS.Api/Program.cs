@@ -103,6 +103,7 @@ app.UseCors("AllowAll");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
+app.UseMiddleware<SessionCheckMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -27,7 +27,16 @@ api.interceptors.response.use(
       if (!isLoginRequest && !isOnLoginPage) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        window.location.href = '/auth/login'
+        
+        // Show Vietnamese message
+        const message = error.response?.data?.message || 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
+        import('react-hot-toast').then(({ toast }) => {
+          toast.error(message);
+        });
+
+        setTimeout(() => {
+          window.location.href = '/auth/login'
+        }, 2000);
       }
     }
     return Promise.reject(error)
