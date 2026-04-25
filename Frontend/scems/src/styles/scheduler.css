@@ -122,24 +122,23 @@
 
 .scheduler-grid {
     display: grid;
-    /* Shrink to fit: 90px plus 15 equal slots */
-    grid-template-columns: 85px repeat(15, 1fr);
+    /* grid-template-columns is always set inline per page */
     width: 100%;
 }
 
 .scheduler-cell {
-    border-bottom: 1px solid #f1f5f9;
-    border-right: 1px solid #f1f5f9;
-    padding: 0.2rem 0.1rem;
-    /* Ultra tight padding */
-    height: 52px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    padding: 0.4rem;
+    height: 64px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     position: relative;
-    transition: background 0.1s ease;
+    transition: all 0.2s ease;
     overflow: hidden;
+    background: #ffffff;
 }
 
 .scheduler-cell:hover {
@@ -152,19 +151,18 @@
     z-index: 20;
     background: #f8fafc !important;
     font-weight: 800;
-    font-size: 0.6rem;
-    /* Smaller font for slots */
-    height: 52px !important;
+    font-size: 0.75rem;
+    height: 64px !important;
     text-align: center;
     color: #475569;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.05em;
     border-bottom: 2px solid #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
     white-space: pre-line;
-    line-height: 1;
+    line-height: 1.2;
 }
 
 .scheduler-room-cell {
@@ -172,7 +170,7 @@
     left: 0;
     z-index: 30;
     background: #f8fafc !important;
-    width: 85px;
+    width: 100%;
     padding: 0.25rem;
     border-right: 2px solid #e2e8f0;
     justify-content: center;
@@ -195,32 +193,35 @@
 }
 
 .slot-status-pill {
-    font-size: 0.5rem;
-    /* Ultra dense */
-    font-weight: 900;
-    padding: 1px 4px;
-    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
     text-transform: uppercase;
     white-space: nowrap;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .pill-available {
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #10b981;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1.5px solid #bbf7d0;
 }
 
 .pill-booked {
     background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #ef4444;
+    color: #991b1b;
+    border: 1.5px solid #fecaca;
 }
 
 .pill-class {
     background: #eef2ff;
-    color: #4f46e5;
-    border: 1px solid #6366f1;
+    color: #3730a3;
+    border: 1.5px solid #c7d2fe;
 }
 
 .slot-available {
@@ -228,24 +229,63 @@
 }
 
 .slot-available:hover {
-    background: rgba(16, 185, 129, 0.05);
+    background: #f0fdf4 !important;
+    transform: scale(0.98);
 }
+
+/* Staff board empty slot - non-interactive (applied via inline style) */
 
 .pill-requested {
     background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #f59e0b;
+    color: #92400e;
+    border: 1.5px solid #fde68a;
+}
+
+.slot-past {
+    background: #f1f5f9 !important;
+    cursor: default;
+}
+
+.slot-past-text {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .slot-main-text {
-    font-size: 0.58rem;
-    font-weight: 800;
+    font-size: 0.7rem;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
     text-align: center;
-    color: #475569;
+    color: #64748b;
+}
+
+/* Staff Board Room Cell Text */
+.room-name-staff {
+    font-weight: 900;
+    font-size: 0.7rem;
+    color: #0f172a;
+    line-height: 1.2;
+    margin-bottom: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+}
+
+.room-code-staff {
+    font-size: 0.6rem;
+    color: #64748b;
+    font-weight: 700;
+    text-align: center;
 }
 
 /* Rest of tooltip and modal styles... */

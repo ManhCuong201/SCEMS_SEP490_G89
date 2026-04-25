@@ -150,6 +150,7 @@ export interface CreateBookingRequest {
   reason?: string
 }
 
+
 export interface CreateRoomChangeRequest {
   scheduleId: string;
   originalRoomId: string;

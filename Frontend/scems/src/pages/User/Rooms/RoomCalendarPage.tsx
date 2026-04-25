@@ -13,6 +13,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, 
 import '../../../styles/calendar.css'
 import '../../../styles/compact-calendar.css'
 import '../../../styles/scheduler.css' // Import scheduler styles for tooltip
+import { NEW_SLOTS, OLD_SLOTS, getTimeInMinutes, getSlotTotalMinutes, Slot } from '../../../helpers/slot.helper'
 
 /* --- Portal Tooltip Component --- */
 interface PortalTooltipProps {
@@ -64,17 +65,14 @@ export const RoomCalendarPage: React.FC = () => {
     const [error, setError] = useState('')
     const [currentDate, setCurrentDate] = useState(new Date())
     const [modalOpen, setModalOpen] = useState(false)
-    const [selectedSlot, setSelectedSlot] = useState<{ date: Date, hour: number } | null>(null)
+    const [slotSystem, setSlotSystem] = useState<'New' | 'Old'>('New')
+    const [selectedSlot, setSelectedSlot] = useState<{ date: Date, slot: Slot } | null>(null)
+    const [durationOption, setDurationOption] = useState<number>(0) // 0 means full slot
     const [reason, setReason] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
     const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
-
-    /* State for Room Change */
-    const [bookingType, setBookingType] = useState<'new' | 'change'>('new')
-    const [originalRoomId, setOriginalRoomId] = useState('')
-    const [allRooms, setAllRooms] = useState<Room[]>([])
 
     const currentUser = authService.getUser()
 
@@ -88,12 +86,6 @@ export const RoomCalendarPage: React.FC = () => {
         loadData()
     }, [id, currentDate])
 
-    /* Load all rooms for dropdown when modal opens (lazy load) */
-    useEffect(() => {
-        if (modalOpen && bookingType === 'change' && allRooms.length === 0) {
-            roomService.getRooms(1, 100).then(res => setAllRooms(res.items))
-        }
-    }, [modalOpen, bookingType])
 
     const getWeekRange = (date: Date) => {
         const day = date.getDay()
@@ -139,54 +131,61 @@ export const RoomCalendarPage: React.FC = () => {
         setCurrentDate(newDate)
     }
 
-    const handleBookClick = (date: Date, hour: number) => {
+    const handleBookClick = (date: Date, slot: Slot) => {
+        const [h, m] = slot.startTime.split(':').map(Number)
         const slotDate = new Date(date)
-        slotDate.setHours(hour, 0, 0, 0)
+        slotDate.setHours(h, m, 0, 0)
 
-        const slotEnd = new Date(slotDate)
-        slotEnd.setHours(hour + 1, 0, 0, 0)
+        const [eh, em] = slot.endTime.split(':').map(Number)
+        const slotEnd = new Date(date)
+        slotEnd.setHours(eh, em, 0, 0)
 
         if (new Date() > slotEnd) {
             return
         }
 
-        setSelectedSlot({ date: slotDate, hour })
+        setSelectedSlot({ date: slotDate, slot })
         setModalOpen(true)
         setReason('')
+        setDurationOption(0)
     }
 
     const handleConfirmBook = async () => {
         if (!selectedSlot || !id || !bookingSettings) return
         setSubmitting(true)
         try {
-            const offset = selectedSlot.date.getTimezoneOffset()
-            const localDate = new Date(selectedSlot.date.getTime() - (offset * 60 * 1000))
-            const isoLocal = localDate.toISOString().slice(0, 19)
-
-            if (bookingType === 'new') {
-                await bookingService.createBooking({
-                    roomId: id,
-                    timeSlot: isoLocal,
-                    duration: bookingSettings.slotDurationMinutes / 60,
-                    reason: reason
-                })
-            } else {
-                if (!originalRoomId) {
-                    setError("Vui lòng chọn phòng ban đầu bạn muốn đổi.")
-                    setSubmitting(false)
-                    return
-                }
-                await bookingService.createRoomChangeRequest({
-                    scheduleId: '00000000-0000-0000-0000-000000000000', // Placeholder as this page doesn't track specific schedule yet
-                    newRoomId: id,
-                    originalRoomId: originalRoomId,
-                    timeSlot: isoLocal,
-                    duration: bookingSettings.slotDurationMinutes / 60,
-                    reason: reason
-                })
+            let slotDate = new Date(selectedSlot.date.getTime());
+            const now = new Date()
+            if (slotDate < now && slotDate.getDate() === now.getDate() && slotDate.getMonth() === now.getMonth() && slotDate.getFullYear() === now.getFullYear()) {
+                slotDate = now;
             }
 
-            setSuccessMsg(bookingType === 'new' ? 'Đã gửi yêu cầu mượn phòng!' : 'Đã gửi yêu cầu đổi phòng!')
+            let duration = getSlotTotalMinutes(selectedSlot.slot) / 60;
+            if (durationOption > 0) duration = durationOption / 60;
+
+            const slotEndTime = new Date(slotDate.getTime() + duration * 3600000)
+            if (slotEndTime < now) {
+                setError('Không thể đặt phòng vào thời gian đã qua.')
+                setSubmitting(false)
+                return
+            }
+
+            const outY = slotDate.getFullYear()
+            const outM = slotDate.getMonth() + 1
+            const outD = slotDate.getDate()
+            const outH = slotDate.getHours()
+            const outMin = slotDate.getMinutes()
+            const pad = (n: number) => n.toString().padStart(2, '0')
+            const isoLocal = `${outY}-${pad(outM)}-${pad(outD)}T${pad(outH)}:${pad(outMin)}:00`
+
+            await bookingService.createBooking({
+                roomId: id,
+                timeSlot: isoLocal,
+                duration: duration,
+                reason: reason
+            })
+
+            setSuccessMsg('Đã gửi yêu cầu mượn phòng!')
             setModalOpen(false)
             loadData()
             setTimeout(() => setSuccessMsg(''), 3000)
@@ -214,17 +213,14 @@ export const RoomCalendarPage: React.FC = () => {
             days.push(d)
         }
 
-        const startHour = bookingSettings.startHour
-        const endHour = bookingSettings.endHour
-        const hoursCount = Math.max(0, endHour - startHour)
-        const hours = Array.from({ length: hoursCount }, (_, i) => i + startHour)
+        const currentSlots = slotSystem === 'New' ? NEW_SLOTS : OLD_SLOTS;
 
         return (
             <div className="table-wrapper">
                 <table className="glass-table calendar-table compact-grid">
                     <thead>
                         <tr>
-                            <th className="calendar-time-col">Thời gian</th>
+                            <th className="calendar-time-col">Ca / Ngày</th>
                             {days.map(d => (
                                 <th key={d.toISOString()} style={{ textAlign: 'center', minWidth: '120px' }}>
                                     <div style={{ fontWeight: 600 }}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
@@ -234,145 +230,204 @@ export const RoomCalendarPage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {hours.map(h => (
-                            <tr key={h}>
+                        {currentSlots.map(slot => (
+                            <tr key={slot.number}>
                                 <td className="calendar-time-col" style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                                    {h}:00 - {h + 1}:00
+                                    Ca {slot.number}<br/>
+                                    <span style={{ fontSize: '0.6rem', fontWeight: 400 }}>{slot.startTime} - {slot.endTime}</span>
                                 </td>
                                 {days.map(d => {
-                                    const slotBookings = bookings.filter(b => {
-                                        const bDate = new Date(b.timeSlot)
-                                        const sameDay = bDate.getDate() === d.getDate() &&
-                                            bDate.getMonth() === d.getMonth() &&
-                                            bDate.getFullYear() === d.getFullYear()
-                                        const sameHour = bDate.getHours() === h
-                                        if (sameDay && sameHour) return true
-
-                                        const bStart = bDate.getTime()
-                                        const durationMs = b.duration * 60 * 60 * 1000
-                                        const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + durationMs
-
-                                        const cellStart = new Date(d)
-                                        cellStart.setHours(h, 0, 0, 0)
-                                        const cellStartMs = cellStart.getTime()
-
-                                        const cellEnd = new Date(cellStart)
-                                        cellEnd.setHours(h + 1, 0, 0, 0)
-                                        const cellEndMs = cellEnd.getTime()
-
-                                        return bStart < cellEndMs && bEnd > cellStartMs
-                                    })
-
-                                    const approved = slotBookings.find(b => {
-                                        const s = String(b.status || '').toLowerCase()
-                                        return s === 'approved' || s === 'active'
-                                    })
-                                    const isApproved = !!approved
-                                    const isSystemBooking = !approved?.requestedBy || approved?.requestedBy === '00000000-0000-0000-0000-000000000000'
-
-                                    const userName = currentUser?.fullName?.trim().toLowerCase()
-                                    const requestedName = approved?.requestedByName?.trim().toLowerCase()
-
-                                    const isMyClass = isApproved && isSystemBooking && requestedName === userName && !!userName
-                                    const isMyBooking = isApproved && !isSystemBooking && approved?.requestedBy === currentUser?.id
-
                                     const slotStart = new Date(d);
-                                    slotStart.setHours(h, 0, 0, 0);
-                                    const slotEnd = new Date(slotStart);
-                                    slotEnd.setHours(h + 1, 0, 0, 0);
+                                    const [sh, sm] = slot.startTime.split(':').map(Number);
+                                    slotStart.setHours(sh, sm, 0, 0);
+
+                                    const slotEnd = new Date(d);
+                                    const [eh, em] = slot.endTime.split(':').map(Number);
+                                    slotEnd.setHours(eh, em, 0, 0);
+
+                                    const slotStartMs = slotStart.getTime();
+                                    const slotEndMs = slotEnd.getTime();
+                                    const slotTotalMs = slotEndMs - slotStartMs;
+
+                                    const slotBookings = bookings.filter(b => {
+                                        const bStart = new Date(b.timeSlot).getTime();
+                                        const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + (b.duration * 60 * 60 * 1000);
+                                        return bStart < slotEndMs && bEnd > slotStartMs;
+                                    });
+
+                                    const approved = slotBookings.filter(b => {
+                                        const s = String(b.status || '').toLowerCase();
+                                        return s === 'approved' || s === 'active';
+                                    });
+
+                                    const teachingSchedule = approved.find(b => b.requestedBy === '00000000-0000-0000-0000-000000000000');
+                                    
+                                    // Calculate occupied time
+                                    let occupiedMs = 0;
+                                    approved.forEach(b => {
+                                        const bStart = new Date(b.timeSlot).getTime();
+                                        const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + (b.duration * 60 * 60 * 1000);
+                                        const intersectStart = Math.max(slotStartMs, bStart);
+                                        const intersectEnd = Math.min(slotEndMs, bEnd);
+                                        if (intersectEnd > intersectStart) {
+                                            occupiedMs += (intersectEnd - intersectStart);
+                                        }
+                                    });
+
+                                    const isFullyBooked = occupiedMs >= (slotTotalMs - 5 * 60 * 1000); // 5 min buffer
+
+                                    const pending = slotBookings.filter(b => String(b.status || '').toLowerCase() === 'pending');
+                                    const pendingCount = pending.length;
+                                    const hasUserRequested = pending.some(b => b.requestedBy === currentUser?.id);
 
                                     const now = new Date();
-                                    const isEnded = now > slotEnd;
-                                    const isStarted = now > slotStart;
+                                    const isPast = now > slotEnd;
 
-                                    const pendingBookings = slotBookings.filter(b => {
-                                        const s = String(b.status || '').toLowerCase()
-                                        return s === 'pending'
-                                    })
+                                    let cellContent;
 
-                                    // Logic: We show all pending requests during the hour. 
-                                    // The backend now handles the hard rejection once the hour ends.
-                                    const visiblePending = pendingBookings;
-                                    const pendingCount = visiblePending.length;
-                                    const hasUserRequested = visiblePending.some(b => b.requestedBy == currentUser?.id)
-
-                                    let cellContent
-
-                                    if (isApproved) {
-                                        let label = "ĐÃ ĐẶT"
-                                        let className = "slot-booked"
-
-                                        if (isMyClass) {
-                                            label = "LỚP CỦA TÔI"
-                                            className = "slot-my-class"
-                                        } else if (isMyBooking) {
-                                            label = "YÊU CẦU CỦA TÔI"
-                                            className = "slot-my-booking"
-                                        }
+                                    if (teachingSchedule) {
+                                        const userName = currentUser?.fullName?.trim().toLowerCase();
+                                        const requestedName = teachingSchedule.requestedByName?.trim().toLowerCase();
+                                        const isMyClass = requestedName === userName && !!userName;
 
                                         cellContent = (
                                             <div
-                                                className={className}
+                                                className={isMyClass ? "slot-my-class" : "slot-booked"}
                                                 onMouseEnter={(e) => {
-                                                    const isClass = isSystemBooking;
-                                                    const lines = isClass ? [
-                                                        { label: 'Môn học', value: approved.reason?.split(': ')[1]?.split(' (')[0] || 'N/A' },
-                                                        { label: 'Lớp', value: approved.reason?.split('(')[1]?.split(')')[0] || 'N/A' },
-                                                        { label: 'Giảng viên', value: approved.requestedByName || 'N/A' },
-                                                        { label: 'Thời gian', value: `${formatLocalTime(approved.timeSlot)} - ${formatLocalTime(approved.endTime || new Date())}` }
-                                                    ] : [
-                                                        { label: 'Bởi', value: getTeacherId(approved.requestedByName || '', approved.requestedByAccount?.email) },
-                                                        { label: 'Lý do', value: approved.reason || 'Không có lý do' }
-                                                    ];
-
                                                     setHoveredTooltip({
-                                                        title: isClass ? 'Lịch học' : 'Yêu cầu mượn phòng',
-                                                        icon: isClass ? <CalendarIcon size={12} /> : <Clock size={12} />,
-                                                        lines: lines,
+                                                        title: 'Lịch học',
+                                                        icon: <CalendarIcon size={12} />,
+                                                        lines: [
+                                                            { label: 'Môn học', value: teachingSchedule.reason?.split(': ')[1]?.split(' (')[0] || 'N/A' },
+                                                            { label: 'Lớp', value: teachingSchedule.reason?.split('(')[1]?.split(')')[0] || 'N/A' },
+                                                            { label: 'Giảng viên', value: teachingSchedule.requestedByName || 'N/A' },
+                                                            { label: 'Thời gian', value: `${formatLocalTime(teachingSchedule.timeSlot)} - ${formatLocalTime(teachingSchedule.endTime || new Date())}` }
+                                                        ],
                                                         targetRect: e.currentTarget.getBoundingClientRect()
                                                     });
                                                 }}
                                                 onMouseLeave={() => setHoveredTooltip(null)}
                                             >
-                                                <div style={{ fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase' }}>
-                                                    {label}
+                                                <div style={{ fontWeight: 700, fontSize: '0.6rem', textTransform: 'uppercase' }}>
+                                                    {isMyClass ? "LỚP CỦA TÔI" : "LỊCH HỌC"}
                                                 </div>
                                             </div>
-                                        )
-                                    } else if (!isEnded && !hasUserRequested) {
-                                        // Still time to book & no active request by user
-                                        // If someone else has a request, we show a badge on our book button
+                                        );
+                                    } else if (isFullyBooked) {
+                                        const mainApproved = approved[0];
+                                        const isMyBooking = mainApproved?.requestedBy === currentUser?.id;
+                                        
                                         cellContent = (
-                                            <div className="slot-available">
+                                            <div
+                                                className={isMyBooking ? "slot-my-booking" : "slot-booked"}
+                                                onMouseEnter={(e) => {
+                                                    if (!mainApproved) return;
+                                                    setHoveredTooltip({
+                                                        title: 'Đã đặt',
+                                                        icon: <Clock size={12} />,
+                                                        lines: [
+                                                            { label: 'Bởi', value: getTeacherId(mainApproved.requestedByName || '', mainApproved.requestedByAccount?.email) },
+                                                            { label: 'Lý do', value: mainApproved.reason || 'Không có lý do' },
+                                                            { label: 'Thời gian', value: `${formatLocalTime(mainApproved.timeSlot)} - ${formatLocalTime(mainApproved.endTime || new Date())}` }
+                                                        ],
+                                                        targetRect: e.currentTarget.getBoundingClientRect()
+                                                    });
+                                                }}
+                                                onMouseLeave={() => setHoveredTooltip(null)}
+                                            >
+                                                <div style={{ fontWeight: 700, fontSize: '0.6rem', textTransform: 'uppercase' }}>
+                                                    {isMyBooking ? "YÊU CẦU CỦA TÔI" : "ĐÃ ĐẶT"}
+                                                </div>
+                                            </div>
+                                        );
+                                    } else if (!isPast && !hasUserRequested) {
+                                        const isPartiallyBooked = approved.length > 0;
+                                        cellContent = (
+                                            <div className="slot-available" style={{ position: 'relative', width: '100%', height: '100%' }}>
                                                 <button
                                                     className="btn-book-slot"
-                                                    onClick={() => handleBookClick(d, h)}
-                                                    style={{ position: 'relative' }}
+                                                    onClick={() => handleBookClick(d, slot)}
+                                                    onMouseEnter={(e) => {
+                                                        const lines: any[] = [];
+                                                        if (isPartiallyBooked) {
+                                                            approved.forEach(b => {
+                                                                const bStart = new Date(b.timeSlot).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                                                                const bEnd = new Date(new Date(b.timeSlot).getTime() + b.duration * 3600000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                                                                lines.push({ label: 'Đã đặt', value: `${bStart} - ${bEnd} bởi ${getTeacherId(b.requestedByName || '', b.requestedByAccount?.email)}` });
+                                                            });
+                                                        }
+                                                        lines.push({ label: 'Chờ duyệt', value: pendingCount });
+                                                        lines.push({ label: 'Hành động', value: 'Nhấn để đặt' });
+                                                        
+                                                        setHoveredTooltip({
+                                                            title: isPartiallyBooked ? 'Khả dụng (Một phần)' : 'Khả dụng',
+                                                            icon: <Users size={12} />,
+                                                            lines: lines,
+                                                            targetRect: e.currentTarget.getBoundingClientRect()
+                                                        });
+                                                    }}
+                                                    onMouseLeave={() => setHoveredTooltip(null)}
                                                 >
-                                                    Đặt
+                                                    Còn trống
                                                     {pendingCount > 0 && (
                                                         <span className="req-badge">
                                                             {pendingCount}
                                                         </span>
                                                     )}
                                                 </button>
+                                                
+                                                {/* Visual Timeline for Partial Bookings */}
+                                                {isPartiallyBooked && (
+                                                    <div className="slot-timeline" style={{ position: 'absolute', bottom: 2, left: '5%', width: '90%', height: '3px', background: '#e2e8f0', borderRadius: '1.5px', overflow: 'hidden', pointerEvents: 'none' }}>
+                                                        {approved.map((b, idx) => {
+                                                            const bStart = new Date(b.timeSlot).getTime();
+                                                            const bEnd = bStart + (b.duration * 3600000);
+                                                            const intersectStart = Math.max(slotStartMs, bStart);
+                                                            const intersectEnd = Math.min(slotEndMs, bEnd);
+                                                            
+                                                            if (intersectEnd > intersectStart) {
+                                                                const leftPercent = ((intersectStart - slotStartMs) / slotTotalMs) * 100;
+                                                                const widthPercent = ((intersectEnd - intersectStart) / slotTotalMs) * 100;
+                                                                return (
+                                                                    <div key={idx} style={{
+                                                                        position: 'absolute',
+                                                                        left: `${leftPercent}%`,
+                                                                        width: `${widthPercent}%`,
+                                                                        height: '100%',
+                                                                        background: '#ef4444' // red for booked
+                                                                    }} />
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )
-                                    } else if (pendingCount > 0) {
-                                        // User has an active pending request (not yet started)
+                                        );
+                                    } else if (hasUserRequested) {
                                         cellContent = (
                                             <div className="slot-pending">
-                                                <span className="slot-pending-text">
-                                                    {pendingCount} Yêu cầu
-                                                </span>
-                                                <div style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 700, marginTop: '2px' }}>✓ ĐÃ GỬI</div>
+                                                <div style={{ fontWeight: 700, fontSize: '0.6rem', color: '#f59e0b' }}>CHỜ DUYỆT</div>
+                                                <div style={{ fontSize: '0.55rem', opacity: 0.8 }}>Đã gửi yêu cầu</div>
                                             </div>
-                                        )
-                                    } else if (isEnded) {
+                                        );
+                                    } else if (pendingCount > 0 && !isPast) {
+                                         cellContent = (
+                                            <div className="slot-available">
+                                                <button
+                                                    className="btn-book-slot"
+                                                    onClick={() => handleBookClick(d, slot)}
+                                                    style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}
+                                                >
+                                                    {pendingCount} Yêu cầu
+                                                </button>
+                                            </div>
+                                        );
+                                    } else if (isPast) {
                                         cellContent = <div className="slot-past" />
                                     }
 
-                                    return <td key={d.toISOString() + h} style={{ padding: '0', height: '32px', verticalAlign: 'middle' }}>{cellContent}</td>
+                                    return <td key={d.toISOString() + slot.number} style={{ padding: '0', height: '40px', verticalAlign: 'middle' }}>{cellContent}</td>
                                 })}
                             </tr>
                         ))}
@@ -423,6 +478,24 @@ export const RoomCalendarPage: React.FC = () => {
                             {room?.roomCode}
                         </span>
                     </div>
+                </div>
+
+                {/* Middle: Slot System Toggle */}
+                <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: 'var(--radius-md)', gap: '4px' }}>
+                    <button 
+                        className={`btn ${slotSystem === 'New' ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setSlotSystem('New')}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', height: 'auto' }}
+                    >
+                        Ca Mới
+                    </button>
+                    <button 
+                        className={`btn ${slotSystem === 'Old' ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setSlotSystem('Old')}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', height: 'auto' }}
+                    >
+                        Ca Cũ
+                    </button>
                 </div>
 
                 {/* Right Side: Week Navigation */}
@@ -497,52 +570,8 @@ export const RoomCalendarPage: React.FC = () => {
                             </button>
                         </div>
 
-                        <div style={{ padding: '1.5rem' }}>
-                            {isLecturer && (
-                                <div style={{
-                                    marginBottom: '1.5rem',
-                                    display: 'flex',
-                                    background: 'var(--bg-secondary)',
-                                    padding: '4px',
-                                    borderRadius: 'var(--radius-md)'
-                                }}>
-                                    <button
-                                        onClick={() => setBookingType('new')}
-                                        style={{
-                                            flex: 1,
-                                            padding: '0.5rem',
-                                            borderRadius: 'var(--radius-sm)',
-                                            background: bookingType === 'new' ? 'var(--bg-surface)' : 'transparent',
-                                            color: bookingType === 'new' ? 'var(--color-primary)' : 'var(--text-muted)',
-                                            fontWeight: bookingType === 'new' ? 600 : 500,
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            boxShadow: bookingType === 'new' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        Mượn phòng mới
-                                    </button>
-                                    <button
-                                        onClick={() => setBookingType('change')}
-                                        style={{
-                                            flex: 1,
-                                            padding: '0.5rem',
-                                            borderRadius: 'var(--radius-sm)',
-                                            background: bookingType === 'change' ? 'var(--bg-surface)' : 'transparent',
-                                            color: bookingType === 'change' ? 'var(--color-primary)' : 'var(--text-muted)',
-                                            fontWeight: bookingType === 'change' ? 600 : 500,
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            boxShadow: bookingType === 'change' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        Đổi phòng
-                                    </button>
-                                </div>
-                            )}
 
+                        <div style={{ padding: '1.5rem' }}>
                             <div style={{
                                 background: 'linear-gradient(to right, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05))',
                                 border: '1px solid rgba(99, 102, 241, 0.2)',
@@ -557,15 +586,54 @@ export const RoomCalendarPage: React.FC = () => {
                                     <div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Khung giờ</div>
                                         <div style={{ fontSize: '1rem', fontWeight: 600 }}>
-                                            {selectedSlot.date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                            {selectedSlot.date.toLocaleDateString('vi-VN', { weekday: 'short', month: 'short', day: 'numeric' })}
                                             <span style={{ margin: '0 0.5rem', opacity: 0.3 }}>|</span>
                                             <span style={{ color: 'var(--color-primary)' }}>
-                                                {selectedSlot.hour}:00 - {selectedSlot.hour + (bookingSettings ? bookingSettings.slotDurationMinutes / 60 : 1)}:00
+                                                Ca {selectedSlot.slot.number} ({selectedSlot.slot.startTime} - {selectedSlot.slot.endTime})
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
+
+                                <div style={{ marginTop: '1rem' }}>
+                                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Thời lượng mượn phòng</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                        {(() => {
+                                            const totalMins = getSlotTotalMinutes(selectedSlot.slot);
+                                            const buttons = [];
+                                            // Generate 30m increments up to the total slot duration
+                                            for (let m = 30; m < totalMins; m += 30) {
+                                                const hours = Math.floor(m / 60);
+                                                const mins = m % 60;
+                                                const label = hours > 0 ? `${hours} Giờ${mins > 0 ? ` ${mins} Phút` : ''}` : `${mins} Phút`;
+                                                buttons.push(
+                                                    <button 
+                                                        key={m}
+                                                        onClick={() => setDurationOption(m)}
+                                                        className={`btn ${durationOption === m ? 'btn-primary' : 'btn-outline'}`}
+                                                        style={{ flex: '1 1 calc(33.333% - 0.5rem)', padding: '0.4rem', fontSize: '0.75rem' }}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                );
+                                            }
+                                            // Always add "Cả Ca" at the end
+                                            buttons.push(
+                                                <button 
+                                                    key={0}
+                                                    onClick={() => setDurationOption(0)}
+                                                    className={`btn ${durationOption === 0 ? 'btn-primary' : 'btn-outline'}`}
+                                                    style={{ flex: '1 1 calc(33.333% - 0.5rem)', padding: '0.4rem', fontSize: '0.75rem' }}
+                                                >
+                                                    Cả Ca ({totalMins} Phút)
+                                                </button>
+                                            );
+                                            return buttons;
+                                        })()}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem' }}>
                                     <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '6px', borderRadius: '50%', color: 'var(--color-primary)' }}>
                                         <MapPin size={18} />
                                     </div>
@@ -576,30 +644,14 @@ export const RoomCalendarPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {bookingType === 'change' && (
-                                <div className="form-group">
-                                    <label className="form-label">Phòng ban đầu (Lớp hiện tại)</label>
-                                    <select
-                                        className="form-select"
-                                        value={originalRoomId}
-                                        onChange={(e) => setOriginalRoomId(e.target.value)}
-                                    >
-                                        <option value="">Chọn phòng hiện tại...</option>
-                                        {allRooms.map(r => (
-                                            <option key={r.id} value={r.roomCode}>{r.roomName} ({r.roomCode})</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
+                            <label className="modal-label-premium" style={{ display: 'block', marginBottom: '0.5rem' }}>Lý do mượn phòng</label>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Ghi chú {bookingType === 'change' ? '(Đổi phòng)' : '(Không bắt buộc)'}</label>
                                 <textarea
                                     className="form-textarea"
                                     value={reason}
                                     onChange={e => setReason(e.target.value)}
                                     rows={3}
-                                    placeholder={bookingType === 'change' ? "Tại sao bạn cần đổi phòng?" : "Nhập yêu cầu cụ thể hoặc lý do..."}
+                                    placeholder="Nhập yêu cầu cụ thể hoặc lý do..."
                                     style={{ resize: 'none' }}
                                 />
                             </div>
@@ -617,7 +669,7 @@ export const RoomCalendarPage: React.FC = () => {
                                 Hủy
                             </Button>
                             <Button variant="primary" onClick={handleConfirmBook} disabled={submitting}>
-                                {submitting ? <><Loading /> Đang xử lý</> : (bookingType === 'new' ? 'Xác nhận Đặt phòng' : 'Yêu cầu Đổi phòng')}
+                                {submitting ? <><Loading /> Đang xử lý</> : 'Xác nhận Đặt phòng'}
                             </Button>
                         </div>
                     </div>

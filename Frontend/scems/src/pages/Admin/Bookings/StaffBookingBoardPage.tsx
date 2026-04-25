@@ -14,6 +14,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { departmentService } from '../../../services/department.service'
 import { Department } from '../../../types/api'
 import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
+import { NEW_SLOTS, OLD_SLOTS, Slot } from '../../../helpers/slot.helper'
 
 export const StaffBookingBoardPage: React.FC = () => {
     const { user } = useAuth()
@@ -26,8 +27,9 @@ export const StaffBookingBoardPage: React.FC = () => {
     const [successMsg, setSuccessMsg] = useState('')
 
     // Modal State
+    const [slotSystem, setSlotSystem] = useState<'New' | 'Old'>('New')
     const [selectedSlotRoom, setSelectedSlotRoom] = useState<Room | null>(null)
-    const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null)
+    const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null)
     const [slotBookings, setSlotBookings] = useState<Booking[]>([])
     const [modalOpen, setModalOpen] = useState(false)
     const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null)
@@ -129,42 +131,40 @@ export const StaffBookingBoardPage: React.FC = () => {
         }
     }
 
-    const handleSlotClick = (room: Room, hour: number, bookingsInSlot: Booking[]) => {
+    const handleSlotClick = (room: Room, slot: Slot, bookingsInSlot: Booking[]) => {
         if (bookingsInSlot.length === 0) return
         setSelectedSlotRoom(room)
-        setSelectedSlotHour(hour)
+        setSelectedSlot(slot)
         setSlotBookings(bookingsInSlot)
         setModalOpen(true)
     }
 
-    const getSlotContent = (room: Room, hour: number) => {
+    const getSlotContent = (room: Room, slot: Slot) => {
         const roomId = room.id
-        const slotStart = new Date(selectedDate)
-        slotStart.setHours(hour, 0, 0, 0)
-        const slotEnd = new Date(selectedDate)
-        slotEnd.setHours(hour + 1, 0, 0, 0)
+        const [sh, sm] = slot.startTime.split(':').map(Number)
+        const [eh, em] = slot.endTime.split(':').map(Number)
+        const [y, m, d] = selectedDate.split('-').map(Number)
+        const slotStartMs = new Date(y, m - 1, d, sh, sm, 0).getTime()
+        const slotEndMs = new Date(y, m - 1, d, eh, em, 0).getTime()
+        const slotStart = new Date(slotStartMs)
+        const slotEnd = new Date(slotEndMs)
 
         const overlapsForSlot = bookings.filter(b => {
             if (b.roomId !== roomId) return false
-            const bStart = new Date(b.timeSlot)
-            const bEndRaw = b.endTime ? new Date(b.endTime) : null
-            const bEnd = !bEndRaw || isNaN(bEndRaw.getTime()) || bEndRaw.getFullYear() < 2000
-                ? new Date(bStart.getTime() + b.duration * 3600000)
-                : bEndRaw
-
-            // For change requests, we want to show them in the TARGET slot
-            return bStart < slotEnd && bEnd > slotStart
+            const bStart = new Date(b.timeSlot).getTime()
+            const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + (b.duration * 3600000)
+            return bStart < slotEndMs && bEnd > slotStartMs
         })
 
         const classInSlot = schedules.find(s => {
             if (s.roomId !== roomId) return false
             const sDate = s.date.split('T')[0]
             if (sDate !== selectedDate) return false
-            const [sh, sm] = s.startTime.split(':').map(Number)
-            const [eh, em] = s.endTime.split(':').map(Number)
-            const sTotalStart = sh + sm / 60
-            const sTotalEnd = eh + em / 60
-            return sTotalStart < (hour + 1) && sTotalEnd > hour
+            const [ssh, ssm] = s.startTime.split(':').map(Number)
+            const [seh, sem] = s.endTime.split(':').map(Number)
+            const sStartMs = new Date(y, m - 1, d, ssh, ssm, 0).getTime()
+            const sEndMs = new Date(y, m - 1, d, seh, sem, 0).getTime()
+            return sStartMs < slotEndMs && sEndMs > slotStartMs
         })
 
         // PRIORITIZE Change Requests for Staff visibility
@@ -194,13 +194,13 @@ export const StaffBookingBoardPage: React.FC = () => {
                 <div
                     className="scheduler-cell"
                     style={{ background: bgColor, cursor: 'pointer', border: `1px dashed ${borderColor}` }}
-                    onClick={() => handleSlotClick(room, hour, pendingBookings)}
+                    onClick={() => handleSlotClick(room, slot, pendingBookings)}
                 >
                     <div className="slot-content-wrapper">
                         <span className="slot-status-pill" style={{ background: bgColor, color: textColor, border: `1px solid ${borderColor}`, fontWeight: 800 }}>
                             {label}
                         </span>
-                        <div className="slot-main-text" style={{ color: textColor }}>Nhấn để xem</div>
+                        <div className="slot-main-text" style={{ color: textColor }}>Nhấn để xem {pendingBookings.length > 1 ? `(${pendingBookings.length})` : ''}</div>
                     </div>
                 </div>
             )
@@ -227,7 +227,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                     <div
                         className="scheduler-cell"
                         style={{ background: bgColor, cursor: 'pointer', border: `1px dashed ${borderColor}` }}
-                        onClick={() => handleSlotClick(room, hour, [outgoingRequest])}
+                        onClick={() => handleSlotClick(room, slot, [outgoingRequest])}
                     >
                         <div className="slot-content-wrapper">
                             <span className="slot-status-pill" style={{ background: bgColor, color: textColor, border: `1px solid ${borderColor}`, fontWeight: 800 }}>
@@ -249,25 +249,71 @@ export const StaffBookingBoardPage: React.FC = () => {
             )
         }
 
-        const approvedBooking = overlapsForSlot.find(b => b.status === BookingStatus.Approved)
-        if (approvedBooking) {
+        const approvedBookings = overlapsForSlot.filter(b => b.status === BookingStatus.Approved || b.status === BookingStatus.CheckedIn)
+        const isPartiallyBooked = approvedBookings.length > 0;
+        const isFullyBooked = approvedBookings.length > 0 && (() => {
+            let occ = 0;
+            approvedBookings.forEach(b => {
+                const bs = new Date(b.timeSlot).getTime();
+                const be = bs + b.duration * 3600000;
+                const is2 = Math.max(slotStartMs, bs);
+                const ie2 = Math.min(slotEndMs, be);
+                if (ie2 > is2) occ += (ie2 - is2);
+            });
+            return occ >= (slotEndMs - slotStartMs - 5 * 60000);
+        })();
+
+        if (isFullyBooked) {
+            const main = approvedBookings[0];
             return (
-                <div className="scheduler-cell slot-booked" onClick={() => handleSlotClick(room, hour, [approvedBooking])}>
-                    <div className="slot-content-wrapper">
+                <div className="scheduler-cell slot-booked" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => handleSlotClick(room, slot, approvedBookings)}>
+                    <div className="slot-timeline" style={{ position: 'absolute', bottom: 3, left: '5%', width: '90%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
+                        {approvedBookings.map((b, idx) => {
+                            const bs = new Date(b.timeSlot).getTime();
+                            const be = bs + b.duration * 3600000;
+                            const is2 = Math.max(slotStartMs, bs);
+                            const ie2 = Math.min(slotEndMs, be);
+                            if (ie2 <= is2) return null;
+                            return <div key={idx} style={{ position: 'absolute', left: `${((is2-slotStartMs)/(slotEndMs-slotStartMs))*100}%`, width: `${((ie2-is2)/(slotEndMs-slotStartMs))*100}%`, height: '100%', background: '#ef4444' }} />;
+                        })}
+                    </div>
+                    <div className="slot-content-wrapper" style={{ marginBottom: '8px' }}>
                         <span className="slot-status-pill pill-booked">ĐÃ ĐẶT</span>
-                        <div className="slot-main-text">{(approvedBooking.requestedByName || '').split(' ').pop()}</div>
+                        <div className="slot-main-text">{(main?.requestedByName || '').split(' ').pop()}{approvedBookings.length > 1 ? ` +${approvedBookings.length - 1}` : ''}</div>
                     </div>
                 </div>
             )
         }
 
-        return <div className="scheduler-cell slot-empty-staff"></div>
+        if (isPartiallyBooked) {
+            return (
+                <div className="scheduler-cell slot-available" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => handleSlotClick(room, slot, approvedBookings)}>
+                    <div className="slot-timeline" style={{ position: 'absolute', bottom: 3, left: '5%', width: '90%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
+                        {approvedBookings.map((b, idx) => {
+                            const bs = new Date(b.timeSlot).getTime();
+                            const be = bs + b.duration * 3600000;
+                            const is2 = Math.max(slotStartMs, bs);
+                            const ie2 = Math.min(slotEndMs, be);
+                            if (ie2 <= is2) return null;
+                            return <div key={idx} style={{ position: 'absolute', left: `${((is2-slotStartMs)/(slotEndMs-slotStartMs))*100}%`, width: `${((ie2-is2)/(slotEndMs-slotStartMs))*100}%`, height: '100%', background: '#ef4444' }} />;
+                        })}
+                    </div>
+                    <div className="slot-content-wrapper" style={{ marginBottom: '8px' }}>
+                        <span className="slot-status-pill pill-available" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>KHẢ DỤNG</span>
+                        <div className="slot-main-text" style={{ color: '#f59e0b' }}>{approvedBookings.length} đặt riêng</div>
+                    </div>
+                </div>
+            )
+        }
+
+        return (
+            <div className="scheduler-cell slot-available" style={{ pointerEvents: 'none' }}>
+                <span className="slot-status-pill pill-available" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>TRỐNG</span>
+            </div>
+        )
     }
 
-    const timeSlotsArray = Array.from({ length: 15 }, (_, i) => {
-        const h = i + 7
-        return { hour: h, label: `${h.toString().padStart(2, '0')}:00` }
-    })
+    const currentSlots = slotSystem === 'New' ? NEW_SLOTS : OLD_SLOTS;
 
     return (
         <div className="scheduler-container staff-mode">
@@ -289,6 +335,24 @@ export const StaffBookingBoardPage: React.FC = () => {
                         />
                         <CalendarIcon size={12} style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
                     </div>
+                </div>
+
+                {/* Slot System Toggle */}
+                <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: 'var(--radius-md)', gap: '4px', height: '32px', alignItems: 'center' }}>
+                    <button 
+                        className={`btn ${slotSystem === 'New' ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setSlotSystem('New')}
+                        style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', height: '24px' }}
+                    >
+                        Ca Mới
+                    </button>
+                    <button 
+                        className={`btn ${slotSystem === 'Old' ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setSlotSystem('Old')}
+                        style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', height: '24px' }}
+                    >
+                        Ca Cũ
+                    </button>
                 </div>
 
                 <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
@@ -337,10 +401,13 @@ export const StaffBookingBoardPage: React.FC = () => {
 
             <div className="scheduler-grid-wrapper">
                 {loading ? <Loading fullPage={false} /> : (
-                    <div className="scheduler-grid">
+                    <div className="scheduler-grid" style={{ gridTemplateColumns: `160px repeat(${currentSlots.length}, 1fr)` }}>
                         <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Phòng</div>
-                        {timeSlotsArray.map(slot => (
-                            <div key={slot.hour} className="scheduler-cell scheduler-header-cell">{slot.label}</div>
+                        {currentSlots.map(slot => (
+                            <div key={slot.number} className="scheduler-cell scheduler-header-cell" style={{ fontSize: '0.65rem' }}>
+                                Ca {slot.number}<br/>
+                                <span style={{ fontWeight: 400, opacity: 0.8 }}>{slot.startTime}-{slot.endTime}</span>
+                            </div>
                         ))}
 
                         {rooms.map(room => (
@@ -349,9 +416,9 @@ export const StaffBookingBoardPage: React.FC = () => {
                                     <div className="room-name-staff">{room.roomName}</div>
                                     <div className="room-code-staff">{room.roomCode}</div>
                                 </div>
-                                {timeSlotsArray.map(slot => (
-                                    <React.Fragment key={`${room.id}-${slot.hour}`}>
-                                        {getSlotContent(room, slot.hour)}
+                                {currentSlots.map(slot => (
+                                    <React.Fragment key={`${room.id}-${slot.number}`}>
+                                        {getSlotContent(room, slot)}
                                     </React.Fragment>
                                 ))}
                             </React.Fragment>
@@ -367,7 +434,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                         <div className="modal-panel-premium" style={{ maxWidth: '600px', width: '90%' }}>
                             <div className="modal-header-premium">
                                 <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Clock size={18} /> Quản lý Khung giờ: {selectedSlotHour}:00 - {selectedSlotHour! + 1}:00
+                                     <Clock size={18} /> Quản lý Khung giờ: Ca {selectedSlot?.number} ({selectedSlot?.startTime} - {selectedSlot?.endTime})
                                 </h3>
                                 <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
                                     <X size={20} />
@@ -416,17 +483,47 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                 )}
 
                                                 {!change.isChangeRequest ? (
-                                                    // Standard Booking Display
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem 1.5rem', fontSize: '0.95rem' }}>
-                                                        <div style={{ color: '#64748b', fontWeight: 600 }}>Người yêu cầu:</div>
-                                                        <div style={{ fontWeight: 700, color: '#1e293b' }}>{booking.requestedByName || booking.requestedByAccount?.fullName}</div>
-
-                                                        <div style={{ color: '#64748b', fontWeight: 600 }}>Thời lượng:</div>
-                                                        <div style={{ fontWeight: 600 }}>{booking.duration} Giờ</div>
-
-                                                        <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do:</div>
-                                                        <div style={{ fontStyle: 'italic', color: '#475569', lineHeight: 1.5 }}>"{cleanDisplayReason(booking.reason)}"</div>
-                                                    </div>
+                                                    // Standard Booking Display with mini-timeline
+                                                    (() => {
+                                                        const [y2, m2, d2] = selectedDate.split('-').map(Number);
+                                                        const [sh2, sm2] = (selectedSlot?.startTime || '00:00').split(':').map(Number);
+                                                        const [eh2, em2] = (selectedSlot?.endTime || '00:00').split(':').map(Number);
+                                                        const slotS = new Date(y2, m2-1, d2, sh2, sm2, 0).getTime();
+                                                        const slotE = new Date(y2, m2-1, d2, eh2, em2, 0).getTime();
+                                                        const slotTotal = slotE - slotS;
+                                                        const bS = new Date(booking.timeSlot).getTime();
+                                                        const bE = bS + booking.duration * 3600000;
+                                                        const is2 = Math.max(slotS, bS);
+                                                        const ie2 = Math.min(slotE, bE);
+                                                        const leftPct = slotTotal > 0 ? ((is2 - slotS) / slotTotal) * 100 : 0;
+                                                        const widthPct = slotTotal > 0 ? ((ie2 - is2) / slotTotal) * 100 : 0;
+                                                        const pad2 = (n: number) => n.toString().padStart(2, '0');
+                                                        const fmtMs = (ms: number) => { const dt = new Date(ms); return `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`; };
+                                                        return (
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                                {/* Mini timeline */}
+                                                                <div>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: '#94a3b8', marginBottom: '3px' }}>
+                                                                        <span>{selectedSlot?.startTime}</span>
+                                                                        <span style={{ color: '#6366f1', fontWeight: 700 }}>{fmtMs(bS)} → {fmtMs(bE)}</span>
+                                                                        <span>{selectedSlot?.endTime}</span>
+                                                                    </div>
+                                                                    <div style={{ position: 'relative', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                                                        <div style={{ position: 'absolute', left: `${leftPct}%`, width: `${widthPct}%`, height: '100%', background: booking.status === BookingStatus.Approved || booking.status === BookingStatus.CheckedIn ? '#6366f1' : '#fb923c', borderRadius: '2px' }} />
+                                                                    </div>
+                                                                </div>
+                                                                {/* Fields */}
+                                                                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1.5rem', fontSize: '0.9rem' }}>
+                                                                    <div style={{ color: '#64748b', fontWeight: 600 }}>Người yêu cầu:</div>
+                                                                    <div style={{ fontWeight: 700, color: '#1e293b' }}>{booking.requestedByName || booking.requestedByAccount?.fullName}</div>
+                                                                    <div style={{ color: '#64748b', fontWeight: 600 }}>Thời lượng:</div>
+                                                                    <div style={{ fontWeight: 600 }}>{Math.round(booking.duration * 60)} Phút</div>
+                                                                    <div style={{ color: '#64748b', fontWeight: 600 }}>Lý do:</div>
+                                                                    <div style={{ fontStyle: 'italic', color: '#475569', lineHeight: 1.5 }}>"{cleanDisplayReason(booking.reason)}"</div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()
                                                 ) : (
                                                     // Change Request Display (Restored comparison view)
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -453,7 +550,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                                     <MapPin size={14} /> {booking.room?.roomName}
                                                                 </div>
                                                                 <div style={{ fontSize: '0.75rem', color: 'var(--color-primary)', opacity: 0.8, marginTop: '2px', paddingLeft: '20px', fontWeight: 600 }}>
-                                                                    {formatDate(booking.timeSlot)} - Ca {selectedSlotHour && (selectedSlotHour - 6 > 0 ? (selectedSlotHour - 6) : 1)}
+                                                                    {formatDate(booking.timeSlot)} - Ca {selectedSlot?.number}
                                                                 </div>
                                                             </div>
                                                         </div>

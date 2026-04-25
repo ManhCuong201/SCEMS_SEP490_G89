@@ -7,7 +7,7 @@ public class Booking : BaseEntity
     public Guid RoomId { get; set; }
     public Guid RequestedBy { get; set; }
     public DateTime TimeSlot { get; set; }
-    public int Duration { get; set; }
+    public double Duration { get; set; }
     public string? Reason { get; set; }
     public string? RejectReason { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Pending;

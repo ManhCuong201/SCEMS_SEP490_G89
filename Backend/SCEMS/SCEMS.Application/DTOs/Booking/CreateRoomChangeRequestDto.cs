@@ -17,7 +17,7 @@ public class CreateRoomChangeRequestDto
     public DateTime TimeSlot { get; set; } // The time of the class
     
     [Required]
-    public int Duration { get; set; } // Duration in hours (or slots)
+    public double Duration { get; set; } // Duration in hours (or slots)
     
     [Required]
     public string Reason { get; set; } = string.Empty;

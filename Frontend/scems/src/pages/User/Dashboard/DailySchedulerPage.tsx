@@ -9,12 +9,14 @@ import { configService, BookingSettings } from '../../../services/config.service
 import { Room, RoomType, ScheduleResponse, Booking, BookingStatus, CreateScheduleChangeRequest } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
+import { Button } from '../../../components/Common/Button'
 import { X, Calendar as CalendarIcon, Clock, Filter, MapPin, Search, Users, Info, ArrowRight, MessageSquare } from 'lucide-react'
 import '../../../styles/scheduler.css'
 import { useAuth } from '../../../context/AuthContext'
 import { departmentService } from '../../../services/department.service'
 import { Department } from '../../../types/api'
 import { formatDate } from '../../../helpers/booking.helper'
+import { NEW_SLOTS, OLD_SLOTS, getTimeInMinutes, getSlotTotalMinutes, Slot } from '../../../helpers/slot.helper'
 
 /* --- Portal Tooltip Component --- */
 interface PortalTooltipProps {
@@ -83,30 +85,16 @@ export const DailySchedulerPage: React.FC = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('')
 
     const [modalOpen, setModalOpen] = useState(false)
+    const [slotSystem, setSlotSystem] = useState<'New' | 'Old'>('New')
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
-    const [selectedSlot, setSelectedSlot] = useState<{ date: string, hour: number } | null>(null)
+    const [selectedSlot, setSelectedSlot] = useState<{ date: string, slot: Slot } | null>(null)
+    const [durationOption, setDurationOption] = useState<number>(0) // 0 means full slot
+    const [approvedInSlot, setApprovedInSlot] = useState<Booking[]>([]) // approved bookings in this slot
     const [reason, setReason] = useState('')
     const [duration, setDuration] = useState(1)
     const [submitting, setSubmitting] = useState(false)
     const [modalError, setModalError] = useState<string | React.ReactNode>('')
     const [modalSuccess, setModalSuccess] = useState('')
-
-    const [isChangeRequest, setIsChangeRequest] = useState(false)
-    const [selectedSchedule, setSelectedSchedule] = useState<ScheduleResponse | null>(null)
-    const [newRoomId, setNewRoomId] = useState('')
-    const [newDate, setNewDate] = useState('')
-    const [slotType, setSlotType] = useState('New')
-    const [newSlot, setNewSlot] = useState(1)
-
-    const getSlotTimes = (type: string, slotNumber: number) => {
-        if (type === 'Old') {
-            const times = { 1: '07:30 - 09:00', 2: '09:10 - 10:40', 3: '10:50 - 12:20', 4: '12:50 - 14:20', 5: '14:30 - 16:00', 6: '16:10 - 17:40', 7: '18:00 - 19:30', 8: '19:45 - 21:15' };
-            return times[slotNumber as keyof typeof times] || '';
-        } else {
-            const times = { 1: '07:30 - 09:50', 2: '10:00 - 12:20', 3: '12:50 - 15:10', 4: '15:20 - 17:40', 5: '18:00 - 20:20', 6: '20:00 - 22:20' };
-            return times[slotNumber as keyof typeof times] || '';
-        }
-    }
 
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
 
@@ -161,35 +149,35 @@ export const DailySchedulerPage: React.FC = () => {
         }
     }, [selectedDate])
 
-    const handleBookClick = (room: Room, hour: number, alreadyRequested: boolean, classSchedule?: ScheduleResponse) => {
+    // Compute contiguous free blocks within [slotStartMs, slotEndMs] given approved bookings
+    const computeFreeBlocks = (slotStartMs: number, slotEndMs: number, approved: Booking[]): { start: number; end: number }[] => {
+        const bookedRanges = approved.map(b => {
+            const s = new Date(b.timeSlot).getTime();
+            const e = s + b.duration * 3600000;
+            return { start: Math.max(slotStartMs, s), end: Math.min(slotEndMs, e) };
+        }).filter(r => r.end > r.start).sort((a, b) => a.start - b.start);
+
+        const freeBlocks: { start: number; end: number }[] = [];
+        let cursor = slotStartMs;
+        for (const r of bookedRanges) {
+            if (r.start > cursor) freeBlocks.push({ start: cursor, end: r.start });
+            cursor = Math.max(cursor, r.end);
+        }
+        if (cursor < slotEndMs) freeBlocks.push({ start: cursor, end: slotEndMs });
+        return freeBlocks;
+    }
+
+    const handleBookClick = (room: Room, slot: Slot, alreadyRequested: boolean, slotApproved: Booking[] = []) => {
         if (alreadyRequested) return
 
         setModalError('')
         setModalSuccess('')
 
-        if (classSchedule) {
-            setIsChangeRequest(true)
-            const [sh] = (classSchedule.startTime || "0:0").split(':').map(Number)
-            const [eh] = (classSchedule.endTime || "0:0").split(':').map(Number)
-            const dur = eh - sh
-
-            const sDate = classSchedule.date.split('T')[0]
-            setSelectedSlot({ date: sDate, hour: sh })
-            setSelectedRoom(room)
-            setSelectedSchedule(classSchedule)
-            setNewRoomId(room.id)
-            setNewDate(sDate)
-            setSlotType('New')
-            setNewSlot(classSchedule.slot || 1)
-            setReason('')
-            setDuration(dur > 0 ? dur : 1)
-        } else {
-            setIsChangeRequest(false)
-            setSelectedSchedule(null)
-            setSelectedRoom(room)
-            setSelectedSlot({ date: selectedDate, hour })
-            setDuration(1)
-        }
+        setSelectedRoom(room)
+        setSelectedSlot({ date: selectedDate, slot })
+        setDuration(1)
+        setDurationOption(0)
+        setApprovedInSlot(slotApproved)
 
         setModalOpen(true)
         setReason('')
@@ -202,59 +190,49 @@ export const DailySchedulerPage: React.FC = () => {
         setModalSuccess('')
 
         try {
-            // Use local date parsing to avoid UTC shift
             const [y, m, d] = selectedSlot.date.split('-').map(Number)
-            const slotDate = new Date(y, m - 1, d, selectedSlot.hour, 0, 0)
-
-            // Check if slot end is in the past
-            const slotEndTime = new Date(y, m - 1, d, selectedSlot.hour + duration, 0, 0)
+            const [sh, sm] = selectedSlot.slot.startTime.split(':').map(Number)
+            const [eh, em] = selectedSlot.slot.endTime.split(':').map(Number)
+            const slotStartMs = new Date(y, m - 1, d, sh, sm, 0).getTime()
+            const slotEndMs = new Date(y, m - 1, d, eh, em, 0).getTime()
 
             const now = new Date()
-            if (slotEndTime < now) {
-                setModalError('Không thể đặt hoặc đổi phòng vào thời gian đã qua.')
+            const finalDurationMs = (durationOption > 0 ? durationOption : getSlotTotalMinutes(selectedSlot.slot)) * 60000;
+
+            // Find earliest free block that fits the requested duration
+            const freeBlocks = computeFreeBlocks(slotStartMs, slotEndMs, approvedInSlot);
+            const fittingBlock = freeBlocks.find(b => (b.end - b.start) >= finalDurationMs);
+
+            if (!fittingBlock) {
+                setModalError('Không còn khoảng thời gian trống đủ để đặt với thời lượng này.');
+                setSubmitting(false);
+                return;
+            }
+
+            // Use now as start if the block already started
+            let bookingStart = Math.max(fittingBlock.start, now.getTime());
+            // Snap to the block start if block hasn't started yet
+            if (fittingBlock.start >= now.getTime()) bookingStart = fittingBlock.start;
+
+            const bookingEnd = bookingStart + finalDurationMs;
+
+            if (bookingEnd < now.getTime()) {
+                setModalError('Không thể đặt phòng vào thời gian đã qua.')
                 setSubmitting(false)
                 return
             }
 
-            // Format as YYYY-MM-DDTHH:mm:ss for backend
+            const startDate = new Date(bookingStart)
             const pad = (n: number) => n.toString().padStart(2, '0')
-            const isoLocal = `${y}-${pad(m)}-${pad(d)}T${pad(selectedSlot.hour)}:00:00`
+            const isoLocal = `${startDate.getFullYear()}-${pad(startDate.getMonth()+1)}-${pad(startDate.getDate())}T${pad(startDate.getHours())}:${pad(startDate.getMinutes())}:00`
 
-            if (isChangeRequest && selectedSchedule) {
-                if (!newRoomId) {
-                    setModalError('Vui lòng chọn phòng mới')
-                    setSubmitting(false)
-                    return
-                }
-
-                const targetSlotEndHour = slotType === 'New' ? (newSlot === 1 ? 10 : newSlot === 2 ? 12 : newSlot === 3 ? 15 : newSlot === 4 ? 18 : newSlot === 5 ? 20 : 22) : (newSlot + 8);
-                const [y1, m1, d1] = newDate.split('-').map(Number);
-                const targetEndTime = new Date(y1, m1 - 1, d1, targetSlotEndHour, 30, 0);
-
-                if (targetEndTime < new Date()) {
-                    setModalError('Không thể đổi lịch sang thời gian đã qua.');
-                    setSubmitting(false);
-                    return;
-                }
-
-                await bookingService.createScheduleChangeRequest({
-                    scheduleId: selectedSchedule.id,
-                    newRoomId: newRoomId,
-                    newDate: newDate,
-                    slotType: slotType,
-                    newSlot: newSlot,
-                    reason: `[Schedule Change Request] Môn học: ${selectedSchedule.subject} - Lớp: ${selectedSchedule.classCode}. Original: [Room: ${selectedSchedule.roomName}, Date: ${formatDate(selectedSchedule.date)}, Slot: ${selectedSchedule.slot}]. Reason: ${reason}`
-                })
-                setModalSuccess('Đã gửi yêu cầu đổi lịch học!')
-            } else {
-                await bookingService.createBooking({
-                    roomId: selectedRoom.id,
-                    timeSlot: isoLocal,
-                    duration: duration,
-                    reason: reason
-                })
-                setModalSuccess('Đã gửi yêu cầu mượn phòng!')
-            }
+            await bookingService.createBooking({
+                roomId: selectedRoom.id,
+                timeSlot: isoLocal,
+                duration: finalDurationMs / 3600000,
+                reason: reason
+            })
+            setModalSuccess('Đã gửi yêu cầu mượn phòng!')
 
             loadSchedulesAndBookings()
             setTimeout(() => {
@@ -287,41 +265,68 @@ export const DailySchedulerPage: React.FC = () => {
         return email.split('@')[0];
     };
 
-    const getSlotContent = (room: Room, hour: number) => {
+    const getSlotContent = (room: Room, slot: Slot) => {
         const roomId = room.id
-        const slotStart = new Date(selectedDate)
-        slotStart.setHours(hour, 0, 0, 0)
-        const slotEnd = new Date(selectedDate)
-        slotEnd.setHours(hour + 1, 0, 0, 0)
+        const [sh, sm] = slot.startTime.split(':').map(Number)
+        const [eh, em] = slot.endTime.split(':').map(Number)
+
+        const [y, m, d] = selectedDate.split('-').map(Number)
+        const slotStart = new Date(y, m - 1, d, sh, sm, 0)
+        const slotEnd = new Date(y, m - 1, d, eh, em, 0)
+
+        const slotStartMs = slotStart.getTime()
+        const slotEndMs = slotEnd.getTime()
+        const slotTotalMs = slotEndMs - slotStartMs
 
         const overlapsForSlot = bookings.filter(b => {
             if (b.roomId !== roomId) return false
-            const bStart = new Date(b.timeSlot)
-            const bEndRaw = b.endTime ? new Date(b.endTime) : null
-            const bEnd = !bEndRaw || isNaN(bEndRaw.getTime()) || bEndRaw.getFullYear() < 2000
-                ? new Date(bStart.getTime() + b.duration * 3600000)
-                : bEndRaw
+            const bStart = new Date(b.timeSlot).getTime()
+            const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + (b.duration * 3600000)
 
-            return bStart < slotEnd && bEnd > slotStart
+            return bStart < slotEndMs && bEnd > slotStartMs
         })
 
+        const approved = overlapsForSlot.filter(b => b.status === 'Approved' || b.status === 'Active')
         const pendingForSlot = overlapsForSlot.filter(b => b.status === "Pending")
         const alreadyRequested = pendingForSlot.some(b => b.requestedBy?.toLowerCase() === user?.id?.toLowerCase())
+
+        // Calculate occupied time
+        let occupiedMs = 0
+        approved.forEach(b => {
+            const bStart = new Date(b.timeSlot).getTime()
+            const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + (b.duration * 3600000)
+            const intersectStart = Math.max(slotStartMs, bStart)
+            const intersectEnd = Math.min(slotEndMs, bEnd)
+            if (intersectEnd > intersectStart) {
+                occupiedMs += (intersectEnd - intersectStart)
+            }
+        })
+
+        const isFullyBooked = occupiedMs >= (slotTotalMs - 5 * 60 * 1000)
 
         const classInSlot = schedules.find(s => {
             if (s.roomId !== roomId) return false
             const sDate = s.date.split('T')[0]
             if (sDate !== selectedDate) return false
 
-            const [sh, sm] = s.startTime.split(':').map(Number)
-            const [eh, em] = s.endTime.split(':').map(Number)
-            const sTotalStart = sh + sm / 60
-            const sTotalEnd = eh + em / 60
+            const [ssh, ssm] = s.startTime.split(':').map(Number)
+            const [seh, sem] = s.endTime.split(':').map(Number)
+            const sStartMs = new Date(y, m - 1, d, ssh, ssm, 0).getTime()
+            const sEndMs = new Date(y, m - 1, d, seh, sem, 0).getTime()
 
-            return sTotalStart < (hour + 1) && sTotalEnd > hour
+            return sStartMs < slotEndMs && sEndMs > slotStartMs
         })
 
         const isPast = new Date() > slotEnd
+
+        // Compute actual bookable free time (clamp to now for current-day slots)
+        const effectiveSlotStartMs = Math.max(slotStartMs, Date.now())
+        const freeBlocksNow = computeFreeBlocks(effectiveSlotStartMs, slotEndMs, approved)
+        const maxFreeBlockMs = freeBlocksNow.reduce((acc, b) => Math.max(acc, b.end - b.start), 0)
+        const noBookableTime = !isPast && maxFreeBlockMs < 30 * 60000
+
+        // Check if there are ANY approved/active bookings
+        const isPartiallyBooked = approved.length > 0;
 
         if (classInSlot) {
             const lecturerEmail = (classInSlot as any).lecturerEmail as string | undefined;
@@ -330,7 +335,6 @@ export const DailySchedulerPage: React.FC = () => {
             return (
                 <div
                     className={`scheduler-cell slot-class ${isMyClass ? 'my-class' : ''} ${isPast ? 'slot-past' : ''}`}
-                    onClick={() => !isPast && isMyClass && handleBookClick(room, hour, false, classInSlot)}
                     onMouseEnter={(e) => setHoveredTooltip({
                         title: 'Lịch học',
                         icon: <CalendarIcon size={12} />,
@@ -338,8 +342,7 @@ export const DailySchedulerPage: React.FC = () => {
                             { label: 'Môn học', value: classInSlot.subject },
                             { label: 'Lớp', value: classInSlot.classCode },
                             { label: 'Giảng viên', value: getTeacherId(classInSlot.lecturerName, (classInSlot as any).lecturerEmail) },
-                            { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` },
-                            isMyClass ? { label: 'Hành động', value: 'Nhấn để đổi phòng' } : { label: 'Trạng thái', value: 'Đang có lớp' }
+                            { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` }
                         ],
                         targetRect: e.currentTarget.getBoundingClientRect()
                     })}
@@ -353,67 +356,111 @@ export const DailySchedulerPage: React.FC = () => {
             )
         }
 
-        const approvedBooking = overlapsForSlot.find(b => b.status === 'Approved')
-
-        if (approvedBooking) {
+        if (isFullyBooked || noBookableTime) {
+            const mainApproved = approved[0]
             return (
                 <div
                     className="scheduler-cell slot-booked"
                     onMouseEnter={(e) => setHoveredTooltip({
-                        title: 'Yêu cầu mượn phòng',
+                        title: noBookableTime && !isFullyBooked ? 'Không khả dụng' : 'Yêu cầu mượn phòng',
                         icon: <Clock size={12} />,
-                        lines: [
-                            { label: 'Bởi', value: getTeacherId(approvedBooking.requestedByName || '', approvedBooking.requestedByAccount?.email) },
-                            { label: 'Lý do', value: approvedBooking.reason || 'Không có lý do' }
-                        ],
+                        lines: noBookableTime && !isFullyBooked
+                            ? [{ label: 'Lý do', value: 'Thời gian còn lại < 30 phút' }]
+                            : [
+                                { label: 'Bởi', value: getTeacherId(mainApproved?.requestedByName || '', mainApproved?.requestedByAccount?.email) },
+                                { label: 'Lý do', value: mainApproved?.reason || 'Không có lý do' }
+                            ],
                         targetRect: e.currentTarget.getBoundingClientRect()
                     })}
                     onMouseLeave={() => setHoveredTooltip(null)}
                 >
                     <div className="slot-content-wrapper">
-                        <span className="slot-status-pill pill-booked">ĐÃ ĐẶT</span>
-                        <div className="slot-main-text">{(approvedBooking.requestedByName || '').split(' ').pop()}</div>
+                        <span className="slot-status-pill pill-booked">{noBookableTime && !isFullyBooked ? 'HẼT GIờ' : 'ĐÃ ĐẶT'}</span>
+                        <div className="slot-main-text">{isFullyBooked ? (mainApproved?.requestedByName || '').split(' ').pop() : ''}</div>
                     </div>
                 </div>
             )
         }
 
         if (isPast) {
-            return <div className="scheduler-cell" style={{ background: 'rgba(0,0,0,0.01)', opacity: 0.2 }}></div>
+            return (
+                <div className="scheduler-cell slot-past">
+                    <span className="slot-past-text">Hết giờ</span>
+                </div>
+            )
         }
 
         return (
             <div
                 className={`scheduler-cell slot-available ${alreadyRequested ? 'already-requested' : ''}`}
-                onClick={() => handleBookClick(room, hour, alreadyRequested)}
-                onMouseEnter={(e) => setHoveredTooltip({
-                    title: 'Khả dụng',
-                    icon: <Users size={12} />,
-                    lines: [
-                        { label: 'Chờ duyệt', value: pendingForSlot.length },
-                        alreadyRequested ? { label: 'Trạng thái', value: 'Đã gửi yêu cầu' } : { label: 'Hành động', value: 'Nhấn để đặt' }
-                    ],
-                    targetRect: e.currentTarget.getBoundingClientRect()
-                })}
+                onClick={() => handleBookClick(room, slot, alreadyRequested, approved)}
+                onMouseEnter={(e) => {
+                    const lines: any[] = [];
+                    if (isPartiallyBooked) {
+                        const ranges = approved.map(b => {
+                            const bStart = new Date(b.timeSlot).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                            const bEnd = new Date(new Date(b.timeSlot).getTime() + b.duration * 3600000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                            return `${bStart} - ${bEnd}`;
+                        }).join(', ');
+                        lines.push({ label: 'Đã đặt', value: ranges });
+                    }
+                    lines.push({ label: 'Chờ duyệt', value: pendingForSlot.length });
+                    lines.push(alreadyRequested ? { label: 'Trạng thái', value: 'Đã gửi yêu cầu' } : { label: 'Hành động', value: 'Nhấn để đặt' });
+                    
+                    setHoveredTooltip({
+                        title: isPartiallyBooked ? 'Khả dụng (Một phần)' : 'Khả dụng',
+                        icon: <Users size={12} />,
+                        lines: lines,
+                        targetRect: e.currentTarget.getBoundingClientRect()
+                    });
+                }}
                 onMouseLeave={() => setHoveredTooltip(null)}
+                style={{ position: 'relative' }}
             >
-                {pendingForSlot.length > 0 && (
+                {pendingForSlot.length > 0 && !alreadyRequested && (
                     <span className="slot-requests-badge">+{pendingForSlot.length}</span>
                 )}
-                <div className="slot-content-wrapper">
+                
+                {/* Visual Timeline for Partial Bookings */}
+                {isPartiallyBooked && (
+                    <div className="slot-timeline" style={{ position: 'absolute', bottom: 4, left: '5%', width: '90%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
+                        {approved.map((b, idx) => {
+                            const bStart = new Date(b.timeSlot).getTime();
+                            const bEnd = bStart + (b.duration * 3600000);
+                            const intersectStart = Math.max(slotStartMs, bStart);
+                            const intersectEnd = Math.min(slotEndMs, bEnd);
+                            
+                            if (intersectEnd > intersectStart) {
+                                const leftPercent = ((intersectStart - slotStartMs) / slotTotalMs) * 100;
+                                const widthPercent = ((intersectEnd - intersectStart) / slotTotalMs) * 100;
+                                return (
+                                    <div key={idx} style={{
+                                        position: 'absolute',
+                                        left: `${leftPercent}%`,
+                                        width: `${widthPercent}%`,
+                                        height: '100%',
+                                        background: '#ef4444' // red for booked
+                                    }} />
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
+                )}
+                
+                <div className="slot-content-wrapper" style={{ marginBottom: isPartiallyBooked ? '8px' : '0' }}>
                     <span className={`slot-status-pill ${alreadyRequested ? 'pill-requested' : 'pill-available'}`}>
                         {alreadyRequested ? 'ĐÃ YÊU CẦU' : 'KHẢ DỤNG'}
                     </span>
+                    {!alreadyRequested && pendingForSlot.length > 0 && (
+                        <div className="slot-main-text text-pending">+{pendingForSlot.length} Yêu cầu</div>
+                    )}
                 </div>
             </div>
         )
     }
 
-    const timeSlotsArray = Array.from({ length: 15 }, (_, i) => {
-        const h = i + 7
-        const start = `${h.toString().padStart(2, '0')}:00`
-        return { hour: h, label: start }
-    })
+    const currentSlots = slotSystem === 'New' ? NEW_SLOTS : OLD_SLOTS;
 
     // Filter rooms logic: A room is "available" if at least one slot is NOT a class and NOT a booked session.
     const filteredRooms = rooms.filter(room => {
@@ -421,31 +468,28 @@ export const DailySchedulerPage: React.FC = () => {
 
         if (!availableOnly) return true;
 
-        // Check if ANY of the 16 slots is available (not a class, not approved booking)
-        return timeSlotsArray.some(slot => {
-            const hour = slot.hour;
-            const slotStart = new Date(selectedDate)
-            slotStart.setHours(hour, 0, 0, 0)
-            const slotEnd = new Date(selectedDate)
-            slotEnd.setHours(hour + 1, 0, 0, 0)
+        const [y, m, d] = selectedDate.split('-').map(Number)
+
+        return currentSlots.some(slot => {
+            const [sh, sm] = slot.startTime.split(':').map(Number)
+            const [eh, em] = slot.endTime.split(':').map(Number)
+            const slotStartMs = new Date(y, m - 1, d, sh, sm, 0).getTime()
+            const slotEndMs = new Date(y, m - 1, d, eh, em, 0).getTime()
 
             const hasClass = schedules.some(s => {
                 if (s.roomId !== room.id) return false;
-                const [sh, sm] = s.startTime.split(':').map(Number);
-                const [eh, em] = s.endTime.split(':').map(Number);
-                const sTotalStart = sh + sm / 60;
-                const sTotalEnd = eh + em / 60;
-                return sTotalStart < (hour + 1) && sTotalEnd > hour;
+                const [ssh, ssm] = s.startTime.split(':').map(Number);
+                const [seh, sem] = s.endTime.split(':').map(Number);
+                const sStartMs = new Date(y, m - 1, d, ssh, ssm, 0).getTime()
+                const sEndMs = new Date(y, m - 1, d, seh, sem, 0).getTime()
+                return sStartMs < slotEndMs && sEndMs > slotStartMs
             });
 
             const hasApprovedBooking = bookings.some(b => {
-                if (b.roomId !== room.id || b.status !== 'Approved') return false;
-                const bStart = new Date(b.timeSlot);
-                const bEndRaw = b.endTime ? new Date(b.endTime) : null;
-                const bEnd = !bEndRaw || isNaN(bEndRaw.getTime()) || bEndRaw.getFullYear() < 2000
-                    ? new Date(bStart.getTime() + b.duration * 3600000)
-                    : bEndRaw;
-                return bStart < slotEnd && bEnd > slotStart;
+                if (b.roomId !== room.id || (b.status !== 'Approved' && b.status !== 'Active')) return false;
+                const bStart = new Date(b.timeSlot).getTime();
+                const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + (b.duration * 3600000);
+                return bStart < slotEndMs && bEnd > slotStartMs;
             });
 
             return !hasClass && !hasApprovedBooking;
@@ -465,6 +509,24 @@ export const DailySchedulerPage: React.FC = () => {
                         />
                         <CalendarIcon size={12} style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
                     </div>
+                </div>
+
+                {/* Slot System Toggle */}
+                <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: 'var(--radius-md)', gap: '4px', height: '32px', alignItems: 'center' }}>
+                    <button 
+                        className={`btn ${slotSystem === 'New' ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setSlotSystem('New')}
+                        style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', height: '24px' }}
+                    >
+                        Ca Mới
+                    </button>
+                    <button 
+                        className={`btn ${slotSystem === 'Old' ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setSlotSystem('Old')}
+                        style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', height: '24px' }}
+                    >
+                        Ca Cũ
+                    </button>
                 </div>
 
                 <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
@@ -516,7 +578,7 @@ export const DailySchedulerPage: React.FC = () => {
                             onChange={(e) => setAvailableOnly(e.target.checked)}
                             className="custom-checkbox"
                         />
-                        <span className="custom-checkbox-label">Chỉ phòng trống</span>
+                        <span className="custom-checkbox-label" style={{ fontSize: '0.7rem' }}>Chỉ phòng trống</span>
                     </label>
                 </div>
             </div>
@@ -526,10 +588,13 @@ export const DailySchedulerPage: React.FC = () => {
 
             <div className="scheduler-grid-wrapper">
                 {loading ? <Loading fullPage={false} /> : (
-                    <div className="scheduler-grid">
+                    <div className="scheduler-grid" style={{ gridTemplateColumns: `140px repeat(${currentSlots.length}, 1fr)` }}>
                         <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Phòng</div>
-                        {timeSlotsArray.map(slot => (
-                            <div key={slot.hour} className="scheduler-cell scheduler-header-cell">{slot.label}</div>
+                        {currentSlots.map(slot => (
+                            <div key={slot.number} className="scheduler-cell scheduler-header-cell" style={{ fontSize: '0.6rem' }}>
+                                Ca {slot.number}<br/>
+                                <span style={{ fontWeight: 400, opacity: 0.8 }}>{slot.startTime}-{slot.endTime}</span>
+                            </div>
                         ))}
 
                         {filteredRooms.map(room => (
@@ -538,9 +603,9 @@ export const DailySchedulerPage: React.FC = () => {
                                     <div style={{ fontWeight: 900, fontSize: '0.65rem', color: '#0f172a', marginBottom: '0.05rem', lineHeight: 1.1 }}>{room.roomName}</div>
                                     <div style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 800 }}>{room.roomCode}</div>
                                 </div>
-                                {timeSlotsArray.map(slot => (
-                                    <React.Fragment key={`${room.id}-${slot.hour}`}>
-                                        {getSlotContent(room, slot.hour)}
+                                {currentSlots.map(slot => (
+                                    <React.Fragment key={`${room.id}-${slot.number}`}>
+                                        {getSlotContent(room, slot)}
                                     </React.Fragment>
                                 ))}
                             </React.Fragment>
@@ -553,196 +618,181 @@ export const DailySchedulerPage: React.FC = () => {
 
             {modalOpen && selectedSlot && selectedRoom && createPortal(
                 <div className="modal-overlay">
-                    <div className="modal-panel-premium">
-                        <div className="modal-header-premium">
-                            <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CalendarIcon size={18} /> {isChangeRequest ? 'Yêu cầu Đổi lịch học' : 'Yêu cầu Mượn phòng'}
-                            </h3>
-                            <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
+                    <div className="modal-content" style={{ maxWidth: '500px', width: '90%', padding: 0, overflow: 'hidden', background: '#ffffff', borderRadius: '12px' }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Xác nhận Đặt phòng</h3>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{selectedRoom?.roomName} ({selectedRoom?.roomCode})</p>
+                            </div>
+                            <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>
                                 <X size={20} />
                             </button>
                         </div>
 
-                        {(() => {
-                            const maxPossibleDuration = 23 - selectedSlot.hour
-                            const durationOptions = [1, 2, 3, 4, 5, 6, 7, 8].filter(h => h <= maxPossibleDuration)
+                        <div style={{ padding: '1.5rem' }}>
+                            {modalError && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <Alert type="error" message={modalError} onClose={() => setModalError('')} />
+                                </div>
+                            )}
+                            {modalSuccess && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <Alert type="success" message={modalSuccess} onClose={() => setModalSuccess('')} />
+                                </div>
+                            )}
 
-                            return (
-                                <>
-                                    <div className="modal-room-card">
-                                        {modalError && (
-                                            <div style={{ marginBottom: '1rem' }}>
-                                                <Alert type="error" message={modalError} onClose={() => setModalError('')} />
+                            {/* Dynamic modal info card using free block logic */}
+                            {(() => {
+                                const [y2, m2, d2] = selectedSlot.date.split('-').map(Number);
+                                const [sh2, sm2] = selectedSlot.slot.startTime.split(':').map(Number);
+                                const [eh2, em2] = selectedSlot.slot.endTime.split(':').map(Number);
+                                const slotStartMs2 = new Date(y2, m2-1, d2, sh2, sm2, 0).getTime();
+                                const slotEndMs2 = new Date(y2, m2-1, d2, eh2, em2, 0).getTime();
+                                const slotTotalMs2 = slotEndMs2 - slotStartMs2;
+                                const freeBlocks2 = computeFreeBlocks(slotStartMs2, slotEndMs2, approvedInSlot);
+                                const maxFreeMs = freeBlocks2.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
+                                const maxFreeMin = Math.floor(maxFreeMs / 60000);
+                                const pad2 = (n: number) => n.toString().padStart(2, '0');
+                                const fmtMs = (ms: number) => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+
+                                // Compute selected booking exact start/end
+                                const selectedMs = durationOption > 0 ? durationOption * 60000 : slotTotalMs2;
+                                const now2 = Date.now();
+                                const fitting2 = freeBlocks2.find(b => (b.end - b.start) >= selectedMs);
+                                const bookStart2 = fitting2 ? Math.max(fitting2.start, now2 <= fitting2.start ? fitting2.start : now2) : null;
+                                const bookEnd2 = bookStart2 !== null ? bookStart2 + selectedMs : null;
+
+                                return (
+                                    <div style={{
+                                        background: 'linear-gradient(to right, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05))',
+                                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: '1rem',
+                                        marginBottom: '1.5rem'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                            <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '6px', borderRadius: '50%', color: 'var(--color-primary)' }}>
+                                                <Clock size={18} />
                                             </div>
-                                        )}
-                                        {modalSuccess && (
-                                            <div style={{ marginBottom: '1rem' }}>
-                                                <Alert type="success" message={modalSuccess} onClose={() => setModalSuccess('')} />
+                                            <div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Khung giờ</div>
+                                                <div style={{ fontSize: '1rem', fontWeight: 600 }}>
+                                                    {new Date(selectedSlot.date).toLocaleDateString('vi-VN', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                    <span style={{ margin: '0 0.5rem', opacity: 0.3 }}>|</span>
+                                                    <span style={{ color: 'var(--color-primary)' }}>Ca {selectedSlot.slot.number}</span>
+                                                </div>
+                                                {bookStart2 !== null && bookEnd2 !== null && (
+                                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 700, marginTop: '0.15rem' }}>
+                                                        {fmtMs(bookStart2)} → {fmtMs(bookEnd2)}
+                                                    </div>
+                                                )}
+                                                {bookStart2 === null && (
+                                                    <div style={{ fontSize: '0.8rem', color: '#ef4444', marginTop: '0.15rem' }}>Không còn khoảng trống phù hợp</div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
 
-                                        {isChangeRequest && selectedSchedule ? (
-                                            <>
-                                                <div className="modal-info-row">
-                                                    <MapPin size={14} style={{ color: '#0f172a' }} />
-                                                    <span>Phòng ban đầu: <strong>{selectedSchedule.roomName || 'Đang cập nhật...'}</strong></span>
-                                                </div>
-                                                <div className="modal-info-row">
-                                                    <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                                    <span>Thời gian ban đầu: <strong>{formatDate(selectedSchedule.date)} (Ca {selectedSchedule.slot}: {selectedSchedule.startTime}-{selectedSchedule.endTime})</strong></span>
-                                                </div>
-                                                <div className="modal-info-row">
-                                                    <Info size={14} style={{ color: '#0f172a' }} />
-                                                    <span>Lớp: <strong>{selectedSchedule.subject} - {selectedSchedule.classCode}</strong></span>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="modal-info-row">
-                                                    <MapPin size={14} style={{ color: '#0f172a' }} />
-                                                    <span>Phòng hiện tại: <strong>{selectedRoom.roomName} ({selectedRoom.roomCode})</strong></span>
-                                                </div>
-                                                <div className="modal-info-row">
-                                                    <Clock size={14} style={{ color: '#0f172a' }} />
-                                                    <span>Thời gian: <strong>{selectedSlot.hour}:00 - {selectedSlot.hour + duration}:00</strong></span>
-                                                </div>
-                                                 <div className="modal-info-row">
-                                                     <CalendarIcon size={14} style={{ color: '#0f172a' }} />
-                                                     <span>Ngày: <strong>{new Date(selectedSlot.date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
-                                                 </div>
-                                            </>
-                                        )}
-                                    </div>
+                                        {/* Slot timeline */}
+                                        <div style={{ marginBottom: '0.75rem' }}>
+                                            <div style={{ position: 'relative', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                                {/* Booked segments */}
+                                                {approvedInSlot.map((b, idx) => {
+                                                    const bs = new Date(b.timeSlot).getTime();
+                                                    const be = bs + b.duration * 3600000;
+                                                    const is = Math.max(slotStartMs2, bs);
+                                                    const ie = Math.min(slotEndMs2, be);
+                                                    if (ie <= is) return null;
+                                                    return <div key={idx} style={{ position: 'absolute', left: `${((is - slotStartMs2)/slotTotalMs2)*100}%`, width: `${((ie-is)/slotTotalMs2)*100}%`, height: '100%', background: '#ef4444', borderRadius: '2px' }} />;
+                                                })}
+                                                {/* Selected booking highlight */}
+                                                {bookStart2 !== null && bookEnd2 !== null && (
+                                                    <div style={{ position: 'absolute', left: `${((bookStart2 - slotStartMs2)/slotTotalMs2)*100}%`, width: `${((bookEnd2-bookStart2)/slotTotalMs2)*100}%`, height: '100%', background: 'rgba(99,102,241,0.7)', borderRadius: '2px', border: '1px solid #6366f1' }} />
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                <span>{selectedSlot.slot.startTime}</span>
+                                                <span>{selectedSlot.slot.endTime}</span>
+                                            </div>
+                                        </div>
 
-                                    <div className="modal-body-premium">
-                                        <div className="modal-input-group">
-                                            {isChangeRequest ? (
-                                                <>
-                                                    <label className="modal-label-premium">Phòng mới</label>
-                                                    <select
-                                                        className="form-input"
-                                                        style={{ width: '100%', marginBottom: '1rem' }}
-                                                        value={newRoomId}
-                                                        onChange={(e) => setNewRoomId(e.target.value)}
-                                                    >
-                                                        {rooms.some(r => r.id === selectedSchedule?.roomId) ? null : (
-                                                            <option value={selectedSchedule?.roomId}>{selectedSchedule?.roomName} (Hiện tại)</option>
-                                                        )}
-                                                        {rooms.map(r => (
-                                                            <option key={r.id} value={r.id}>{r.roomName} ({r.roomCode})</option>
-                                                        ))}
-                                                    </select>
-                                                    
-                                                    <label className="modal-label-premium">Ngày mới</label>
-                                                    <input
-                                                        type="date"
-                                                        className="form-input"
-                                                        style={{ width: '100%', marginBottom: '1rem' }}
-                                                        value={newDate}
-                                                        onChange={e => setNewDate(e.target.value)}
-                                                    />
+                                        <div style={{ marginTop: '0.5rem' }}>
+                                            <label className="form-label" style={{ fontSize: '0.75rem' }}>Thời lượng mượn phòng</label>
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                                {(() => {
+                                                    const buttons = [];
+                                                    for (let mn = 30; mn < maxFreeMin; mn += 30) {
+                                                        const hours = Math.floor(mn / 60);
+                                                        const mins = mn % 60;
+                                                        const label = hours > 0 ? `${hours} Giờ${mins > 0 ? ` ${mins} Phút` : ''}` : `${mins} Phút`;
+                                                        buttons.push(
+                                                            <button key={mn} onClick={() => setDurationOption(mn)}
+                                                                className={`btn ${durationOption === mn ? 'btn-primary' : 'btn-outline'}`}
+                                                                style={{ flex: '1 1 calc(33.333% - 0.5rem)', padding: '0.4rem', fontSize: '0.75rem' }}>
+                                                                {label}
+                                                            </button>
+                                                        );
+                                                    }
+                                                    // Always add a final button for the exact maxFreeMin
+                                                    const isFullSlot = maxFreeMin === getSlotTotalMinutes(selectedSlot.slot);
+                                                    const finalOptVal = isFullSlot ? 0 : maxFreeMin;
+                                                    const finalHours = Math.floor(maxFreeMin / 60);
+                                                    const finalMins = maxFreeMin % 60;
+                                                    const finalBaseLabel = finalHours > 0 ? `${finalHours} Giờ${finalMins > 0 ? ` ${finalMins} Phút` : ''}` : `${finalMins} Phút`;
+                                                    const finalLabel = isFullSlot
+                                                        ? `Cả Ca (${maxFreeMin} Phút)`
+                                                        : `Còn lại (${finalBaseLabel})`;
+                                                    buttons.push(
+                                                        <button key={maxFreeMin} onClick={() => setDurationOption(finalOptVal)}
+                                                            className={`btn ${durationOption === finalOptVal ? 'btn-primary' : 'btn-outline'}`}
+                                                            style={{ flex: '1 1 calc(33.333% - 0.5rem)', padding: '0.4rem', fontSize: '0.75rem' }}>
+                                                            {finalLabel}
+                                                        </button>
+                                                    );
+                                                    return buttons;
+                                                })()}
+                                            </div>
+                                        </div>
 
-                                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                                        <div style={{ flex: 1 }}>
-                                                            <label className="modal-label-premium">Loại Ca học</label>
-                                                            <select
-                                                                className="form-input"
-                                                                style={{ width: '100%' }}
-                                                                value={slotType}
-                                                                onChange={e => {
-                                                                    setSlotType(e.target.value);
-                                                                    setNewSlot(1);
-                                                                }}
-                                                            >
-                                                                <option value="New">Ca mới (10 tuần)</option>
-                                                                <option value="Old">Ca cũ (3 tuần)</option>
-                                                            </select>
-                                                        </div>
-                                                        <div style={{ flex: 1 }}>
-                                                            <label className="modal-label-premium">Ca học</label>
-                                                            <select
-                                                                className="form-input"
-                                                                style={{ width: '100%' }}
-                                                                value={newSlot}
-                                                                onChange={e => setNewSlot(Number(e.target.value))}
-                                                            >
-                                                                {Array.from({ length: slotType === 'New' ? 6 : 8 }, (_, i) => i + 1).map(n => (
-                                                                    <option key={n} value={n}>Ca {n}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                        <Clock size={16} className="text-primary" />
-                                                        <span style={{ fontSize: '0.9rem' }}>
-                                                            Thời gian đã chọn: <strong>{getSlotTimes(slotType, newSlot)}</strong>
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <label className="modal-label-premium">Lý do Đổi lịch</label>
-                                                    <textarea
-                                                        className="modal-textarea-premium"
-                                                        value={reason}
-                                                        onChange={(e) => setReason(e.target.value)}
-                                                        placeholder="Giải thích ngắn gọn lý do cần đổi lịch học này..."
-                                                        rows={3}
-                                                    />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <label className="modal-label-premium">
-                                                        <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                        Thời lượng (Giờ)
-                                                    </label>
-                                                    <select
-                                                        className="form-input"
-                                                        style={{ width: '100%', marginBottom: '1rem' }}
-                                                        value={duration}
-                                                        onChange={(e) => setDuration(Number(e.target.value))}
-                                                    >
-                                                        {durationOptions.map(h => (
-                                                            <option key={h} value={h}>{h} {h === 1 ? 'Giờ' : 'Giờ'}</option>
-                                                        ))}
-                                                    </select>
-
-                                                    <label className="modal-label-premium">
-                                                        <MessageSquare size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                        Mục đích Mượn phòng
-                                                    </label>
-                                                    <textarea
-                                                        className="modal-textarea-premium"
-                                                        value={reason}
-                                                        onChange={(e) => setReason(e.target.value)}
-                                                        placeholder={`Giải thích ngắn gọn lý do bạn cần phòng này... (Không bắt buộc)`}
-                                                        rows={3}
-                                                    />
-                                                    <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        <Info size={10} /> Yêu cầu của bạn sẽ được nhân viên quản lý phòng xem xét.
-                                                    </div>
-                                                </>
-                                            )}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }}>
+                                            <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '6px', borderRadius: '50%', color: 'var(--color-primary)' }}>
+                                                <MapPin size={18} />
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Địa điểm</div>
+                                                <div style={{ fontSize: '0.95rem' }}>{selectedRoom?.roomName} ({selectedRoom?.roomCode})</div>
+                                            </div>
                                         </div>
                                     </div>
-                                </>
-                            )
-                        })()}
+                                );
+                            })()}
 
-                        <div className="modal-footer-premium">
-                            <button className="btn-modal btn-modal-cancel" onClick={() => setModalOpen(false)}>
+                            <label className="modal-label-premium" style={{ display: 'block', marginBottom: '0.5rem' }}>Lý do mượn phòng</label>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <textarea
+                                    className="form-textarea"
+                                    value={reason}
+                                    onChange={e => setReason(e.target.value)}
+                                    rows={3}
+                                    placeholder="Nhập yêu cầu cụ thể hoặc lý do..."
+                                    style={{ resize: 'none' }}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{
+                            padding: '1.25rem 1.5rem',
+                            background: 'rgba(0,0,0,0.05)',
+                            borderTop: '1px solid var(--border-glass)',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '1rem'
+                        }}>
+                            <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={submitting}>
                                 Hủy
-                            </button>
-                            <button
-                                className="btn-modal btn-modal-primary"
-                                onClick={handleConfirmBook}
-                                disabled={submitting}
-                            >
-                                {submitting ? 'Đang xử lý...' : (
-                                    <>
-                                        Xác nhận Yêu cầu <ArrowRight size={16} />
-                                    </>
-                                )}
-                            </button>
+                            </Button>
+                            <Button variant="primary" onClick={handleConfirmBook} disabled={submitting}>
+                                {submitting ? <><Loading /> Đang xử lý</> : 'Xác nhận Đặt phòng'}
+                            </Button>
                         </div>
                     </div>
                 </div>,

@@ -11,7 +11,7 @@ public class BookingResponseDto
     public Guid RequestedBy { get; set; }
     public DateTime TimeSlot { get; set; }
     public DateTime EndTime { get; set; } // Add precise end time
-    public int Duration { get; set; }
+    public double Duration { get; set; }
     public string? Reason { get; set; }
     public string BookingStatus { get; set; } // Rename or map enum string? The DTO has 'Status' enum type usually.
     // Wait, previous file content showed `public BookingStatus Status { get; set; }`

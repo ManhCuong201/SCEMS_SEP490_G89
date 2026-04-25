@@ -11,7 +11,7 @@ public class CreateBookingDto
     public DateTime TimeSlot { get; set; }
 
     [Required]
-    public int Duration { get; set; } = 1;
+    public double Duration { get; set; } = 1;
 
     public string? Reason { get; set; }
 }

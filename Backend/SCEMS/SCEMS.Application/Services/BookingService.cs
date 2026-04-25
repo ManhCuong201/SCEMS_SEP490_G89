@@ -127,9 +127,10 @@ public class BookingService : IBookingService
             errors.Add($"Thời gian mượn phòng phải trong khoảng từ {startHour}:00 đến {endHour}:00.");
         }
         
-        if ((dto.Duration * 60) % slotDuration != 0)
+        // Duration must be at least 30 minutes
+        if (!skipDurationCheck && dto.Duration < 0.5)
         {
-            errors.Add($"Thời lượng mượn phòng phải chính xác theo khung giờ ({slotDuration} phút).");
+            errors.Add("Thời lượng mượn phòng tối thiểu là 30 phút.");
         }
 
         if (!skipDurationCheck)
@@ -462,7 +463,11 @@ public class BookingService : IBookingService
     {
         var bookings = await _unitOfWork.Bookings.GetAll()
             .AsNoTracking()
-            .Where(b => b.RoomId == roomId && b.TimeSlot >= startDate && b.TimeSlot <= endDate && b.Status != BookingStatus.Rejected)
+            .Where(b => b.RoomId == roomId 
+                && b.TimeSlot >= startDate 
+                && b.TimeSlot <= endDate 
+                && b.Status != BookingStatus.Rejected 
+                && b.Status != BookingStatus.Cancelled)
             .Include(b => b.RequestedByAccount)
             .OrderBy(b => b.TimeSlot)
             .ToListAsync();
@@ -557,6 +562,7 @@ public class BookingService : IBookingService
         return _mapper.Map<List<BookingResponseDto>>(bookingsOnDay.OrderBy(b => b.TimeSlot).ToList());
     }
 
+
     public async Task<BookingResponseDto> CreateRoomChangeRequestAsync(CreateRoomChangeRequestDto dto, Guid userId)
     {
         var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
@@ -570,7 +576,6 @@ public class BookingService : IBookingService
             throw new InvalidOperationException("Không tìm thấy lịch dạy gốc.");
 
         // 1. Validation: No Change
-        // Check if the new request is identical to current schedule
         if (schedule.RoomId == dto.NewRoomId && schedule.Date == dto.TimeSlot.Date && schedule.StartTime == dto.TimeSlot.TimeOfDay)
         {
             throw new InvalidOperationException("Yêu cầu này trùng khớp hoàn toàn với lịch hiện tại. Vui lòng chọn phòng hoặc thời gian khác.");
