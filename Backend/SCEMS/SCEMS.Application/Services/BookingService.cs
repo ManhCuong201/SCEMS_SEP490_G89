@@ -190,23 +190,30 @@ public class BookingService : IBookingService
 
         if (room != null)
         {
-            // Check conflicts in Bookings (other approved or pending bookings for same room)
+            // Check conflicts in Bookings (other approved bookings for same room)
             // We ignore Rejected AND Cancelled bookings
-            var conflictingBooking = _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == dto.RoomId 
+            // NOTE: b.TimeSlot.AddHours(b.Duration) cannot be translated to SQL by EF Core
+            // when Duration is a DB column, so we fetch the broad set in SQL then filter in C#.
+            var candidateBookings = await _unitOfWork.Bookings.GetAll()
+                .Where(b => b.RoomId == dto.RoomId
                     && (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
-                    && b.TimeSlot < newEnd 
-                    && b.TimeSlot.AddHours(b.Duration) > newStart)
-                .ToList()
-                .Any(b => {
-                    // If this is a change request, ignore existing bookings that ARE for the same scheduleId
-                    if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
-                    {
-                        if (b.Reason.Contains(excludeScheduleId.ToString()!))
-                            return false;
-                    }
-                    return true;
-                });
+                    && b.TimeSlot < newEnd)
+                .ToListAsync();
+
+            var conflictingBooking = candidateBookings.Any(b =>
+            {
+                // Precise C# end-time overlap check (Duration is a double, safe in C#)
+                var bEnd = b.TimeSlot.AddHours(b.Duration);
+                if (bEnd <= newStart) return false;
+
+                // If this is a change request, ignore bookings for the same scheduleId
+                if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
+                {
+                    if (b.Reason.Contains(excludeScheduleId.ToString()!))
+                        return false;
+                }
+                return true;
+            });
 
             if (conflictingBooking)
             {
@@ -319,16 +326,34 @@ public class BookingService : IBookingService
             booking.RejectReason = rejectReason;
         }
         
-        // If approved, reject all other pending requests for the same slot?
+        // If approved, first verify no already-Approved booking conflicts exist
         if (status == BookingStatus.Approved || status == BookingStatus.CheckedIn)
         {
              var start = booking.TimeSlot;
              var end = booking.TimeSlot.AddHours(booking.Duration);
-             
-             var conflicting = _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == booking.RoomId && b.Id != booking.Id && b.Status == BookingStatus.Pending)
-                .ToList()
-                .Where(b => b.TimeSlot < end && b.TimeSlot.AddHours(b.Duration) > start)
+
+             // Guard: reject if an already-approved booking overlaps this one
+             var approvedCandidates = await _unitOfWork.Bookings.GetAll()
+                .Where(b => b.RoomId == booking.RoomId
+                    && b.Id != booking.Id
+                    && (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
+                    && b.TimeSlot < end)
+                .ToListAsync();
+
+             var alreadyApprovedConflict = approvedCandidates.Any(b => b.TimeSlot.AddHours(b.Duration) > start);
+
+             if (alreadyApprovedConflict)
+             {
+                 throw new InvalidOperationException("Không thể phê duyệt: phòng này đã được duyệt cho một yêu cầu khác trong cùng thời gian.");
+             }
+
+             // Auto-reject all other Pending requests that overlap (evaluated in C# for same reason)
+             var pendingCandidates = await _unitOfWork.Bookings.GetAll()
+                .Where(b => b.RoomId == booking.RoomId && b.Id != booking.Id && b.Status == BookingStatus.Pending && b.TimeSlot < end)
+                .ToListAsync();
+
+             var conflicting = pendingCandidates
+                .Where(b => b.TimeSlot.AddHours(b.Duration) > start)
                 .ToList();
             
              foreach(var conflict in conflicting)

@@ -167,7 +167,7 @@ export const DailySchedulerPage: React.FC = () => {
         return freeBlocks;
     }
 
-    const handleBookClick = (room: Room, slot: Slot, alreadyRequested: boolean, slotApproved: Booking[] = []) => {
+    const handleBookClick = (room: Room, slot: Slot, alreadyRequested: boolean, slotApproved: Booking[] = [], classInSlot?: ScheduleResponse) => {
         if (alreadyRequested) return
 
         setModalError('')
@@ -177,7 +177,28 @@ export const DailySchedulerPage: React.FC = () => {
         setSelectedSlot({ date: selectedDate, slot })
         setDuration(1)
         setDurationOption(0)
-        setApprovedInSlot(slotApproved)
+        
+        // Combine bookings and class into a single occupied list for the modal
+        const occupied = [...slotApproved];
+        if (classInSlot) {
+            // Convert class schedule to a Booking-like object for computeFreeBlocks
+            const [y, m, d] = selectedDate.split('-').map(Number);
+            const [sh, sm] = classInSlot.startTime.split(':').map(Number);
+            const [eh, em] = classInSlot.endTime.split(':').map(Number);
+            const start = new Date(y, m - 1, d, sh, sm, 0);
+            const end = new Date(y, m - 1, d, eh, em, 0);
+            
+            occupied.push({
+                id: classInSlot.id,
+                timeSlot: start.toISOString(),
+                duration: (end.getTime() - start.getTime()) / 3600000,
+                status: 'Approved',
+                roomId: room.id,
+                reason: `Class: ${classInSlot.subject}`
+            } as any);
+        }
+        
+        setApprovedInSlot(occupied)
 
         setModalOpen(true)
         setReason('')
@@ -197,22 +218,26 @@ export const DailySchedulerPage: React.FC = () => {
             const slotEndMs = new Date(y, m - 1, d, eh, em, 0).getTime()
 
             const now = new Date()
-            const finalDurationMs = (durationOption > 0 ? durationOption : getSlotTotalMinutes(selectedSlot.slot)) * 60000;
+            
+            // Re-calculate free blocks starting from NOW (or slot start if in future)
+            const effectiveStartMs = Math.max(slotStartMs, now.getTime());
+            const freeBlocks = computeFreeBlocks(effectiveStartMs, slotEndMs, approvedInSlot);
+            const maxFreeMs = freeBlocks.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
+            
+            // If durationOption is 0 (Full Slot), use the total max free time available
+            const finalDurationMs = (durationOption > 0 ? durationOption : (maxFreeMs / 60000)) * 60000;
 
             // Find earliest free block that fits the requested duration
-            const freeBlocks = computeFreeBlocks(slotStartMs, slotEndMs, approvedInSlot);
             const fittingBlock = freeBlocks.find(b => (b.end - b.start) >= finalDurationMs);
 
-            if (!fittingBlock) {
+            if (!fittingBlock || finalDurationMs < 30 * 60000) {
                 setModalError('Không còn khoảng thời gian trống đủ để đặt với thời lượng này.');
                 setSubmitting(false);
                 return;
             }
 
-            // Use now as start if the block already started
-            let bookingStart = Math.max(fittingBlock.start, now.getTime());
-            // Snap to the block start if block hasn't started yet
-            if (fittingBlock.start >= now.getTime()) bookingStart = fittingBlock.start;
+            // The booking starts at the beginning of the first fitting free block
+            const bookingStart = fittingBlock.start;
 
             const bookingEnd = bookingStart + finalDurationMs;
 
@@ -393,7 +418,7 @@ export const DailySchedulerPage: React.FC = () => {
         return (
             <div
                 className={`scheduler-cell slot-available ${alreadyRequested ? 'already-requested' : ''}`}
-                onClick={() => handleBookClick(room, slot, alreadyRequested, approved)}
+                onClick={() => handleBookClick(room, slot, alreadyRequested, approved, classInSlot)}
                 onMouseEnter={(e) => {
                     const lines: any[] = [];
                     if (isPartiallyBooked) {

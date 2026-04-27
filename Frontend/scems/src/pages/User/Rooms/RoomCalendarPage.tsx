@@ -198,8 +198,7 @@ export const RoomCalendarPage: React.FC = () => {
                 return;
             }
 
-            let bookingStart = Math.max(fittingBlock.start, now.getTime());
-            if (fittingBlock.start >= now.getTime()) bookingStart = fittingBlock.start;
+            const bookingStart = fittingBlock.start;
 
             const bookingEnd = bookingStart + finalDurationMs;
 
