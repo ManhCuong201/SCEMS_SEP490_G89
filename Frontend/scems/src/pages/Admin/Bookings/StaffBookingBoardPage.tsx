@@ -16,6 +16,47 @@ import { Department } from '../../../types/api'
 import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
 import { NEW_SLOTS, OLD_SLOTS, Slot } from '../../../helpers/slot.helper'
 
+/* --- Portal Tooltip Component --- */
+interface PortalTooltipProps {
+    title: string;
+    icon: React.ReactNode;
+    lines: { label: string; value: string | number }[];
+    targetRect: DOMRect | null;
+}
+
+const PortalTooltip: React.FC<PortalTooltipProps> = ({ title, icon, lines, targetRect }) => {
+    if (!targetRect) return null;
+
+    const style: React.CSSProperties = {
+        position: 'fixed',
+        zIndex: 11000,
+        top: `${targetRect.top - 12}px`,
+        left: `${targetRect.left + targetRect.width / 2}px`,
+        transform: 'translateX(-50%) translateY(-100%)'
+    };
+
+    if (targetRect.left + 220 > window.innerWidth) {
+        style.left = 'auto';
+        style.right = `${window.innerWidth - targetRect.right}px`;
+        style.transform = 'translateY(-100%)';
+    }
+
+    return createPortal(
+        <div className="portal-scheduler-tooltip" style={style}>
+            <div className="portal-tooltip-header">
+                {icon} {title}
+            </div>
+            {lines.map((line, idx) => (
+                <div key={idx} className="portal-tooltip-line">
+                    <span>{line.label}</span>
+                    <strong>{line.value}</strong>
+                </div>
+            ))}
+        </div>,
+        document.body
+    );
+};
+
 export const StaffBookingBoardPage: React.FC = () => {
     const { user } = useAuth()
     const [rooms, setRooms] = useState<Room[]>([])
@@ -34,6 +75,7 @@ export const StaffBookingBoardPage: React.FC = () => {
     const [modalOpen, setModalOpen] = useState(false)
     const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null)
     const [rejectReason, setRejectReason] = useState('')
+    const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
 
     const getLocalToday = () => {
         const now = new Date()
@@ -240,7 +282,21 @@ export const StaffBookingBoardPage: React.FC = () => {
             }
 
             return (
-                <div className="scheduler-cell slot-class">
+                <div 
+                    className="scheduler-cell slot-class"
+                    onMouseEnter={(e) => setHoveredTooltip({
+                        title: 'Lịch học',
+                        icon: <CalendarIcon size={12} />,
+                        lines: [
+                            { label: 'Môn học', value: classInSlot.subject },
+                            { label: 'Lớp', value: classInSlot.classCode },
+                            { label: 'Giảng viên', value: classInSlot.lecturerName || 'N/A' },
+                            { label: 'Thời gian', value: `${classInSlot.startTime} - ${classInSlot.endTime}` }
+                        ],
+                        targetRect: e.currentTarget.getBoundingClientRect()
+                    })}
+                    onMouseLeave={() => setHoveredTooltip(null)}
+                >
                     <div className="slot-content-wrapper">
                         <span className="slot-status-pill pill-class">LỚP HỌC</span>
                         <div className="slot-main-text">{classInSlot.subject}</div>
@@ -266,7 +322,22 @@ export const StaffBookingBoardPage: React.FC = () => {
         if (isFullyBooked) {
             const main = approvedBookings[0];
             return (
-                <div className="scheduler-cell slot-booked" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => handleSlotClick(room, slot, approvedBookings)}>
+                <div 
+                    className="scheduler-cell slot-booked" 
+                    style={{ position: 'relative', cursor: 'pointer' }} 
+                    onClick={() => handleSlotClick(room, slot, approvedBookings)}
+                    onMouseEnter={(e) => setHoveredTooltip({
+                        title: 'Đã đặt (Toàn bộ)',
+                        icon: <Clock size={12} />,
+                        lines: [
+                            { label: 'Người đặt', value: main?.requestedByName || 'N/A' },
+                            { label: 'Lý do', value: main?.reason || 'N/A' },
+                            { label: 'Số lượng', value: `${approvedBookings.length} yêu cầu` }
+                        ],
+                        targetRect: e.currentTarget.getBoundingClientRect()
+                    })}
+                    onMouseLeave={() => setHoveredTooltip(null)}
+                >
                     <div className="slot-timeline" style={{ position: 'absolute', bottom: 3, left: '5%', width: '90%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
                         {approvedBookings.map((b, idx) => {
                             const bs = new Date(b.timeSlot).getTime();
@@ -287,7 +358,21 @@ export const StaffBookingBoardPage: React.FC = () => {
 
         if (isPartiallyBooked) {
             return (
-                <div className="scheduler-cell slot-available" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => handleSlotClick(room, slot, approvedBookings)}>
+                <div 
+                    className="scheduler-cell slot-available" 
+                    style={{ position: 'relative', cursor: 'pointer' }} 
+                    onClick={() => handleSlotClick(room, slot, approvedBookings)}
+                    onMouseEnter={(e) => setHoveredTooltip({
+                        title: 'Khả dụng (Một phần)',
+                        icon: <Users size={12} />,
+                        lines: [
+                            { label: 'Đã đặt', value: `${approvedBookings.length} phần` },
+                            { label: 'Hành động', value: 'Nhấn để xem chi tiết' }
+                        ],
+                        targetRect: e.currentTarget.getBoundingClientRect()
+                    })}
+                    onMouseLeave={() => setHoveredTooltip(null)}
+                >
                     <div className="slot-timeline" style={{ position: 'absolute', bottom: 3, left: '5%', width: '90%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
                         {approvedBookings.map((b, idx) => {
                             const bs = new Date(b.timeSlot).getTime();
@@ -308,7 +393,9 @@ export const StaffBookingBoardPage: React.FC = () => {
 
         return (
             <div className="scheduler-cell slot-available" style={{ pointerEvents: 'none' }}>
-                <span className="slot-status-pill pill-available" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>TRỐNG</span>
+                <div className="slot-content-wrapper">
+                    <span className="slot-status-pill pill-available" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>TRỐNG</span>
+                </div>
             </div>
         )
     }
@@ -401,7 +488,7 @@ export const StaffBookingBoardPage: React.FC = () => {
 
             <div className="scheduler-grid-wrapper">
                 {loading ? <Loading fullPage={false} /> : (
-                    <div className="scheduler-grid" style={{ gridTemplateColumns: `160px repeat(${currentSlots.length}, 1fr)` }}>
+                    <div className="scheduler-grid" style={{ gridTemplateColumns: `120px repeat(${currentSlots.length}, 1fr)` }}>
                         <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Phòng</div>
                         {currentSlots.map(slot => (
                             <div key={slot.number} className="scheduler-cell scheduler-header-cell" style={{ fontSize: '0.65rem' }}>
@@ -708,6 +795,7 @@ export const StaffBookingBoardPage: React.FC = () => {
                     document.body
                 )
             )}
+            {hoveredTooltip && <PortalTooltip {...hoveredTooltip} />}
         </div>
     )
 }

@@ -91,11 +91,16 @@ public class BookingService : IBookingService
         // 1. Validation: Constraints
         var errors = new List<string>();
 
-        // Past Time Check (allowing actions if the slot ends in the future)
+        // Past Time Check
+        var now = DateTime.Now;
         var endTime = dto.TimeSlot.AddHours(dto.Duration);
-        if (endTime < DateTime.Now)
+        if (endTime < now)
         {
             errors.Add("Không thể mượn hoặc đổi phòng vào thời gian đã qua.");
+        }
+        else if (dto.TimeSlot < now.AddMinutes(-5)) // Allow 5 min buffer for network latency
+        {
+            errors.Add("Thời gian bắt đầu mượn phòng không thể ở quá khứ.");
         }
 
         // Start Time Check (Rough check before fetching config if we want to fail really early, 

@@ -73,6 +73,7 @@ export const RoomCalendarPage: React.FC = () => {
     const [successMsg, setSuccessMsg] = useState('')
     const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
+    const [approvedInSlot, setApprovedInSlot] = useState<Booking[]>([]) // approved bookings in this slot
 
     const currentUser = authService.getUser()
 
@@ -131,7 +132,25 @@ export const RoomCalendarPage: React.FC = () => {
         setCurrentDate(newDate)
     }
 
-    const handleBookClick = (date: Date, slot: Slot) => {
+    // Compute contiguous free blocks within [slotStartMs, slotEndMs] given approved bookings
+    const computeFreeBlocks = (slotStartMs: number, slotEndMs: number, approved: Booking[]): { start: number; end: number }[] => {
+        const bookedRanges = approved.map(b => {
+            const s = new Date(b.timeSlot).getTime();
+            const e = s + b.duration * 3600000;
+            return { start: Math.max(slotStartMs, s), end: Math.min(slotEndMs, e) };
+        }).filter(r => r.end > r.start).sort((a, b) => a.start - b.start);
+
+        const freeBlocks: { start: number; end: number }[] = [];
+        let cursor = slotStartMs;
+        for (const r of bookedRanges) {
+            if (r.start > cursor) freeBlocks.push({ start: cursor, end: r.start });
+            cursor = Math.max(cursor, r.end);
+        }
+        if (cursor < slotEndMs) freeBlocks.push({ start: cursor, end: slotEndMs });
+        return freeBlocks;
+    }
+
+    const handleBookClick = (date: Date, slot: Slot, slotApproved: Booking[] = []) => {
         const [h, m] = slot.startTime.split(':').map(Number)
         const slotDate = new Date(date)
         slotDate.setHours(h, m, 0, 0)
@@ -145,6 +164,7 @@ export const RoomCalendarPage: React.FC = () => {
         }
 
         setSelectedSlot({ date: slotDate, slot })
+        setApprovedInSlot(slotApproved)
         setModalOpen(true)
         setReason('')
         setDurationOption(0)
@@ -153,35 +173,50 @@ export const RoomCalendarPage: React.FC = () => {
     const handleConfirmBook = async () => {
         if (!selectedSlot || !id || !bookingSettings) return
         setSubmitting(true)
+        setError('')
         try {
-            let slotDate = new Date(selectedSlot.date.getTime());
-            const now = new Date()
-            if (slotDate < now && slotDate.getDate() === now.getDate() && slotDate.getMonth() === now.getMonth() && slotDate.getFullYear() === now.getFullYear()) {
-                slotDate = now;
+            const slotDate = new Date(selectedSlot.date.getTime());
+            const [eh, em] = selectedSlot.slot.endTime.split(':').map(Number);
+            const slotEndDate = new Date(selectedSlot.date.getTime());
+            slotEndDate.setHours(eh, em, 0, 0);
+
+            const slotStartMs = slotDate.getTime();
+            const slotEndMs = slotEndDate.getTime();
+            const now = new Date();
+            
+            const effectiveStartMs = Math.max(slotStartMs, now.getTime());
+            const freeBlocks = computeFreeBlocks(effectiveStartMs, slotEndMs, approvedInSlot);
+            const maxFreeMs = freeBlocks.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
+
+            let finalDurationMs = (durationOption > 0 ? durationOption : (maxFreeMs / 60000)) * 60000;
+            
+            const fittingBlock = freeBlocks.find(b => (b.end - b.start) >= finalDurationMs);
+
+            if (!fittingBlock) {
+                setError('Không còn khoảng thời gian trống đủ để đặt với thời lượng này.');
+                setSubmitting(false);
+                return;
             }
 
-            let duration = getSlotTotalMinutes(selectedSlot.slot) / 60;
-            if (durationOption > 0) duration = durationOption / 60;
+            let bookingStart = Math.max(fittingBlock.start, now.getTime());
+            if (fittingBlock.start >= now.getTime()) bookingStart = fittingBlock.start;
 
-            const slotEndTime = new Date(slotDate.getTime() + duration * 3600000)
-            if (slotEndTime < now) {
+            const bookingEnd = bookingStart + finalDurationMs;
+
+            if (bookingEnd < now.getTime()) {
                 setError('Không thể đặt phòng vào thời gian đã qua.')
                 setSubmitting(false)
                 return
             }
 
-            const outY = slotDate.getFullYear()
-            const outM = slotDate.getMonth() + 1
-            const outD = slotDate.getDate()
-            const outH = slotDate.getHours()
-            const outMin = slotDate.getMinutes()
+            const startDate = new Date(bookingStart)
             const pad = (n: number) => n.toString().padStart(2, '0')
-            const isoLocal = `${outY}-${pad(outM)}-${pad(outD)}T${pad(outH)}:${pad(outMin)}:00`
+            const isoLocal = `${startDate.getFullYear()}-${pad(startDate.getMonth()+1)}-${pad(startDate.getDate())}T${pad(startDate.getHours())}:${pad(startDate.getMinutes())}:00`
 
             await bookingService.createBooking({
                 roomId: id,
                 timeSlot: isoLocal,
-                duration: duration,
+                duration: finalDurationMs / 3600000,
                 reason: reason
             })
 
@@ -281,7 +316,13 @@ export const RoomCalendarPage: React.FC = () => {
                                     const hasUserRequested = pending.some(b => b.requestedBy === currentUser?.id);
 
                                     const now = new Date();
+                                    
+                                    // Compute actual bookable free time (clamp to now for current-day slots)
+                                    const effectiveSlotStartMs = Math.max(slotStartMs, now.getTime());
+                                    const freeBlocksNow = computeFreeBlocks(effectiveSlotStartMs, slotEndMs, approved);
+                                    const maxFreeBlockMs = freeBlocksNow.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
                                     const isPast = now > slotEnd;
+                                    const noBookableTime = !isPast && maxFreeBlockMs < 30 * 60000;
 
                                     let cellContent;
 
@@ -340,13 +381,13 @@ export const RoomCalendarPage: React.FC = () => {
                                                 </div>
                                             </div>
                                         );
-                                    } else if (!isPast && !hasUserRequested) {
+                                    } else if (!isPast && !hasUserRequested && !noBookableTime) {
                                         const isPartiallyBooked = approved.length > 0;
                                         cellContent = (
                                             <div className="slot-available" style={{ position: 'relative', width: '100%', height: '100%' }}>
                                                 <button
                                                     className="btn-book-slot"
-                                                    onClick={() => handleBookClick(d, slot)}
+                                                    onClick={() => handleBookClick(d, slot, approved)}
                                                     onMouseEnter={(e) => {
                                                         const lines: any[] = [];
                                                         if (isPartiallyBooked) {
@@ -411,19 +452,19 @@ export const RoomCalendarPage: React.FC = () => {
                                                 <div style={{ fontSize: '0.55rem', opacity: 0.8 }}>Đã gửi yêu cầu</div>
                                             </div>
                                         );
-                                    } else if (pendingCount > 0 && !isPast) {
+                                    } else if (pendingCount > 0 && !isPast && !noBookableTime) {
                                          cellContent = (
                                             <div className="slot-available">
                                                 <button
                                                     className="btn-book-slot"
-                                                    onClick={() => handleBookClick(d, slot)}
+                                                    onClick={() => handleBookClick(d, slot, approved)}
                                                     style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}
                                                 >
                                                     {pendingCount} Yêu cầu
                                                 </button>
                                             </div>
                                         );
-                                    } else if (isPast) {
+                                    } else if (isPast || noBookableTime) {
                                         cellContent = <div className="slot-past" />
                                     }
 
@@ -579,7 +620,7 @@ export const RoomCalendarPage: React.FC = () => {
                                 padding: '1rem',
                                 marginBottom: '1.5rem'
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                                     <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '6px', borderRadius: '50%', color: 'var(--color-primary)' }}>
                                         <Clock size={18} />
                                     </div>
@@ -589,20 +630,92 @@ export const RoomCalendarPage: React.FC = () => {
                                             {selectedSlot.date.toLocaleDateString('vi-VN', { weekday: 'short', month: 'short', day: 'numeric' })}
                                             <span style={{ margin: '0 0.5rem', opacity: 0.3 }}>|</span>
                                             <span style={{ color: 'var(--color-primary)' }}>
-                                                Ca {selectedSlot.slot.number} ({selectedSlot.slot.startTime} - {selectedSlot.slot.endTime})
+                                                Ca {selectedSlot.slot.number}
                                             </span>
                                         </div>
+                                        {(() => {
+                                            const [eh, em] = selectedSlot.slot.endTime.split(':').map(Number);
+                                            const slotEndDate = new Date(selectedSlot.date.getTime());
+                                            slotEndDate.setHours(eh, em, 0, 0);
+                                            const effectiveStartMs = Math.max(selectedSlot.date.getTime(), Date.now());
+                                            const freeBlocks = computeFreeBlocks(effectiveStartMs, slotEndDate.getTime(), approvedInSlot);
+                                            const maxFreeMs = freeBlocks.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
+                                            const selectedMs = durationOption > 0 ? durationOption * 60000 : maxFreeMs;
+                                            const fitting = freeBlocks.find(b => (b.end - b.start) >= selectedMs);
+                                            const bStart = fitting ? Math.max(fitting.start, Date.now()) : null;
+                                            const bEnd = bStart ? bStart + selectedMs : null;
+                                            const pad = (n: number) => n.toString().padStart(2, '0');
+                                            const fmt = (ms: number) => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+                                            
+                                            if (bStart && bEnd) {
+                                                return <div style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 700, marginTop: '0.15rem' }}>
+                                                    {fmt(bStart)} → {fmt(bEnd)}
+                                                </div>;
+                                            }
+                                            return <div style={{ fontSize: '0.8rem', color: '#ef4444', marginTop: '0.15rem' }}>Không còn khoảng trống phù hợp</div>;
+                                        })()}
                                     </div>
+                                </div>
+
+                                {/* Slot timeline */}
+                                <div style={{ marginBottom: '0.75rem' }}>
+                                    {(() => {
+                                        const [eh, em] = selectedSlot.slot.endTime.split(':').map(Number);
+                                        const slotEndDate = new Date(selectedSlot.date.getTime());
+                                        slotEndDate.setHours(eh, em, 0, 0);
+                                        const slotStartMs = selectedSlot.date.getTime();
+                                        const slotEndMs = slotEndDate.getTime();
+                                        const totalMs = slotEndMs - slotStartMs;
+                                        
+                                        const effectiveStartMs = Math.max(slotStartMs, Date.now());
+                                        const freeBlocks = computeFreeBlocks(effectiveStartMs, slotEndDate.getTime(), approvedInSlot);
+                                        const maxFreeMs = freeBlocks.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
+                                        const selectedMs = durationOption > 0 ? durationOption * 60000 : maxFreeMs;
+                                        const fitting = freeBlocks.find(b => (b.end - b.start) >= selectedMs);
+                                        const bStart = fitting ? Math.max(fitting.start, Date.now()) : null;
+                                        const bEnd = bStart ? bStart + selectedMs : null;
+
+                                        return (
+                                            <>
+                                                <div style={{ position: 'relative', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                                    {approvedInSlot.map((b, idx) => {
+                                                        const bs = new Date(b.timeSlot).getTime();
+                                                        const be = bs + b.duration * 3600000;
+                                                        const is = Math.max(slotStartMs, bs);
+                                                        const ie = Math.min(slotEndMs, be);
+                                                        if (ie <= is) return null;
+                                                        return <div key={idx} style={{ position: 'absolute', left: `${((is-slotStartMs)/totalMs)*100}%`, width: `${((ie-is)/totalMs)*100}%`, height: '100%', background: '#ef4444', borderRadius: '2px' }} />;
+                                                    })}
+                                                    {bStart && bEnd && (
+                                                        <div style={{ position: 'absolute', left: `${((bStart-slotStartMs)/totalMs)*100}%`, width: `${((bEnd-bStart)/totalMs)*100}%`, height: '100%', background: 'rgba(99,102,241,0.7)', borderRadius: '2px', border: '1px solid #6366f1' }} />
+                                                    )}
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                    <span>{selectedSlot.slot.startTime}</span>
+                                                    <span>{selectedSlot.slot.endTime}</span>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div style={{ marginTop: '1rem' }}>
                                     <label className="form-label" style={{ fontSize: '0.75rem' }}>Thời lượng mượn phòng</label>
                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                                         {(() => {
-                                            const totalMins = getSlotTotalMinutes(selectedSlot.slot);
+                                            const totalSlotMins = getSlotTotalMinutes(selectedSlot.slot);
+                                            const [eh, em] = selectedSlot.slot.endTime.split(':').map(Number);
+                                            const slotEndDate = new Date(selectedSlot.date.getTime());
+                                            slotEndDate.setHours(eh, em, 0, 0);
+                                            
+                                            const effectiveStartMs = Math.max(selectedSlot.date.getTime(), Date.now());
+                                            const freeBlocks = computeFreeBlocks(effectiveStartMs, slotEndDate.getTime(), approvedInSlot);
+                                            const maxFreeMs = freeBlocks.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
+                                            const maxFreeMin = Math.floor(maxFreeMs / 60000);
+
                                             const buttons = [];
                                             // Generate 30m increments up to the total slot duration
-                                            for (let m = 30; m < totalMins; m += 30) {
+                                            for (let m = 30; m < maxFreeMin; m += 30) {
                                                 const hours = Math.floor(m / 60);
                                                 const mins = m % 60;
                                                 const label = hours > 0 ? `${hours} Giờ${mins > 0 ? ` ${mins} Phút` : ''}` : `${mins} Phút`;
@@ -617,17 +730,20 @@ export const RoomCalendarPage: React.FC = () => {
                                                     </button>
                                                 );
                                             }
-                                            // Always add "Cả Ca" at the end
-                                            buttons.push(
-                                                <button 
-                                                    key={0}
-                                                    onClick={() => setDurationOption(0)}
-                                                    className={`btn ${durationOption === 0 ? 'btn-primary' : 'btn-outline'}`}
-                                                    style={{ flex: '1 1 calc(33.333% - 0.5rem)', padding: '0.4rem', fontSize: '0.75rem' }}
-                                                >
-                                                    Cả Ca ({totalMins} Phút)
-                                                </button>
-                                            );
+                                            // Always add "Cả Ca" or "Còn Lại" if >= 30m
+                                            if (maxFreeMin >= 30) {
+                                                const isPartial = maxFreeMs < (totalSlotMins * 60000 - 60000);
+                                                buttons.push(
+                                                    <button 
+                                                        key={0}
+                                                        onClick={() => setDurationOption(0)}
+                                                        className={`btn ${durationOption === 0 ? 'btn-primary' : 'btn-outline'}`}
+                                                        style={{ flex: '1 1 calc(33.333% - 0.5rem)', padding: '0.4rem', fontSize: '0.75rem' }}
+                                                    >
+                                                        {isPartial ? `Còn lại (${maxFreeMin} Phút)` : `Cả Ca (${maxFreeMin} Phút)`}
+                                                    </button>
+                                                );
+                                            }
                                             return buttons;
                                         })()}
                                     </div>

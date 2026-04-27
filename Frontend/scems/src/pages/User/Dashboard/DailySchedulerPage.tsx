@@ -649,14 +649,15 @@ export const DailySchedulerPage: React.FC = () => {
                                 const slotStartMs2 = new Date(y2, m2-1, d2, sh2, sm2, 0).getTime();
                                 const slotEndMs2 = new Date(y2, m2-1, d2, eh2, em2, 0).getTime();
                                 const slotTotalMs2 = slotEndMs2 - slotStartMs2;
-                                const freeBlocks2 = computeFreeBlocks(slotStartMs2, slotEndMs2, approvedInSlot);
+                                const effectiveStartMs = Math.max(slotStartMs2, Date.now());
+                                const freeBlocks2 = computeFreeBlocks(effectiveStartMs, slotEndMs2, approvedInSlot);
                                 const maxFreeMs = freeBlocks2.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
                                 const maxFreeMin = Math.floor(maxFreeMs / 60000);
                                 const pad2 = (n: number) => n.toString().padStart(2, '0');
                                 const fmtMs = (ms: number) => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
 
                                 // Compute selected booking exact start/end
-                                const selectedMs = durationOption > 0 ? durationOption * 60000 : slotTotalMs2;
+                                const selectedMs = durationOption > 0 ? durationOption * 60000 : maxFreeMs;
                                 const now2 = Date.now();
                                 const fitting2 = freeBlocks2.find(b => (b.end - b.start) >= selectedMs);
                                 const bookStart2 = fitting2 ? Math.max(fitting2.start, now2 <= fitting2.start ? fitting2.start : now2) : null;
@@ -738,9 +739,9 @@ export const DailySchedulerPage: React.FC = () => {
                                                     const finalHours = Math.floor(maxFreeMin / 60);
                                                     const finalMins = maxFreeMin % 60;
                                                     const finalBaseLabel = finalHours > 0 ? `${finalHours} Giờ${finalMins > 0 ? ` ${finalMins} Phút` : ''}` : `${finalMins} Phút`;
-                                                    const finalLabel = isFullSlot
-                                                        ? `Cả Ca (${maxFreeMin} Phút)`
-                                                        : `Còn lại (${finalBaseLabel})`;
+                                                    const finalLabel = (maxFreeMs < (slotTotalMs2 - 60000))
+                                                        ? `Còn lại (${finalBaseLabel})`
+                                                        : `Cả Ca (${maxFreeMin} Phút)`;
                                                     buttons.push(
                                                         <button key={maxFreeMin} onClick={() => setDurationOption(finalOptVal)}
                                                             className={`btn ${durationOption === finalOptVal ? 'btn-primary' : 'btn-outline'}`}
