@@ -99,3 +99,16 @@ export const cleanDisplayReason = (reason?: string): string => {
 
     return cleaned.trim() || '-';
 };
+
+/**
+ * Formats a duration in hours (e.g. 0.5 or 2.333) into a human-readable string (e.g. "30 phút" or "2 giờ 20 phút").
+ */
+export const formatDuration = (hours: number): string => {
+    if (hours <= 0) return '0 phút';
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    
+    if (h === 0) return `${m} phút`;
+    if (m === 0) return `${h} giờ`;
+    return `${h} giờ ${m} phút`;
+};

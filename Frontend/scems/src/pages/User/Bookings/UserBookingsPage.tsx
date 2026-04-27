@@ -7,7 +7,7 @@ import { Loading } from '../../../components/Common/Loading'
 import { Pagination } from '../../../components/Common/Pagination'
 import { SearchBar } from '../../../components/Common/SearchBar'
 import { CalendarDays, Clock, MapPin, AlertCircle, ArrowRight, XCircle, Trash2, BookOpen } from 'lucide-react'
-import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
+import { parseChangeRequest, cleanDisplayReason, formatDate, formatDuration } from '../../../helpers/booking.helper'
 import toast from 'react-hot-toast'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
 
@@ -255,7 +255,7 @@ export const UserBookingsPage: React.FC = () => {
                               return (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                   <Clock size={16} className="text-muted" />
-                                  {booking.duration} giờ {changeDetails.isChangeRequest && `(Ca ${newSlot})`}
+                                  {formatDuration(booking.duration)} {changeDetails.isChangeRequest && `(Ca ${newSlot})`}
                                 </div>
                               );
                             }
@@ -267,7 +267,7 @@ export const UserBookingsPage: React.FC = () => {
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-primary)', fontWeight: 600 }}>
                                   <ArrowRight size={10} /> Ca {newSlot}
-                                  <span style={{ fontSize: '0.7rem', fontWeight: 400 }}>({booking.duration}h)</span>
+                                  <span style={{ fontSize: '0.7rem', fontWeight: 400 }}>({formatDuration(booking.duration)})</span>
                                 </div>
                               </div>
                             );

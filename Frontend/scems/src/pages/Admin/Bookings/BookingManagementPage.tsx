@@ -6,7 +6,7 @@ import { Pagination } from '../../../components/Common/Pagination'
 import { DataTable, Column } from '../../../components/Common/DataTable'
 import { Check, X, ArrowRight, MapPin, Calendar, Clock, BookOpen } from 'lucide-react'
 import { ConfirmModal } from '../../../components/Common/ConfirmModal'
-import { parseChangeRequest, cleanDisplayReason, formatDate } from '../../../helpers/booking.helper'
+import { parseChangeRequest, cleanDisplayReason, formatDate, formatDuration } from '../../../helpers/booking.helper'
 
 export const BookingManagementPage: React.FC = () => {
     const [bookings, setBookings] = useState<Booking[]>([])
@@ -170,7 +170,7 @@ export const BookingManagementPage: React.FC = () => {
                                         <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>Ca {newSlot}</span>
                                     </div>
                                     <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                        ({b.duration} Giờ)
+                                        ({formatDuration(b.duration)})
                                     </div>
                                 </div>
                             ) : (
@@ -180,7 +180,7 @@ export const BookingManagementPage: React.FC = () => {
                                         {change.isChangeRequest && ` (Ca ${newSlot})`}
                                     </div>
                                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                        {b.duration} Giờ
+                                        {formatDuration(b.duration)}
                                     </div>
                                 </div>
                             )}
