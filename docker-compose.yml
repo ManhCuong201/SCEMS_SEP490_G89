@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: scems_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: SCEMS
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./Backend/SCEMS
+      dockerfile: Dockerfile
+    container_name: scems_backend
+    restart: always
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=SCEMS;User=root;Password=rootpassword;
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "5000:80"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./Frontend/scems
+      dockerfile: Dockerfile
+    container_name: scems_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
