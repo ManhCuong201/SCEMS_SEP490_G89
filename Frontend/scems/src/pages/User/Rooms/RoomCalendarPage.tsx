@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { bookingService } from '../../../services/booking.service'
 import { roomService } from '../../../services/room.service'
-import { configService, BookingSettings } from '../../../services/config.service'
+import { configService } from '../../../services/config.service'
 import { authService } from '../../../services/auth.service'
 import { Booking, Room, BookingStatus } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
@@ -71,16 +71,14 @@ export const RoomCalendarPage: React.FC = () => {
     const [reason, setReason] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
-    const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
+
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
     const [approvedInSlot, setApprovedInSlot] = useState<Booking[]>([]) // approved bookings in this slot
 
     const currentUser = authService.getUser()
 
     useEffect(() => {
-        configService.getBookingSettings()
-            .then(setBookingSettings)
-            .catch(err => console.error("Failed to load booking settings", err))
+
     }, [])
 
     useEffect(() => {
@@ -171,7 +169,7 @@ export const RoomCalendarPage: React.FC = () => {
     }
 
     const handleConfirmBook = async () => {
-        if (!selectedSlot || !id || !bookingSettings) return
+        if (!selectedSlot || !id) return
         setSubmitting(true)
         setError('')
         try {
@@ -238,7 +236,7 @@ export const RoomCalendarPage: React.FC = () => {
     };
 
     const renderCalendar = () => {
-        if (!room || !bookingSettings) return null
+        if (!room) return null
         const { start } = getWeekRange(currentDate)
         const days: Date[] = []
         for (let i = 0; i < 7; i++) {

@@ -215,7 +215,7 @@ const AppContent: React.FC = () => {
                 </PrivateRoute>
               } />
               <Route path="settings" element={
-                <PrivateRoute allowedRoles={['Admin']}>
+                <PrivateRoute allowedRoles={['Admin', 'BookingStaff']}>
                   <SystemSettingsPage />
                 </PrivateRoute>
               } />

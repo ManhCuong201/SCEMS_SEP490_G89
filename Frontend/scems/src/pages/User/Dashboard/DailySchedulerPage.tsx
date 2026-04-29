@@ -5,7 +5,7 @@ import { roomService } from '../../../services/room.service'
 import { roomTypeService } from '../../../services/roomType.service'
 import { scheduleService } from '../../../services/teachingSchedule.service'
 import { bookingService } from '../../../services/booking.service'
-import { configService, BookingSettings } from '../../../services/config.service'
+import { configService } from '../../../services/config.service'
 import { Room, RoomType, ScheduleResponse, Booking, BookingStatus, CreateScheduleChangeRequest } from '../../../types/api'
 import { Alert } from '../../../components/Common/Alert'
 import { Loading } from '../../../components/Common/Loading'
@@ -80,7 +80,7 @@ export const DailySchedulerPage: React.FC = () => {
     const debouncedSearch = useDebounce(search, 400)
     const [selectedType, setSelectedType] = useState('')
     const [availableOnly, setAvailableOnly] = useState(false)
-    const [bookingSettings, setBookingSettings] = useState<BookingSettings | null>(null)
+
     const [departments, setDepartments] = useState<Department[]>([])
     const [selectedDepartment, setSelectedDepartment] = useState('')
 
@@ -99,9 +99,7 @@ export const DailySchedulerPage: React.FC = () => {
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
 
     useEffect(() => {
-        configService.getBookingSettings()
-            .then(setBookingSettings)
-            .catch(err => console.error("Failed to load booking settings", err))
+
 
         departmentService.getAll()
             .then(setDepartments)
@@ -205,7 +203,7 @@ export const DailySchedulerPage: React.FC = () => {
     }
 
     const handleConfirmBook = async () => {
-        if (!selectedSlot || !selectedRoom || !bookingSettings) return
+        if (!selectedSlot || !selectedRoom) return
         setSubmitting(true)
         setModalError('')
         setModalSuccess('')

@@ -33,10 +33,19 @@ public class ConfigurationController : ControllerBase
         return Ok(setting);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,BookingStaff")]
     [HttpPut("{key}")]
     public async Task<IActionResult> UpdateSetting(string key, [FromBody] UpdateSettingRequest request)
     {
+        if (User.IsInRole("BookingStaff") && !User.IsInRole("Admin"))
+        {
+            var allowedKeys = new[] { "Booking.AutoApproveEnabled", "Booking.AutoApproveRules" };
+            if (!allowedKeys.Contains(key))
+            {
+                return Forbid();
+            }
+        }
+
         await _configurationService.UpdateSettingAsync(key, request.Value, request.Description);
         return Ok(new { message = $"Setting '{key}' updated successfully." });
     }

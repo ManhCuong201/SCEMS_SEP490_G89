@@ -18,7 +18,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<BookingSettings>(builder.Configuration.GetSection("BookingSettings"));
+
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -86,9 +86,14 @@ builder.Services.AddInfrastructureServices(connectionString);
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddHostedService<BookingCleanupWorker>();
 
+// Register Email Service
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, SCEMS.Application.Services.EmailService>();
+
 // Register SignalR and Notification Dispatcher
 builder.Services.AddSignalR();
 builder.Services.AddScoped<INotificationDispatcher, SignalRNotificationDispatcher>();
+
 
 var app = builder.Build();
 

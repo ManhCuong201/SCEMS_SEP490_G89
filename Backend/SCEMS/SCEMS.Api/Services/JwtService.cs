@@ -4,27 +4,33 @@ using System.Security.Claims;
 using System.Text;
 using SCEMS.Domain.Entities;
 
+using SCEMS.Application.Services.Interfaces;
+
 namespace SCEMS.Api.Services;
 
 public interface IJwtService
 {
-    string GenerateToken(Account account);
+    Task<string> GenerateTokenAsync(Account account);
 }
 
 public class JwtService : IJwtService
 {
     private readonly IConfiguration _configuration;
+    private readonly IConfigurationService _configService;
 
-    public JwtService(IConfiguration configuration)
+    public JwtService(IConfiguration configuration, IConfigurationService configService)
     {
         _configuration = configuration;
+        _configService = configService;
     }
 
-    public string GenerateToken(Account account)
+    public async Task<string> GenerateTokenAsync(Account account)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var timeoutMinutes = await _configService.GetValueAsync("Security.SessionTimeoutMinutes", 60);
 
         var claims = new[]
         {
@@ -39,7 +45,7 @@ public class JwtService : IJwtService
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(3),
+            expires: DateTime.UtcNow.AddMinutes(timeoutMinutes),
             signingCredentials: credentials
         );
 

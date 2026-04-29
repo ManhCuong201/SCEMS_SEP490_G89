@@ -82,6 +82,7 @@ export const Sidebar: React.FC = () => {
               <div style={{ margin: '0.5rem 0', borderTop: '1px solid var(--border-glass)' }}></div>
               <NavLink href="/admin/classes" label="Quản lý Lớp học" icon={<Users size={20} />} active={isActive('/admin/classes')} />
               <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
+              <NavLink href="/admin/settings" label="Cài đặt tự động" icon={<Settings size={20} />} active={isActive('/admin/settings')} />
             </>
           )}
           {user?.role === 'Guard' && (

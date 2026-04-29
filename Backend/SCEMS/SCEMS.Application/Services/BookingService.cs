@@ -91,354 +91,385 @@ public class BookingService : IBookingService
         // 1. Validation: Constraints
         var errors = new List<string>();
 
-        // Past Time Check
-        var now = DateTime.Now;
-        var endTime = dto.TimeSlot.AddHours(dto.Duration);
-        if (endTime < now)
+        try
         {
-            errors.Add("Không thể mượn hoặc đổi phòng vào thời gian đã qua.");
-        }
-        else if (dto.TimeSlot < now.AddMinutes(-5)) // Allow 5 min buffer for network latency
-        {
-            errors.Add("Thời gian bắt đầu mượn phòng không thể ở quá khứ.");
-        }
+            await _unitOfWork.BeginTransactionAsync();
 
-        // Start Time Check (Rough check before fetching config if we want to fail really early, 
-        // but we'll use the default values for the early check)
-        var reqStartHour = dto.TimeSlot.Hour;
-        var reqEndHour = dto.TimeSlot.AddHours(dto.Duration).Hour;
-        
-        // duration check (non-DB part)
-        if (!skipDurationCheck && dto.Duration <= 0)
-        {
-             errors.Add("Thời lượng mượn phòng không hợp lệ.");
-        }
+            // 1. Validation: Time is in future (inside transaction to be safe)
+            var now = DateTime.Now;
+            var endTime = dto.TimeSlot.AddHours(dto.Duration);
 
-        if (errors.Any())
-        {
-            throw new InvalidOperationException(string.Join("|", errors));
-        }
-
-        // Fetch dynamic settings
-        var startHour = await _configurationService.GetValueAsync("Booking.StartHour", 7);
-        var endHour = await _configurationService.GetValueAsync("Booking.EndHour", 22);
-        var slotDuration = await _configurationService.GetValueAsync("Booking.SlotDurationMinutes", 60);
-        var maxDuration = await _configurationService.GetValueAsync("Booking.MaxDurationHours", 4);
-        var maxPerWeek = await _configurationService.GetValueAsync("Booking.MaxPerWeek", 5);
-
-        // Validation with Dynamic Config
-        if (reqStartHour < startHour || reqStartHour >= endHour || (reqEndHour > endHour && dto.TimeSlot.AddHours(dto.Duration).Minute > 0))
-        {
-            errors.Add($"Thời gian mượn phòng phải trong khoảng từ {startHour}:00 đến {endHour}:00.");
-        }
-        
-        // Duration must be at least 30 minutes
-        if (!skipDurationCheck && dto.Duration < 0.5)
-        {
-            errors.Add("Thời lượng mượn phòng tối thiểu là 30 phút.");
-        }
-
-        if (!skipDurationCheck)
-        {
-            if (dto.Duration > maxDuration)
+            if (endTime < now)
             {
-                 errors.Add($"Thời lượng mượn phòng tối đa cho phép là {maxDuration} giờ.");
+                errors.Add("Không thể mượn hoặc đổi phòng vào thời gian đã qua.");
             }
+            else if (dto.TimeSlot < now.AddMinutes(-5))
+            {
+                errors.Add("Thời gian bắt đầu mượn phòng không thể ở quá khứ.");
+            }
+
+            // Duration check
+            if (!skipDurationCheck && dto.Duration <= 0)
+            {
+                 errors.Add("Thời lượng mượn phòng không hợp lệ.");
+            }
+            else if (!skipDurationCheck && dto.Duration < 0.5)
+            {
+                errors.Add("Thời lượng mượn phòng tối thiểu là 30 phút.");
+            }
+
+            if (errors.Any())
+            {
+                throw new InvalidOperationException(string.Join("|", errors));
+            }
+
+            // Re-fetch dynamic settings inside transaction
+            var maxPerWeek = await _configurationService.GetValueAsync("Booking.MaxPerWeek", 5);
+
+            // Frequency Limit Check
+            var startOfWeek = dto.TimeSlot.Date.AddDays(-(int)dto.TimeSlot.DayOfWeek + (int)DayOfWeek.Monday);
+            var endOfWeek = startOfWeek.AddDays(7);
             
-            var expectedDurationHours = slotDuration / 60;
-            if (slotDuration % 60 == 0 && dto.Duration != expectedDurationHours)
-            {
-                // Only enforce exact single slot if config implies fixed slots
-                // But for now, let's keep it flexible or use the specific check the user-intended
-            }
-        }
-
-        if (errors.Any())
-        {
-            throw new InvalidOperationException(string.Join("|", errors));
-        }
-
-        // Frequency Limit Check (UC 022)
-        var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + (int)DayOfWeek.Monday);
-        var endOfWeek = startOfWeek.AddDays(7);
-        
-        var weeklyBookingCount = await _unitOfWork.Bookings.GetAll()
-            .CountAsync(b => b.RequestedBy == userId && b.CreatedAt >= startOfWeek && b.CreatedAt < endOfWeek && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled);
-            
-        if (weeklyBookingCount >= maxPerWeek)
-        {
-            errors.Add($"Bạn đã đạt tới giới hạn mượn phòng tối đa ({maxPerWeek} lần) trong tuần này.");
-        }
-
-        // 2. Validation: Room exists
-        var room = await _unitOfWork.Rooms.GetByIdAsync(dto.RoomId);
-        if (room == null)
-        {
-            errors.Add("Không tìm thấy phòng.");
-        }
-        else if (room.Status != RoomStatus.Available)
-        {
-            errors.Add("Phòng hiện không khả dụng để mượn.");
-        }
-
-        // 3. Validation: Overlaps
-        var newStart = dto.TimeSlot;
-        var newEnd = dto.TimeSlot.AddHours(dto.Duration);
-        var date = newStart.Date;
-        var reqStartTime = newStart.TimeOfDay;
-        var reqEndTime = newEnd.TimeOfDay;
-
-        if (room != null)
-        {
-            // Check conflicts in Bookings (other approved bookings for same room)
-            // We ignore Rejected AND Cancelled bookings
-            // NOTE: b.TimeSlot.AddHours(b.Duration) cannot be translated to SQL by EF Core
-            // when Duration is a DB column, so we fetch the broad set in SQL then filter in C#.
-            var candidateBookings = await _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == dto.RoomId
-                    && (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
-                    && b.TimeSlot < newEnd)
-                .ToListAsync();
-
-            var conflictingBooking = candidateBookings.Any(b =>
-            {
-                // Precise C# end-time overlap check (Duration is a double, safe in C#)
-                var bEnd = b.TimeSlot.AddHours(b.Duration);
-                if (bEnd <= newStart) return false;
-
-                // If this is a change request, ignore bookings for the same scheduleId
-                if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
-                {
-                    if (b.Reason.Contains(excludeScheduleId.ToString()!))
-                        return false;
-                }
-                return true;
-            });
-
-            if (conflictingBooking)
-            {
-                errors.Add("Phòng này đã được người khác mượn trong thời gian này.");
-            }
+            var weeklyBookingCount = await _unitOfWork.Bookings.GetAll()
+                .CountAsync(b => b.RequestedBy == userId 
+                    && b.TimeSlot >= startOfWeek 
+                    && b.TimeSlot < endOfWeek 
+                    && b.Status != BookingStatus.Rejected 
+                    && b.Status != BookingStatus.Cancelled);
                 
-            // Check conflicts in Teaching Schedule for the room
-            var hasClass = await _unitOfWork.TeachingSchedules.GetAll()
-                 .AnyAsync(ts => ts.RoomId == dto.RoomId 
+            if (weeklyBookingCount >= maxPerWeek)
+            {
+                errors.Add($"Bạn đã đạt tới giới hạn mượn phòng tối đa ({maxPerWeek} lần) trong tuần của ngày đặt ({startOfWeek:dd/MM} - {endOfWeek.AddDays(-1):dd/MM}).");
+            }
+
+            // 2. Validation: Room exists
+            var room = await _unitOfWork.Rooms.GetAll()
+                .Include(r => r.RoomType)
+                .FirstOrDefaultAsync(r => r.Id == dto.RoomId);
+
+            if (room == null)
+            {
+                errors.Add("Không tìm thấy phòng.");
+            }
+            else if (room.Status != RoomStatus.Available)
+            {
+                errors.Add("Phòng hiện không khả dụng để mượn.");
+            }
+
+            // 3. Validation: Overlaps
+            var newStart = dto.TimeSlot;
+            var newEnd = dto.TimeSlot.AddHours(dto.Duration);
+            var date = newStart.Date;
+            var reqStartTime = newStart.TimeOfDay;
+            var reqEndTime = newEnd.TimeOfDay;
+
+            if (room != null)
+            {
+                var candidateBookings = await _unitOfWork.Bookings.GetAll()
+                    .Where(b => b.RoomId == dto.RoomId 
+                        && b.TimeSlot.Date == date 
+                        && b.Status != BookingStatus.Rejected 
+                        && b.Status != BookingStatus.Cancelled)
+                    .ToListAsync();
+
+                var conflictingBooking = candidateBookings.Any(b => 
+                {
+                    var overlaps = b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart;
+                    if (!overlaps) return false;
+                    if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
+                    {
+                        if (b.Reason.Contains(excludeScheduleId.ToString()!)) return false;
+                    }
+                    return true;
+                });
+
+                if (conflictingBooking)
+                {
+                    errors.Add("Phòng này đã được người khác mượn trong thời gian này.");
+                }
+                    
+                var hasClass = await _unitOfWork.TeachingSchedules.GetAll()
+                     .AnyAsync(ts => ts.RoomId == dto.RoomId 
+                        && ts.Date == date 
+                        && ts.Id != excludeScheduleId
+                        && ts.StartTime < reqEndTime 
+                        && ts.EndTime > reqStartTime);
+
+                if (hasClass)
+                {
+                    errors.Add("Phòng này đã được xếp lịch dạy lớp khác vào thời gian này.");
+                }
+            }
+
+            // 4. Check Lecturer/User Conflict
+            var userHasClass = await _unitOfWork.TeachingSchedules.GetAll()
+                .AnyAsync(ts => ts.LecturerId == userId.ToString() 
                     && ts.Date == date 
                     && ts.Id != excludeScheduleId
                     && ts.StartTime < reqEndTime 
                     && ts.EndTime > reqStartTime);
 
-            if (hasClass)
+            if (userHasClass)
             {
-                 errors.Add("Phòng này đã được xếp lịch dạy lớp khác vào thời gian này.");
+                errors.Add("Bạn đã có lịch dạy lớp khác vào thời gian này.");
             }
-        }
 
-        // 5. Check Lecturer/User Conflict (User cannot be in two places at once)
-        var userHasClass = await _unitOfWork.TeachingSchedules.GetAll()
-            .AnyAsync(ts => ts.LecturerId == userId.ToString() 
-                && ts.Date == date 
-                && ts.Id != excludeScheduleId
-                && ts.StartTime < reqEndTime 
-                && ts.EndTime > reqStartTime);
-
-        if (userHasClass)
-        {
-            errors.Add("Bạn đã có lịch dạy lớp khác vào thời gian này.");
-        }
-
-        // 5.1 Check Student Class Conflict
-        var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
-        if (account?.Role == AccountRole.Student)
-        {
-            var enrolledClassCodes = await _unitOfWork.ClassStudents.GetAll()
-                .Where(cs => cs.StudentId == userId)
-                .Select(cs => cs.Class != null ? cs.Class.ClassCode : cs.PendingStudentIdentifier)
-                .Where(cc => cc != null)
-                .ToListAsync();
-
-            if (enrolledClassCodes.Any())
+            var account = await _unitOfWork.Accounts.GetByIdAsync(userId);
+            if (account?.Role == AccountRole.Student)
             {
-                var studentHasClass = _unitOfWork.TeachingSchedules.GetAll()
-                    .Where(ts => enrolledClassCodes.Contains(ts.ClassCode) && ts.Date == date)
-                    .ToList()
-                    .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+                var enrolledClassCodes = await _unitOfWork.ClassStudents.GetAll()
+                    .Where(cs => cs.StudentId == userId)
+                    .Select(cs => cs.Class != null ? cs.Class.ClassCode : cs.PendingStudentIdentifier)
+                    .Where(cc => cc != null)
+                    .ToListAsync();
 
-                if (studentHasClass)
+                if (enrolledClassCodes.Any())
                 {
-                    errors.Add("Bạn đã có lịch học lớp khác vào thời gian này.");
+                    var studentHasClass = (await _unitOfWork.TeachingSchedules.GetAll()
+                        .Where(ts => enrolledClassCodes.Contains(ts.ClassCode) && ts.Date == date)
+                        .ToListAsync())
+                        .Any(ts => ts.StartTime < reqEndTime && ts.EndTime > reqStartTime);
+
+                    if (studentHasClass)
+                    {
+                        errors.Add("Bạn đã có lịch học lớp khác vào thời gian này.");
+                    }
                 }
             }
-        }
 
-        var userHasBooking = _unitOfWork.Bookings.GetAll()
-            .Where(b => b.RequestedBy == userId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
-            .ToList()
-            .Any(b => {
-                var overlaps = b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart;
-                if (!overlaps) return false;
-                
-                // If this is a change request, ignore existing bookings that ARE for the same schedule
-                if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
+            var userHasBooking = (await _unitOfWork.Bookings.GetAll()
+                .Where(b => b.RequestedBy == userId && b.Status != BookingStatus.Rejected && b.Status != BookingStatus.Cancelled)
+                .ToListAsync())
+                .Any(b => {
+                    var overlaps = b.TimeSlot < newEnd && b.TimeSlot.AddHours(b.Duration) > newStart;
+                    if (!overlaps) return false;
+                    if (excludeScheduleId != null && !string.IsNullOrEmpty(b.Reason))
+                    {
+                        if (b.Reason.Contains(excludeScheduleId.ToString()!)) return false;
+                    }
+                    return true;
+                });
+
+            if (userHasBooking)
+            {
+                errors.Add("Bạn đã có một yêu cầu mượn phòng khác trong thời gian này.");
+            }
+
+            if (errors.Any())
+            {
+                throw new InvalidOperationException(string.Join("|", errors));
+            }
+
+            // Check Auto-Approve conditions
+            var autoApproveEnabled = await _configurationService.GetValueAsync("Booking.AutoApproveEnabled", "false") == "true";
+            var status = BookingStatus.Pending;
+
+            if (autoApproveEnabled && account != null && room?.RoomType != null)
+            {
+                var rulesJson = await _configurationService.GetValueAsync("Booking.AutoApproveRules", "[]");
+                try
                 {
-                    if (b.Reason.Contains(excludeScheduleId.ToString()!))
-                        return false;
+                    var rules = System.Text.Json.JsonSerializer.Deserialize<List<AutoApproveRule>>(rulesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    
+                    if (rules != null)
+                    {
+                        var userRole = account.Role.ToString();
+                        var roomTypeName = room.RoomType.Name;
+
+                        foreach (var rule in rules)
+                        {
+                            bool roleMatch = rule.Role == "*" || string.Equals(rule.Role, userRole, StringComparison.OrdinalIgnoreCase);
+                            
+                            // Support multiple room types in one rule (comma separated)
+                            var allowedRoomTypes = rule.RoomType.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                            bool roomMatch = rule.RoomType == "*" || allowedRoomTypes.Contains(roomTypeName, StringComparer.OrdinalIgnoreCase);
+
+                            if (roleMatch && roomMatch)
+                            {
+                                status = BookingStatus.Approved;
+                                break;
+                            }
+                        }
+                    }
                 }
-                return true;
-            });
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error parsing auto-approve rules: {ex.Message}");
+                }
+            }
 
-        if (userHasBooking)
-        {
-            errors.Add("Bạn đã có một yêu cầu mượn phòng khác trong thời gian này.");
+            var booking = new Booking
+            {
+                RoomId = dto.RoomId,
+                RequestedBy = userId,
+                TimeSlot = dto.TimeSlot,
+                Duration = dto.Duration,
+                Reason = dto.Reason,
+                Status = status,
+                CreatedAt = DateTime.Now
+            };
+
+            await _unitOfWork.Bookings.AddAsync(booking);
+            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitTransactionAsync();
+
+            if (status == BookingStatus.Approved)
+            {
+                await _notificationService.SendNotificationAsync(userId, "Yêu cầu mượn phòng được phê duyệt tự động", 
+                    $"Yêu cầu mượn phòng {room?.RoomName} vào {dto.TimeSlot:dd/MM HH:mm} đã được hệ thống phê duyệt tự động.");
+            }
+
+            return await GetBookingByIdAsync(booking.Id) ?? throw new InvalidOperationException("Failed to retrieve created booking");
         }
-
-        if (errors.Any())
+        catch (Exception)
         {
-            throw new InvalidOperationException(string.Join("|", errors));
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
         }
+    }
 
-        var booking = new Booking
-        {
-            RoomId = dto.RoomId,
-            RequestedBy = userId,
-            TimeSlot = dto.TimeSlot,
-            Duration = dto.Duration,
-            Reason = dto.Reason,
-            Status = BookingStatus.Pending
-        };
-
-        await _unitOfWork.Bookings.AddAsync(booking);
-        await _unitOfWork.SaveChangesAsync();
-
-        return await GetBookingByIdAsync(booking.Id) ?? throw new InvalidOperationException("Failed to retrieve created booking");
+    private class AutoApproveRule
+    {
+        public string Role { get; set; } = string.Empty;
+        public string RoomType { get; set; } = string.Empty;
     }
 
     public async Task<BookingResponseDto?> UpdateStatusAsync(Guid id, BookingStatus status, string? rejectReason = null)
     {
-        var booking = await _unitOfWork.Bookings.GetAll()
-            .Include(b => b.Room)
-            .FirstOrDefaultAsync(b => b.Id == id);
-        if (booking == null) return null;
-
-        booking.Status = status;
-        if (status == BookingStatus.Rejected && !string.IsNullOrEmpty(rejectReason))
+        try
         {
-            booking.RejectReason = rejectReason;
-        }
-        
-        // If approved, first verify no already-Approved booking conflicts exist
-        if (status == BookingStatus.Approved || status == BookingStatus.CheckedIn)
-        {
-             var start = booking.TimeSlot;
-             var end = booking.TimeSlot.AddHours(booking.Duration);
+            await _unitOfWork.BeginTransactionAsync();
 
-             // Guard: reject if an already-approved booking overlaps this one
-             var approvedCandidates = await _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == booking.RoomId
-                    && b.Id != booking.Id
-                    && (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
-                    && b.TimeSlot < end)
-                .ToListAsync();
+            var booking = await _unitOfWork.Bookings.GetAll()
+                .Include(b => b.Room)
+                .FirstOrDefaultAsync(b => b.Id == id);
+            if (booking == null) 
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                return null;
+            }
 
-             var alreadyApprovedConflict = approvedCandidates.Any(b => b.TimeSlot.AddHours(b.Duration) > start);
-
-             if (alreadyApprovedConflict)
-             {
-                 throw new InvalidOperationException("Không thể phê duyệt: phòng này đã được duyệt cho một yêu cầu khác trong cùng thời gian.");
-             }
-
-             // Auto-reject all other Pending requests that overlap (evaluated in C# for same reason)
-             var pendingCandidates = await _unitOfWork.Bookings.GetAll()
-                .Where(b => b.RoomId == booking.RoomId && b.Id != booking.Id && b.Status == BookingStatus.Pending && b.TimeSlot < end)
-                .ToListAsync();
-
-             var conflicting = pendingCandidates
-                .Where(b => b.TimeSlot.AddHours(b.Duration) > start)
-                .ToList();
+            booking.Status = status;
+            if (status == BookingStatus.Rejected && !string.IsNullOrEmpty(rejectReason))
+            {
+                booking.RejectReason = rejectReason;
+            }
             
-             foreach(var conflict in conflicting)
-             {
-                 conflict.Status = BookingStatus.Rejected;
-                 _unitOfWork.Bookings.Update(conflict);
-             }
+            // If approved, first verify no already-Approved booking conflicts exist
+            if (status == BookingStatus.Approved || status == BookingStatus.CheckedIn)
+            {
+                 var start = booking.TimeSlot;
+                 var end = booking.TimeSlot.AddHours(booking.Duration);
 
-             // Handle Change Requests (Room or Schedule)
-             if (!string.IsNullOrEmpty(booking.Reason) && 
-                (booking.Reason.StartsWith("[Schedule Change Request]") || booking.Reason.StartsWith("[Room Change Request]")))
-             {
-                 // Format: "[Schedule Change Request] ScheduleId: {id}. Original: {room} on {date} Slot {slot}. New: {newRoom} on {newDate} Slot {newSlot}. Reason: {reason}"
-                 var scheduleIdMatch = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"ScheduleId:\s*([a-fA-F0-9-]+)");
-                 if (scheduleIdMatch.Success && Guid.TryParse(scheduleIdMatch.Groups[1].Value, out var scheduleId))
+                 // Guard: reject if an already-approved booking overlaps this one
+                 var approvedCandidates = await _unitOfWork.Bookings.GetAll()
+                    .Where(b => b.RoomId == booking.RoomId
+                        && b.Id != booking.Id
+                        && (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
+                        && b.TimeSlot < end)
+                    .ToListAsync();
+
+                 var alreadyApprovedConflict = approvedCandidates.Any(b => b.TimeSlot.AddHours(b.Duration) > start);
+
+                 if (alreadyApprovedConflict)
                  {
-                     var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(scheduleId);
-                     if (schedule != null)
+                     throw new InvalidOperationException("Không thể phê duyệt: phòng này đã được duyệt cho một yêu cầu khác trong cùng thời gian.");
+                 }
+
+                 // Auto-reject all other Pending requests that overlap
+                 var pendingCandidates = await _unitOfWork.Bookings.GetAll()
+                    .Where(b => b.RoomId == booking.RoomId && b.Id != booking.Id && b.Status == BookingStatus.Pending && b.TimeSlot < end)
+                    .ToListAsync();
+
+                 var conflicting = pendingCandidates
+                    .Where(b => b.TimeSlot.AddHours(b.Duration) > start)
+                    .ToList();
+                
+                 foreach(var conflict in conflicting)
+                 {
+                     conflict.Status = BookingStatus.Rejected;
+                     conflict.RejectReason = "Hệ thống tự động từ chối do trùng lịch với một yêu cầu đã được phê duyệt.";
+                     _unitOfWork.Bookings.Update(conflict);
+                 }
+
+                 // Handle Change Requests
+                 if (!string.IsNullOrEmpty(booking.Reason) && 
+                    (booking.Reason.StartsWith("[Schedule Change Request]") || booking.Reason.StartsWith("[Room Change Request]")))
+                 {
+                     // Format: "[Schedule Change Request] ScheduleId: {id}. Original: {room} on {date} Slot {slot}. New: {newRoom} on {newDate} Slot {newSlot}. Reason: {reason}"
+                     var scheduleIdMatch = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"ScheduleId:\s*([a-fA-F0-9-]+)");
+                     if (scheduleIdMatch.Success && Guid.TryParse(scheduleIdMatch.Groups[1].Value, out var scheduleId))
                      {
-                         // Update Room
-                         schedule.RoomId = booking.RoomId;
-
-                         // Update Time if it's a Schedule Change
-                         if (booking.Reason.StartsWith("[Schedule Change Request]"))
+                         var schedule = await _unitOfWork.TeachingSchedules.GetByIdAsync(scheduleId);
+                         if (schedule != null)
                          {
-                             schedule.Date = booking.TimeSlot.Date;
-                             // Try to parse SlotType and NewSlot from the reason string
-                             var matchSlot = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"NewSlot:\s*(\d+)");
-                             var matchType = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"SlotType:\s*(New|Old)");
-                             
-                             if (matchSlot.Success && matchType.Success)
+                             // Update Room
+                             schedule.RoomId = booking.RoomId;
+
+                             // Update Time if it's a Schedule Change
+                             if (booking.Reason.StartsWith("[Schedule Change Request]"))
                              {
-                                 var newSlotVal = int.Parse(matchSlot.Groups[1].Value);
-                                 var slotTypeStr = matchType.Groups[1].Value;
+                                 schedule.Date = booking.TimeSlot.Date;
                                  
-                                 schedule.Slot = newSlotVal;
-                                 var times = SlotHelper.GetSlotTimes(slotTypeStr, newSlotVal);
-                                 schedule.StartTime = times.StartTime;
-                                 schedule.EndTime = times.EndTime;
-                             }
-                             else
-                             {
-                                 // Fallback for legacy requests without SlotType in Reason
-                                 var hour = booking.TimeSlot.Hour;
-                                 int fallBackSlot = hour switch
+                                 // Try to parse SlotType and NewSlot from the reason string
+                                 var matchSlot = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"NewSlot:\s*(\d+)");
+                                 var matchType = System.Text.RegularExpressions.Regex.Match(booking.Reason, @"SlotType:\s*(New|Old)");
+                                 
+                                 if (matchSlot.Success && matchType.Success)
                                  {
-                                     7 => 1,
-                                     10 => 2,
-                                     12 => 3,
-                                     15 => 4,
-                                     18 => 5,
-                                     20 => 6,
-                                     _ => 1
-                                 };
-                                 schedule.Slot = fallBackSlot;
-                                 schedule.StartTime = booking.TimeSlot.TimeOfDay;
-                                 schedule.EndTime = booking.TimeSlot.AddHours(booking.Duration).TimeOfDay;
+                                     var newSlotVal = int.Parse(matchSlot.Groups[1].Value);
+                                     var slotTypeStr = matchType.Groups[1].Value;
+                                     
+                                     schedule.Slot = newSlotVal;
+                                     var times = SlotHelper.GetSlotTimes(slotTypeStr, newSlotVal);
+                                     schedule.StartTime = times.StartTime;
+                                     schedule.EndTime = times.EndTime;
+                                 }
+                                 else
+                                 {
+                                     // Fallback for legacy requests without SlotType in Reason
+                                     var hour = booking.TimeSlot.Hour;
+                                     int fallBackSlot = hour switch
+                                     {
+                                         7 => 1,
+                                         10 => 2,
+                                         12 => 3,
+                                         15 => 4,
+                                         18 => 5,
+                                         20 => 6,
+                                         _ => 1
+                                     };
+                                     schedule.Slot = fallBackSlot;
+                                     schedule.StartTime = booking.TimeSlot.TimeOfDay;
+                                     schedule.EndTime = booking.TimeSlot.AddHours(booking.Duration).TimeOfDay;
+                                 }
                              }
-                         }
 
-                         _unitOfWork.TeachingSchedules.Update(schedule);
+                             _unitOfWork.TeachingSchedules.Update(schedule);
 
-                         // Notify students in the class
-                         if (!string.IsNullOrEmpty(schedule.ClassCode))
-                         {
-                             var studentIds = await _unitOfWork.ClassStudents.GetAll()
-                                 .Where(cs => cs.Class != null && cs.Class.ClassCode == schedule.ClassCode && cs.StudentId.HasValue)
-                                 .Select(cs => cs.StudentId.Value)
-                                 .ToListAsync();
-
-                             foreach (var studentId in studentIds)
+                             // Notify students in the class
+                             if (!string.IsNullOrEmpty(schedule.ClassCode))
                              {
-                                 await _notificationService.SendNotificationAsync(studentId, 
+                                 var studentIds = await _unitOfWork.ClassStudents.GetAll()
+                                     .Where(cs => cs.Class != null && cs.Class.ClassCode == schedule.ClassCode && cs.StudentId.HasValue)
+                                     .Select(cs => cs.StudentId.Value)
+                                     .ToListAsync();
+
+                                 foreach (var studentId in studentIds)
+                                 {
+                                     await _notificationService.SendNotificationAsync(studentId, 
                                      "Thay đổi lịch học (Phê duyệt)", 
                                      $"Lịch học môn {schedule.Subject} đã được thay đổi sang phòng {booking.Room?.RoomName} vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
-                                     "/schedule");
+                                         "/schedule");
+                                 }
                              }
                          }
                      }
                  }
-             }
         }
-
         _unitOfWork.Bookings.Update(booking);
         await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitTransactionAsync();
 
         // --- NOTIFICATIONS ---
         var isChangeRequest = !string.IsNullOrEmpty(booking.Reason) && (booking.Reason.Contains("[Room Change Request]") || booking.Reason.Contains("[Schedule Change Request]"));
@@ -487,6 +518,12 @@ public class BookingService : IBookingService
         }
 
         return _mapper.Map<BookingResponseDto>(booking);
+        }
+        catch (Exception)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
     }
 
     public async Task<List<BookingResponseDto>> GetRoomScheduleAsync(Guid roomId, DateTime startDate, DateTime endDate)

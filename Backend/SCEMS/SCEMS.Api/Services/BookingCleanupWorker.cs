@@ -43,10 +43,12 @@ public class BookingCleanupWorker : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var configService = scope.ServiceProvider.GetRequiredService<IConfigurationService>();
 
         var now = DateTime.Now;
+        var autoLockEnabled = await configService.GetValueAsync("Classroom.AutoLock", "true") == "true";
         
-        // Find pending bookings that have already ended
+        // 1. Find pending bookings that have already ended
         var expiredPending = await unitOfWork.Bookings.GetAll()
             .Where(b => b.Status == BookingStatus.Pending)
             .ToListAsync();
@@ -62,7 +64,36 @@ public class BookingCleanupWorker : BackgroundService
                 b.RejectReason = "Tự động từ chối do đã hết thời gian yêu cầu.";
                 unitOfWork.Bookings.Update(b);
             }
-            await unitOfWork.SaveChangesAsync();
         }
+
+        // 2. Handle AutoLock for finished bookings
+        if (autoLockEnabled)
+        {
+            // Find bookings that ended in the last 30 minutes and are Approved
+            // We lock the room once the booking is finished
+            var recentlyFinished = await unitOfWork.Bookings.GetAll()
+                .Include(b => b.Room)
+                .Where(b => b.Status == BookingStatus.Approved)
+                .ToListAsync();
+            
+            var roomsToLock = recentlyFinished
+                .Where(b => b.TimeSlot.AddHours(b.Duration) <= now && b.TimeSlot.AddHours(b.Duration) > now.AddMinutes(-30))
+                .Select(b => b.Room)
+                .Where(r => r != null && r.Status == RoomStatus.Available)
+                .DistinctBy(r => r.Id)
+                .ToList();
+
+            if (roomsToLock.Any())
+            {
+                _logger.LogInformation("Auto-locking {Count} rooms after booking end.", roomsToLock.Count);
+                foreach (var room in roomsToLock)
+                {
+                    room.Status = RoomStatus.Disabled; // Using Disabled as "Locked" for now
+                    unitOfWork.Rooms.Update(room);
+                }
+            }
+        }
+
+        await unitOfWork.SaveChangesAsync();
     }
 }

@@ -23,4 +23,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<SCEMS.Domain.Entities.System_Configuration> SystemConfigurations { get; }
 
     Task SaveChangesAsync();
+    Task BeginTransactionAsync(System.Data.IsolationLevel isolationLevel = System.Data.IsolationLevel.Serializable);
+    Task CommitTransactionAsync();
+    Task RollbackTransactionAsync();
 }

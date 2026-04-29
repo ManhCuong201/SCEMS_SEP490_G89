@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SCEMS.Domain.Entities;
 using SCEMS.Infrastructure.DbContext;
 using SCEMS.Infrastructure.Repositories.Base;
@@ -110,6 +111,23 @@ public class UnitOfWork : IUnitOfWork
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();
+    }
+
+    public async Task BeginTransactionAsync(System.Data.IsolationLevel isolationLevel = System.Data.IsolationLevel.Serializable)
+    {
+        await _context.Database.BeginTransactionAsync(isolationLevel, default);
+    }
+
+    public async Task CommitTransactionAsync()
+    {
+        if (_context.Database.CurrentTransaction != null)
+            await _context.Database.CommitTransactionAsync();
+    }
+
+    public async Task RollbackTransactionAsync()
+    {
+        if (_context.Database.CurrentTransaction != null)
+            await _context.Database.RollbackTransactionAsync();
     }
 
     public void Dispose()

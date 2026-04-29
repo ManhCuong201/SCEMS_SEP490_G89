@@ -11,15 +11,20 @@ public class NotificationService : INotificationService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INotificationDispatcher _dispatcher;
+    private readonly IEmailService _emailService;
+    private readonly IConfigurationService _configService;
 
-    public NotificationService(IUnitOfWork unitOfWork, INotificationDispatcher dispatcher)
+    public NotificationService(IUnitOfWork unitOfWork, INotificationDispatcher dispatcher, IEmailService emailService, IConfigurationService configService)
     {
         _unitOfWork = unitOfWork;
         _dispatcher = dispatcher;
+        _emailService = emailService;
+        _configService = configService;
     }
 
     public async Task SendNotificationAsync(Guid recipientId, string title, string message, string? link = null)
     {
+        // 1. Save to DB
         var notification = new Notification
         {
             RecipientId = recipientId,
@@ -29,12 +34,27 @@ public class NotificationService : INotificationService
             IsRead = false
         };
 
-        var repo = _unitOfWork.Notifications;
-        await repo.AddAsync(notification);
+        await _unitOfWork.Notifications.AddAsync(notification);
         await _unitOfWork.SaveChangesAsync();
 
-        // Push real-time event to the specific user via the abstracted dispatcher
+        // 2. Real-time push
         await _dispatcher.DispatchToUserAsync(recipientId, notification);
+
+        // 3. Email notification
+        var emailEnabled = await _configService.GetValueAsync("Notification.EmailEnabled", "true") == "true";
+        if (emailEnabled)
+        {
+            var user = await _unitOfWork.Accounts.GetByIdAsync(recipientId);
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                var body = $"<h3>{title}</h3><p>{message}</p>";
+                if (!string.IsNullOrEmpty(link))
+                {
+                    body += $"<br/><a href='{link}'>Click here to view</a>";
+                }
+                await _emailService.SendEmailAsync(user.Email, title, body);
+            }
+        }
     }
 
     public async Task SendToRoleAsync(AccountRole role, string title, string message, string? link = null)

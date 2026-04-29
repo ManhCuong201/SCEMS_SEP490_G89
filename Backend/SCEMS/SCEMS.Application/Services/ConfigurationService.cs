@@ -78,25 +78,23 @@ public class ConfigurationService : IConfigurationService
     {
         var defaults = new List<(string Key, string Value, string Description)>
         {
-            // Booking Rules (UC 022, 023, 033)
-            ("Booking.StartHour", "7", "Thời gian bắt dầu cho phép mượn phòng (giờ)"),
-            ("Booking.EndHour", "22", "Thời gian kết thúc cho phép mượn phòng (giờ)"),
-            ("Booking.SlotDurationMinutes", "60", "Thời lượng mặc định của một slot mượn phòng (phút)"),
-            ("Booking.MaxDurationHours", "4", "Thời lượng tối đa cho một lần mượn phòng (giờ)"),
+            // Booking Rules
             ("Booking.MaxPerWeek", "5", "Số lần mượn phòng tối đa của một người dùng trong một tuần"),
+            ("Booking.AutoApproveEnabled", "true", "Bật/Tắt tự động phê duyệt yêu cầu"),
+            ("Booking.AutoApproveRules", "[{\"Role\":\"Lecturer\",\"RoomType\":\"Phòng học lý thuyết\"}]", "Danh sách quy tắc phê duyệt tự động"),
             
-            // Classroom Settings (UC 034)
-            ("Classroom.AutoLock", "true", "Tự động khóa phòng sau khi kết thúc sử dụng"),
+            // Classroom Settings
+            ("Classroom.AutoLock", "false", "Tự động khóa phòng sau khi kết thúc sử dụng"),
             ("Classroom.DefaultStatus", "Available", "Trạng thái mặc định của phòng học khi khởi tạo"),
 
-            // Equipment Mgmt Rules (UC 035)
+            // Equipment Mgmt Rules
             ("Equipment.MaintenanceIntervalDays", "90", "Khoảng cách giữa các lần bảo trì thiết bị định kỳ (ngày)"),
 
-            // Notification Settings (UC 036)
+            // Notification Settings
             ("Notification.EmailEnabled", "true", "Bật/Tắt gửi thông báo qua Email"),
             ("Notification.PushEnabled", "true", "Bật/Tắt gửi thông báo Push"),
 
-            // Security Policies (UC 037)
+            // Security Policies
             ("Security.MaxLoginAttempts", "5", "Số lần đăng nhập sai tối đa trước khi khóa tài khoản"),
             ("Security.SessionTimeoutMinutes", "60", "Thời gian hết hạn phiên làm việc (phút)"),
             ("Security.PasswordMinLength", "8", "Độ dài tối thiểu của mật khẩu")
@@ -114,6 +112,20 @@ public class ConfigurationService : IConfigurationService
                     Description = desc
                 });
             }
+        }
+
+        // Cleanup Obsolete Keys
+        var obsoleteKeys = new[] { 
+            "Booking.StartHour", "Booking.EndHour", "Booking.SlotDurationMinutes", "Booking.MaxDurationHours",
+            "Booking.AutoApproveRoles", "Booking.AutoApproveRoomTypes"
+        };
+        var obsoleteSettings = await _unitOfWork.SystemConfigurations.GetAll()
+            .Where(s => obsoleteKeys.Contains(s.Key))
+            .ToListAsync();
+            
+        foreach (var obsolete in obsoleteSettings)
+        {
+            _unitOfWork.SystemConfigurations.Delete(obsolete);
         }
 
         await _unitOfWork.SaveChangesAsync();

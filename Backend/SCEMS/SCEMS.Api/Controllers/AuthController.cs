@@ -76,7 +76,7 @@ public class AuthController : ControllerBase
             await _unitOfWork.SaveChangesAsync();
         }
 
-        var token = _jwtService.GenerateToken(account);
+        var token = await _jwtService.GenerateTokenAsync(account);
 
         return Ok(new
         {
@@ -187,7 +187,7 @@ public class AuthController : ControllerBase
                 await _unitOfWork.SaveChangesAsync();
             }
 
-            var token = _jwtService.GenerateToken(account);
+            var token = await _jwtService.GenerateTokenAsync(account);
 
             return Ok(new
             {

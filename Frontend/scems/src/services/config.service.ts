@@ -7,11 +7,7 @@ export interface SystemConfiguration {
   description: string
 }
 
-export interface BookingSettings {
-  startHour: number
-  endHour: number
-  slotDurationMinutes: number
-}
+
 
 export interface UpdateSettingRequest {
   value: string
@@ -34,17 +30,5 @@ export const configService = {
     return data
   },
 
-  async getBookingSettings(): Promise<BookingSettings> {
-    // This is a helper that aggregates settings into a strongly typed object
-    const settings = await this.getAllSettings()
-    const getVal = (key: string, def: number) => {
-      const s = settings.find(x => x.key === key)
-      return s ? parseInt(s.value) : def
-    }
-    return {
-      startHour: getVal('START_HOUR', 7),
-      endHour: getVal('END_HOUR', 22),
-      slotDurationMinutes: getVal('SLOT_DURATION', 60)
-    }
-  }
+
 }
