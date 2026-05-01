@@ -78,22 +78,28 @@ export const NotificationMenu: React.FC = () => {
                 )}
             </button>
 
-            {isOpen && (
+            {isOpen && (() => {
+                // Compute right-aligned position clamped to viewport
+                const btnRect = menuRef.current?.getBoundingClientRect();
+                const panelW = Math.min(350, window.innerWidth * 0.95);
+                const rightEdge = btnRect ? btnRect.right : window.innerWidth;
+                const left = Math.max(8, rightEdge - panelW);
+                const top = btnRect ? btnRect.bottom + 8 : 64;
+                return (
                 <div className="glass-card shadow-premium" style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    width: '350px',
+                    position: 'fixed',
+                    top: `${top}px`,
+                    left: `${left}px`,
+                    width: `${panelW}px`,
                     maxHeight: '500px',
                     display: 'flex',
                     flexDirection: 'column',
                     backgroundColor: 'var(--bg-surface)',
                     boxShadow: 'var(--shadow-xl)',
                     borderRadius: 'var(--radius-lg)',
-                    zIndex: 1000,
+                    zIndex: 9999,
                     padding: '0',
                     border: '1px solid var(--border-glass)',
-                    marginTop: '0.5rem'
                 }}>
                     <div style={{
                         padding: '12px 16px',
@@ -196,7 +202,8 @@ export const NotificationMenu: React.FC = () => {
                         </Link>
                     </div>
                 </div>
-            )}
+                );
+            })()}
         </div>
     );
 };

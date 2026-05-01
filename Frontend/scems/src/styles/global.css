@@ -421,3 +421,190 @@ a:hover {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE — @media max-width: 768px
+   All rules below are scoped to mobile only.
+   Desktop layout (inline styles) is untouched.
+   ============================================================ */
+
+/* Hamburger button — hidden on desktop, flex on mobile */
+.mob-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-main);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sidebar drawer overlay */
+.mob-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 1100;
+}
+
+.mob-sidebar-overlay.mob-open {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  /* ---- Layout ---- */
+  .mob-menu-btn { display: flex; }
+  .mob-hide-name { display: none; }
+
+  /* App root: allow page to grow taller than viewport on mobile,
+     so the body handles vertical scroll (avoids 100vh clipping) */
+  div[style*="height: 100vh"] {
+    height: auto !important;
+    min-height: 100dvh;
+  }
+
+  .mob-header {
+    padding: 0.6rem 1rem !important;
+    margin: 0.4rem 0.5rem !important;
+  }
+
+  .mob-content-wrapper {
+    padding: 0 0.5rem 0.5rem 0.5rem !important;
+    gap: 0 !important;
+    /* Prevent the inline overflow:hidden from clipping page content on mobile */
+    overflow: visible !important;
+    /* Allow the page (body) to scroll on mobile instead of this flex child */
+    flex: none !important;
+    min-height: 0;
+  }
+
+  .mob-main-content {
+    padding: 1rem !important;
+    /* Override the inline overflowY:auto so child overflow-x works on WebKit */
+    overflow: visible !important;
+  }
+
+  /* Sidebar off-canvas drawer */
+  .mob-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    height: 100% !important;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0 !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1200;
+    overflow-y: auto;
+  }
+
+  .mob-sidebar.mob-open {
+    transform: translateX(0);
+  }
+
+  /* ---- Page content ---- */
+
+  /* Page header: stack title + actions vertically */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.35rem !important;
+  }
+
+  /* Action button groups inside page-header wrap and expand */
+  .page-header > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .page-header > div:last-child > *,
+  .page-header > div:last-child a {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  /* Glass panel inner padding */
+  .glass-panel[style*="padding: 1.5rem"],
+  .glass-panel[style*="padding:1.5rem"] {
+    padding: 1rem !important;
+  }
+
+  /* Filter rows inside glass panels */
+  .glass-panel div[style*="display: flex"][style*="gap: 1rem"],
+  .glass-panel div[style*="display:flex"][style*="gap:1rem"] {
+    flex-wrap: wrap;
+  }
+
+  /* Make filter selects full-width on mobile */
+  .glass-panel select.form-input,
+  .glass-panel select.form-select {
+    width: 100% !important;
+  }
+
+  /* Auth card */
+  .auth-card {
+    padding: 1.5rem !important;
+  }
+
+  /* Typography scale */
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.4rem; }
+  h3 { font-size: 1.2rem; }
+
+  /* Make form grids single column */
+  div[style*="grid-template-columns: 1fr 1fr"],
+  div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form submit button rows: full-width buttons, stacked */
+  form > div[style*="display: flex"][style*="gap"],
+  .glass-panel > div[style*="display: flex"][style*="marginTop"] {
+    flex-wrap: wrap;
+  }
+
+  form > div[style*="display: flex"][style*="gap"] > .btn,
+  form > div[style*="display: flex"][style*="gap"] > button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  /* Reduce page-container outer padding */
+  .page-container {
+    padding: 0 !important;
+  }
+
+  /* Table cell padding reduction */
+  .glass-table th,
+  .glass-table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  /* Pagination wraps */
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  /* Stat cards: single column */
+  div[style*="repeat(auto-fit, minmax(280px, 1fr))"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  div[style*="repeat(auto-fit, minmax(450px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+}

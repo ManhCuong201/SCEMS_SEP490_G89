@@ -3,7 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { Building2, CalendarDays, Calendar, Users, LayoutGrid, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
-export const UserSidebar: React.FC = () => {
+interface UserSidebarProps {
+  onClose?: () => void
+}
+
+export const UserSidebar: React.FC<UserSidebarProps> = ({ onClose }) => {
   const location = useLocation()
   const { user } = useAuth()
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/')
@@ -15,7 +19,8 @@ export const UserSidebar: React.FC = () => {
       flexDirection: 'column',
       padding: '1.5rem',
       borderRadius: 'var(--radius-lg)',
-      border: '1px solid var(--border-glass)'
+      border: '1px solid var(--border-glass)',
+      height: '100%'
     }}>
       <nav style={{ flex: 1 }}>
         <div style={{ marginBottom: '2rem' }}>
@@ -29,17 +34,17 @@ export const UserSidebar: React.FC = () => {
           }}>
             Danh mục
           </p>
-          <NavLink href="/dashboard" label="Lịch trình hôm nay" icon={<LayoutGrid size={20} />} active={isActive('/dashboard')} />
-          <NavLink href="/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/rooms')} />
+          <NavLink href="/dashboard" label="Lịch trình hôm nay" icon={<LayoutGrid size={20} />} active={isActive('/dashboard')} onClose={onClose} />
+          <NavLink href="/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/rooms')} onClose={onClose} />
           {user?.role === 'Lecturer' && (
-            <NavLink href="/teacher/classes" label="Lớp học của tôi" icon={<Users size={20} />} active={isActive('/teacher/classes')} />
+            <NavLink href="/teacher/classes" label="Lớp học của tôi" icon={<Users size={20} />} active={isActive('/teacher/classes')} onClose={onClose} />
           )}
           {(user?.role === 'Lecturer' || user?.role === 'Student') && (
-            <NavLink href="/schedule" label="Lịch học" icon={<Calendar size={20} />} active={isActive('/schedule')} />
+            <NavLink href="/schedule" label="Lịch học" icon={<Calendar size={20} />} active={isActive('/schedule')} onClose={onClose} />
           )}
-          <NavLink href="/my-bookings" label="Yêu cầu đặt phòng" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} />
+          <NavLink href="/my-bookings" label="Yêu cầu đặt phòng" icon={<CalendarDays size={20} />} active={isActive('/my-bookings')} onClose={onClose} />
           {(user?.role === 'Lecturer' || user?.role === 'Student') && (
-            <NavLink href="/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/issue-reports')} />
+            <NavLink href="/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/issue-reports')} onClose={onClose} />
           )}
         </div>
       </nav>
@@ -53,10 +58,11 @@ export const UserSidebar: React.FC = () => {
   )
 }
 
-const NavLink: React.FC<{ href: string; label: string; icon: React.ReactNode; active: boolean }> = ({ href, label, icon, active }) => (
+const NavLink: React.FC<{ href: string; label: string; icon: React.ReactNode; active: boolean; onClose?: () => void }> = ({ href, label, icon, active, onClose }) => (
   <Link
     to={href}
     className="sidebar-nav-link"
+    onClick={onClose}
     style={{
       display: 'flex',
       alignItems: 'center',

@@ -1,10 +1,14 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Menu } from 'lucide-react'
 import { NotificationMenu } from './NotificationMenu'
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onToggleSidebar?: () => void
+}
+
+export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [showMenu, setShowMenu] = React.useState(false)
@@ -15,7 +19,7 @@ export const Header: React.FC = () => {
   }
 
   return (
-    <header className="glass-panel" style={{
+    <header className="glass-panel mob-header" style={{
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -26,7 +30,21 @@ export const Header: React.FC = () => {
       top: '0.5rem',
       zIndex: 1000
     }}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, background: 'linear-gradient(to right, var(--primary-600), var(--secondary-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>SCEMS</h2>
+      {/* Left side: hamburger (mobile only) + logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {onToggleSidebar && (
+          <button
+            className="mob-menu-btn"
+            onClick={onToggleSidebar}
+            aria-label="Toggle navigation"
+          >
+            <Menu size={22} />
+          </button>
+        )}
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, background: 'linear-gradient(to right, var(--primary-600), var(--secondary-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>SCEMS</h2>
+      </div>
+
+      {/* Right side: notifications + user menu */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <NotificationMenu />
 
@@ -50,10 +68,10 @@ export const Header: React.FC = () => {
             onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary-400)'}
             onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-glass)'}
           >
-            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--primary-100)', color: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
+            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--primary-100)', color: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
               {user?.fullName?.charAt(0) || 'U'}
             </div>
-            {user?.fullName || 'Người dùng'}
+            <span className="mob-hide-name">{user?.fullName || 'Người dùng'}</span>
             <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>▼</span>
           </button>
           {showMenu && (

@@ -177,3 +177,25 @@
     background: rgba(245, 158, 11, 0.1) !important;
     border-color: var(--color-warning) !important;
 }
+
+@media (max-width: 768px) {
+    .rooms-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    /* User room cards: full-width on mobile, no fixed compact width */
+    .room-card-user {
+        width: 100% !important;
+        max-height: none !important;
+    }
+
+    .room-card-user.active {
+        width: 100% !important;
+        max-height: none !important;
+    }
+
+    /* Flex container: single column on very small screens */
+    .rooms-flex-container {
+        flex-direction: column;
+    }
+}

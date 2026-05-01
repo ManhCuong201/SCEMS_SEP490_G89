@@ -14,7 +14,11 @@ import {
 
 import { useAuth } from '../../context/AuthContext'
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onClose?: () => void
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { user } = useAuth()
   const location = useLocation()
   const isActive = (path: string) => {
@@ -29,7 +33,8 @@ export const Sidebar: React.FC = () => {
       flexDirection: 'column',
       padding: '1.5rem',
       borderRadius: 'var(--radius-lg)',
-      border: '1px solid var(--border-glass)'
+      border: '1px solid var(--border-glass)',
+      height: '100%'
     }}>
       <nav style={{ flex: 1 }}>
         <div style={{ marginBottom: '2rem' }}>
@@ -43,7 +48,7 @@ export const Sidebar: React.FC = () => {
           }}>
             Chính
           </p>
-          <NavLink href="/admin/dashboard" label="Bảng điều khiển" icon={<LayoutDashboard size={20} />} active={isActive('/admin/dashboard')} />
+          <NavLink href="/admin/dashboard" label="Bảng điều khiển" icon={<LayoutDashboard size={20} />} active={isActive('/admin/dashboard')} onClose={onClose} />
         </div>
 
         <div>
@@ -59,39 +64,38 @@ export const Sidebar: React.FC = () => {
           </p>
           {user?.role === 'Admin' && (
             <>
-              <NavLink href="/admin/accounts" label="Tài khoản" icon={<Users size={20} />} active={isActive('/admin/accounts')} />
-              <NavLink href="/admin/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
-              <NavLink href="/admin/departments" label="Tòa nhà" icon={<Users size={20} />} active={isActive('/admin/departments')} />
-              <NavLink href="/admin/room-types" label="Loại phòng" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} />
-              <NavLink href="/admin/equipment-types" label="Loại thiết bị" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} />
-              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
-              <NavLink href="/admin/settings" label="Cài đặt hệ thống" icon={<Settings size={20} />} active={isActive('/admin/settings')} />
+              <NavLink href="/admin/accounts" label="Tài khoản" icon={<Users size={20} />} active={isActive('/admin/accounts')} onClose={onClose} />
+              <NavLink href="/admin/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} onClose={onClose} />
+              <NavLink href="/admin/departments" label="Tòa nhà" icon={<Users size={20} />} active={isActive('/admin/departments')} onClose={onClose} />
+              <NavLink href="/admin/room-types" label="Loại phòng" icon={<Building2 size={20} />} active={isActive('/admin/room-types')} onClose={onClose} />
+              <NavLink href="/admin/equipment-types" label="Loại thiết bị" icon={<Settings size={20} />} active={isActive('/admin/equipment-types')} onClose={onClose} />
+              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} onClose={onClose} />
+              <NavLink href="/admin/settings" label="Cài đặt hệ thống" icon={<Settings size={20} />} active={isActive('/admin/settings')} onClose={onClose} />
             </>
           )}
           {user?.role === 'AssetStaff' && (
             <>
-              <NavLink href="/admin/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} />
-              <NavLink href="/admin/equipment" label="Thiết bị" icon={<Wrench size={20} />} active={isActive('/admin/equipment')} />
-              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
+              <NavLink href="/admin/rooms" label="Phòng" icon={<Building2 size={20} />} active={isActive('/admin/rooms')} onClose={onClose} />
+              <NavLink href="/admin/equipment" label="Thiết bị" icon={<Wrench size={20} />} active={isActive('/admin/equipment')} onClose={onClose} />
+              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} onClose={onClose} />
             </>
           )}
           {user?.role === 'BookingStaff' && (
             <>
-              <NavLink href="/admin/booking-board" label="Bảng đặt phòng" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} />
-              <NavLink href="/admin/bookings" label="Yêu cầu đặt phòng" icon={<CalendarDays size={20} />} active={isActive('/admin/bookings')} />
+              <NavLink href="/admin/booking-board" label="Bảng đặt phòng" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} onClose={onClose} />
+              <NavLink href="/admin/bookings" label="Yêu cầu đặt phòng" icon={<CalendarDays size={20} />} active={isActive('/admin/bookings')} onClose={onClose} />
               <div style={{ margin: '0.5rem 0', borderTop: '1px solid var(--border-glass)' }}></div>
-              <NavLink href="/admin/classes" label="Quản lý Lớp học" icon={<Users size={20} />} active={isActive('/admin/classes')} />
-              <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
-              <NavLink href="/admin/settings" label="Cài đặt tự động" icon={<Settings size={20} />} active={isActive('/admin/settings')} />
+              <NavLink href="/admin/classes" label="Quản lý Lớp học" icon={<Users size={20} />} active={isActive('/admin/classes')} onClose={onClose} />
+              <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} onClose={onClose} />
             </>
           )}
           {user?.role === 'Guard' && (
             <>
-              <NavLink href="/admin/live-status" label="Giám sát phòng" icon={<ShieldCheck size={20} />} active={isActive('/admin/live-status')} />
-              <NavLink href="/admin/booking-board" label="Bảng đặt phòng" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} />
-              <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} />
-              <NavLink href="/admin/security-checks" label="Kiểm tra an ninh" icon={<ShieldCheck size={20} />} active={isActive('/admin/security-checks')} />
-              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} />
+              <NavLink href="/admin/live-status" label="Giám sát phòng" icon={<ShieldCheck size={20} />} active={isActive('/admin/live-status')} onClose={onClose} />
+              <NavLink href="/admin/booking-board" label="Bảng đặt phòng" icon={<Calendar size={20} />} active={isActive('/admin/booking-board')} onClose={onClose} />
+              <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} onClose={onClose} />
+              <NavLink href="/admin/security-checks" label="Kiểm tra an ninh" icon={<ShieldCheck size={20} />} active={isActive('/admin/security-checks')} onClose={onClose} />
+              <NavLink href="/admin/issue-reports" label="Báo cáo sự cố" icon={<AlertTriangle size={20} />} active={isActive('/admin/issue-reports')} onClose={onClose} />
             </>
           )}
         </div>
@@ -106,9 +110,10 @@ export const Sidebar: React.FC = () => {
   )
 }
 
-const NavLink: React.FC<{ href: string; label: string; icon: React.ReactNode; active: boolean }> = ({ href, label, icon, active }) => (
+const NavLink: React.FC<{ href: string; label: string; icon: React.ReactNode; active: boolean; onClose?: () => void }> = ({ href, label, icon, active, onClose }) => (
   <Link
     to={href}
+    onClick={onClose}
     style={{
       display: 'flex',
       alignItems: 'center',

@@ -329,3 +329,30 @@
   gap: var(--spacing-md);
   justify-content: flex-end;
 }
+
+@media (max-width: 768px) {
+  /* Modal as a bottom sheet on mobile */
+  .modal {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Form footer buttons go full-width, stacked */
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: var(--spacing-sm);
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
