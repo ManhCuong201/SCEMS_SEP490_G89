@@ -51,7 +51,6 @@ public class MockDataSeeder
             if (seedData != null)
             {
                 // 1. Thêm Accounts
-                // Lấy email đầu tiên trong file JSON để check xem DB đã nạp file này chưa
                 var firstEmail = seedData.Accounts.FirstOrDefault()?.Email;
                 if (!string.IsNullOrEmpty(firstEmail) && !await context.Accounts.AnyAsync(a => a.Email == firstEmail))
                 {
@@ -71,7 +70,7 @@ public class MockDataSeeder
                     await context.SaveChangesAsync();
                 }
 
-                // Lấy ra 1 phòng và 1 thiết bị đầu tiên để gán tự động (tránh lỗi khóa ngoại)
+                // Lấy ra 1 phòng và 1 thiết bị đầu tiên để gán tự động (tránh lỗi khóa ngoại nếu JSON bị thiếu)
                 var firstRoom = await context.Rooms.FirstOrDefaultAsync();
                 var firstEquip = await context.Equipment.FirstOrDefaultAsync();
 
@@ -80,7 +79,12 @@ public class MockDataSeeder
                     // 3. Thêm Lịch học
                     if (seedData.TeachingSchedules.Any() && !await context.TeachingSchedules.AnyAsync())
                     {
-                        foreach (var s in seedData.TeachingSchedules) s.RoomId = firstRoom.Id;
+                        foreach (var s in seedData.TeachingSchedules)
+                        {
+                            // SỬA LỖI CS0023: Kiểm tra trực tiếp với Guid.Empty
+                            if (s.RoomId == Guid.Empty)
+                                s.RoomId = firstRoom.Id;
+                        }
                         await context.TeachingSchedules.AddRangeAsync(seedData.TeachingSchedules);
                         await context.SaveChangesAsync();
                     }
@@ -88,7 +92,17 @@ public class MockDataSeeder
                     // 4. Thêm Report & Noti & Booking
                     if (seedData.IssueReports.Any() && !await context.IssueReports.AnyAsync())
                     {
-                        foreach (var i in seedData.IssueReports) { i.RoomId = firstRoom.Id; i.EquipmentId = firstEquip?.Id; }
+                        foreach (var i in seedData.IssueReports)
+                        {
+                            // SỬA LỖI CS0023: Kiểm tra trực tiếp với Guid.Empty
+                            if (i.RoomId == Guid.Empty)
+                                i.RoomId = firstRoom.Id;
+
+                            // Kiểm tra an toàn cho EquipmentId (dù nó là Guid hay nullable Guid?)
+                            bool isEquipEmpty = (i.EquipmentId == null || i.EquipmentId.Equals(Guid.Empty));
+                            if (isEquipEmpty && firstEquip != null)
+                                i.EquipmentId = firstEquip.Id;
+                        }
                         await context.IssueReports.AddRangeAsync(seedData.IssueReports);
                         await context.SaveChangesAsync();
                     }
@@ -99,7 +113,7 @@ public class MockDataSeeder
                     }
                     if (seedData.Bookings.Any() && !await context.Bookings.AnyAsync())
                     {
-                        foreach (var b in seedData.Bookings) b.RoomId = firstRoom.Id;
+                        // Giữ nguyên dữ liệu Bookings, không gán đè RoomId nữa
                         await context.Bookings.AddRangeAsync(seedData.Bookings);
                         await context.SaveChangesAsync();
                     }
