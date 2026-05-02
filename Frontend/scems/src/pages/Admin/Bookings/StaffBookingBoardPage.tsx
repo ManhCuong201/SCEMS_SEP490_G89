@@ -76,6 +76,7 @@ export const StaffBookingBoardPage: React.FC = () => {
     const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null)
     const [rejectReason, setRejectReason] = useState('')
     const [hoveredTooltip, setHoveredTooltip] = useState<PortalTooltipProps | null>(null);
+    const [updatingId, setUpdatingId] = useState<string | null>(null)
 
     const getLocalToday = () => {
         const now = new Date()
@@ -160,6 +161,9 @@ export const StaffBookingBoardPage: React.FC = () => {
     }, [selectedDate, debouncedSearch, selectedType, selectedDepartment])
 
     const handleUpdateStatus = async (id: string, status: BookingStatus, reason?: string) => {
+        setUpdatingId(id)
+        setError('')
+        setSuccessMsg('')
         try {
             await bookingService.updateStatus(id, status, reason)
             setSuccessMsg(status === BookingStatus.Approved ? 'Duyệt yêu cầu thành công' : 'Từ chối yêu cầu thành công')
@@ -170,6 +174,8 @@ export const StaffBookingBoardPage: React.FC = () => {
             setTimeout(() => setSuccessMsg(''), 3000)
         } catch (err: any) {
             setError(err.response?.data?.message || 'Cập nhật yêu cầu thất bại')
+        } finally {
+            setUpdatingId(null)
         }
     }
 
@@ -696,19 +702,20 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                                     </button>
                                                                     <button
                                                                         onClick={() => handleUpdateStatus(booking.id, BookingStatus.Rejected, rejectReason)}
-                                                                        disabled={!rejectReason.trim()}
+                                                                        disabled={!rejectReason.trim() || !!updatingId}
                                                                         style={{
                                                                             padding: '0.5rem 1rem',
                                                                             borderRadius: '6px',
                                                                             border: 'none',
-                                                                            background: rejectReason.trim() ? '#ef4444' : '#fca5a5',
+                                                                            background: rejectReason.trim() && !updatingId ? '#ef4444' : '#fca5a5',
                                                                             color: 'white',
                                                                             fontWeight: 600,
-                                                                            cursor: rejectReason.trim() ? 'pointer' : 'not-allowed',
-                                                                            boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)'
+                                                                            cursor: rejectReason.trim() && !updatingId ? 'pointer' : 'not-allowed',
+                                                                            boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)',
+                                                                            opacity: !!updatingId ? 0.7 : 1
                                                                         }}
                                                                     >
-                                                                        Xác nhận Từ chối
+                                                                        {updatingId === booking.id ? 'Đang xử lý...' : 'Xác nhận Từ chối'}
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -717,41 +724,45 @@ export const StaffBookingBoardPage: React.FC = () => {
                                                                 <button
                                                                     onClick={() => setRejectingBookingId(booking.id)}
                                                                     className="btn-status-reject"
+                                                                    disabled={!!updatingId}
                                                                     style={{
                                                                         padding: '0.6rem 1.25rem',
                                                                         borderRadius: '8px',
                                                                         border: '1px solid #fca5a5',
                                                                         background: 'white',
                                                                         color: '#b91c1c',
-                                                                        cursor: 'pointer',
+                                                                        cursor: !!updatingId ? 'not-allowed' : 'pointer',
                                                                         fontWeight: 700,
                                                                         fontSize: '0.85rem',
                                                                         display: 'flex',
                                                                         alignItems: 'center',
-                                                                        gap: '0.4rem'
+                                                                        gap: '0.4rem',
+                                                                        opacity: !!updatingId ? 0.7 : 1
                                                                     }}
                                                                 >
                                                                     <X size={16} /> Từ chối
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleUpdateStatus(booking.id, BookingStatus.Approved)}
+                                                                    disabled={!!updatingId}
                                                                     className="btn-status-approve"
                                                                     style={{
                                                                         padding: '0.6rem 1.25rem',
                                                                         borderRadius: '8px',
                                                                         border: 'none',
-                                                                        background: isPending ? '#fb923c' : '#10b981',
+                                                                        background: isPending ? (!!updatingId ? '#fdba74' : '#fb923c') : (!!updatingId ? '#6ee7b7' : '#10b981'),
                                                                         color: 'white',
-                                                                        cursor: 'pointer',
+                                                                        cursor: !!updatingId ? 'not-allowed' : 'pointer',
                                                                         fontWeight: 700,
                                                                         fontSize: '0.85rem',
                                                                         display: 'flex',
                                                                         alignItems: 'center',
                                                                         gap: '0.4rem',
-                                                                        boxShadow: '0 4px 10px rgba(251, 146, 60, 0.2)'
+                                                                        boxShadow: '0 4px 10px rgba(251, 146, 60, 0.2)',
+                                                                        opacity: !!updatingId ? 0.7 : 1
                                                                     }}
                                                                 >
-                                                                    <Check size={16} /> Phê duyệt
+                                                                    {updatingId === booking.id ? '...' : <><Check size={16} /> Phê duyệt</>}
                                                                 </button>
                                                             </>
                                                         )}

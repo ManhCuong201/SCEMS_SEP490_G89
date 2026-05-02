@@ -13,5 +13,6 @@ public class CreateBookingDto
     [Required]
     public double Duration { get; set; } = 1;
 
-    public string? Reason { get; set; }
+    [Required(ErrorMessage = "Vui lòng nhập lý do mượn phòng.")]
+    public string Reason { get; set; } = string.Empty;
 }

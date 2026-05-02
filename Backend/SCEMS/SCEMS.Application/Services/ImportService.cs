@@ -16,11 +16,14 @@ public class ImportService : IImportService
     private readonly IPasswordHasher _passwordHasher;
     private readonly INotificationService _notificationService;
 
-    public ImportService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, INotificationService notificationService)
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public ImportService(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, INotificationService notificationService, IServiceScopeFactory scopeFactory)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _notificationService = notificationService;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<ImportResultDto> ImportAccountsAsync(Stream fileStream)
@@ -330,12 +333,20 @@ public class ImportService : IImportService
         if (result.SuccessCount > 0)
         {
             var msg = $"Đã nhập thành công {result.SuccessCount} lịch giảng dạy mới.";
-            await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Nhập lịch giảng dạy", msg, "/admin/schedules");
-            await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Kết quả nhập lịch giảng dạy", msg, "/admin/schedules");
-            await _notificationService.SendToRoleAsync(AccountRole.Lecturer, "Cập nhật lịch giảng dạy", "Có lịch giảng dạy mới được cập nhật. Vui lòng kiểm tra lịch của bạn.", "/teacher/classes");
-            await _notificationService.SendToRoleAsync(AccountRole.Guard, "Cập nhật phòng học", "Có lịch sử dụng phòng mới được hệ thống cập nhật.", "/admin/booking-board");
-            await _notificationService.SendToRoleAsync(AccountRole.AssetStaff, "Yêu cầu chuẩn bị thiết bị", "Lịch học mới đã được cập nhật. Vui lòng chuẩn bị trang thiết bị cho các phòng.", "/admin/booking-board");
-            await _notificationService.SendToRoleAsync(AccountRole.Student, "Cập nhật lịch học", "Lịch học mới đã được cập nhật. Vui lòng xem thời khóa biểu của bạn.", "/schedule");
+            _ = Task.Run(async () => {
+                using var scope = _scopeFactory.CreateScope();
+                var scopedNotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                try {
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Nhập lịch giảng dạy", msg, "/admin/schedules");
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.BookingStaff, "Kết quả nhập lịch giảng dạy", msg, "/admin/schedules");
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.Lecturer, "Cập nhật lịch giảng dạy", "Có lịch giảng dạy mới được cập nhật. Vui lòng kiểm tra lịch của bạn.", "/teacher/classes");
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.Guard, "Cập nhật phòng học", "Có lịch sử dụng phòng mới được hệ thống cập nhật.", "/admin/booking-board");
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.AssetStaff, "Yêu cầu chuẩn bị thiết bị", "Lịch học mới đã được cập nhật. Vui lòng chuẩn bị trang thiết bị cho các phòng.", "/admin/booking-board");
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.Student, "Cập nhật lịch học", "Lịch học mới đã được cập nhật. Vui lòng xem thời khóa biểu của bạn.", "/schedule");
+                } catch (Exception ex) {
+                    Console.WriteLine($"Import notification error: {ex.Message}");
+                }
+            });
         }
 
         return result;

@@ -170,6 +170,12 @@ export const RoomCalendarPage: React.FC = () => {
 
     const handleConfirmBook = async () => {
         if (!selectedSlot || !id) return
+
+        if (!reason.trim()) {
+            setError('Vui lòng nhập lý do mượn phòng.');
+            return;
+        }
+
         setSubmitting(true)
         setError('')
         try {
@@ -218,9 +224,12 @@ export const RoomCalendarPage: React.FC = () => {
             })
 
             setSuccessMsg('Đã gửi yêu cầu mượn phòng!')
-            setModalOpen(false)
             loadData()
-            setTimeout(() => setSuccessMsg(''), 3000)
+            setTimeout(() => {
+                setModalOpen(false)
+                setSuccessMsg('')
+                setSubmitting(false)
+            }, 2000)
         } catch (err: unknown) {
             const error = err as any;
             setError(error.response?.data?.message || 'Gửi yêu cầu thất bại')
@@ -781,7 +790,7 @@ export const RoomCalendarPage: React.FC = () => {
                             <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={submitting}>
                                 Hủy
                             </Button>
-                            <Button variant="primary" onClick={handleConfirmBook} disabled={submitting}>
+                            <Button variant="primary" onClick={handleConfirmBook} disabled={submitting || !!successMsg}>
                                 {submitting ? <><Loading /> Đang xử lý</> : 'Xác nhận Đặt phòng'}
                             </Button>
                         </div>

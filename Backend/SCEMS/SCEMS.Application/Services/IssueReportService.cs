@@ -15,11 +15,14 @@ public class IssueReportService : IIssueReportService
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
 
-    public IssueReportService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public IssueReportService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, IServiceScopeFactory scopeFactory)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _notificationService = notificationService;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<PaginatedResult<IssueReportResponseDto>> GetReportsAsync(PaginationParams @params, Guid? userId = null, IssueReportStatus? status = null)
@@ -120,9 +123,17 @@ public class IssueReportService : IIssueReportService
 
         var msg = $"Báo cáo sự cố mới về {targetContext} từ {reporter?.FullName ?? "người dùng"}. Nội dung: {dto.Description}";
 
-        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Sự cố mới", msg, "/admin/issue-reports");
-        await _notificationService.SendToRoleAsync(AccountRole.Guard, "Báo cáo sự cố mới", msg, "/admin/issue-reports");
-        await _notificationService.SendToRoleAsync(AccountRole.BookingStaff, "Báo cáo sự cố mới", msg, "/admin/issue-reports");
+        _ = Task.Run(async () => {
+            using var scope = _scopeFactory.CreateScope();
+            var scopedNotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+            try {
+                await scopedNotificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Sự cố mới", msg, "/admin/issue-reports");
+                await scopedNotificationService.SendToRoleAsync(AccountRole.Guard, "Báo cáo sự cố mới", msg, "/admin/issue-reports");
+                await scopedNotificationService.SendToRoleAsync(AccountRole.BookingStaff, "Báo cáo sự cố mới", msg, "/admin/issue-reports");
+            } catch (Exception ex) {
+                Console.WriteLine($"Create report notification error: {ex.Message}");
+            }
+        });
 
         return await GetReportByIdAsync(report.Id) ?? throw new InvalidOperationException("Failed to retrieve created report.");
     }
@@ -138,10 +149,17 @@ public class IssueReportService : IIssueReportService
 
         var msg = $"Trạng thái sự cố số {id} đã được cập nhật thành: {status}";
         
-        // Notify the person who created it
-        await _notificationService.SendNotificationAsync(report.CreatedBy, "Cập nhật trạng thái sự cố", msg, "/issue-reports");
-        
-        await _notificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Cập nhật sự cố", msg, "/admin/issue-reports");
+        _ = Task.Run(async () => {
+            using var scope = _scopeFactory.CreateScope();
+            var scopedNotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+            try {
+                // Notify the person who created it
+                await scopedNotificationService.SendNotificationAsync(report.CreatedBy, "Cập nhật trạng thái sự cố", msg, "/issue-reports");
+                await scopedNotificationService.SendToRoleAsync(AccountRole.Admin, "Nhật ký hệ thống: Cập nhật sự cố", msg, "/admin/issue-reports");
+            } catch (Exception ex) {
+                Console.WriteLine($"Update report notification error: {ex.Message}");
+            }
+        });
 
         return await GetReportByIdAsync(id);
     }

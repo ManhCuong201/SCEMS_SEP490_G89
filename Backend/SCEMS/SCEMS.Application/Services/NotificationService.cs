@@ -64,10 +64,11 @@ public class NotificationService : INotificationService
             .Select(a => a.Id)
             .ToListAsync();
 
-        foreach (var userId in roleUsers)
-        {
-            await SendNotificationAsync(userId, title, message, link);
-        }
+        if (!roleUsers.Any()) return;
+
+        // Send all notifications in parallel to avoid blocking the main thread for too long
+        var tasks = roleUsers.Select(userId => SendNotificationAsync(userId, title, message, link));
+        await Task.WhenAll(tasks);
     }
 
     public async Task<IEnumerable<Notification>> GetUserUnreadNotificationsAsync(Guid userId)

@@ -12,6 +12,7 @@ interface ConfirmModalProps {
     isDanger?: boolean;
     showInput?: boolean;
     onConfirmWithReason?: (reason: string) => void;
+    isLoading?: boolean;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -24,7 +25,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     cancelText = 'Hủy',
     isDanger = false,
     showInput = false,
-    onConfirmWithReason
+    onConfirmWithReason,
+    isLoading = false
 }) => {
     const [reason, setReason] = React.useState('');
 
@@ -90,15 +92,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                    <button className="btn btn-secondary" onClick={onCancel}>
+                    <button className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
                         {cancelText}
                     </button>
                     <button
                         className={`btn ${isDanger ? 'btn-danger' : 'btn-primary'}`}
-                        style={isDanger ? { backgroundColor: 'var(--color-danger)', color: 'white' } : {}}
+                        style={isDanger ? { backgroundColor: 'var(--color-danger)', color: 'white', opacity: isLoading ? 0.7 : 1 } : { opacity: isLoading ? 0.7 : 1 }}
                         onClick={handleConfirm}
+                        disabled={isLoading}
                     >
-                        {confirmText}
+                        {isLoading ? '...' : confirmText}
                     </button>
                 </div>
             </div>

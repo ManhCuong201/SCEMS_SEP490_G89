@@ -175,7 +175,7 @@ export const DailySchedulerPage: React.FC = () => {
         setSelectedSlot({ date: selectedDate, slot })
         setDuration(1)
         setDurationOption(0)
-        
+
         // Combine bookings and class into a single occupied list for the modal
         const occupied = [...slotApproved];
         if (classInSlot) {
@@ -185,7 +185,7 @@ export const DailySchedulerPage: React.FC = () => {
             const [eh, em] = classInSlot.endTime.split(':').map(Number);
             const start = new Date(y, m - 1, d, sh, sm, 0);
             const end = new Date(y, m - 1, d, eh, em, 0);
-            
+
             occupied.push({
                 id: classInSlot.id,
                 timeSlot: start.toISOString(),
@@ -195,7 +195,7 @@ export const DailySchedulerPage: React.FC = () => {
                 reason: `Class: ${classInSlot.subject}`
             } as any);
         }
-        
+
         setApprovedInSlot(occupied)
 
         setModalOpen(true)
@@ -204,6 +204,12 @@ export const DailySchedulerPage: React.FC = () => {
 
     const handleConfirmBook = async () => {
         if (!selectedSlot || !selectedRoom) return
+
+        if (!reason.trim()) {
+            setModalError('Vui lòng nhập lý do mượn phòng.');
+            return;
+        }
+
         setSubmitting(true)
         setModalError('')
         setModalSuccess('')
@@ -216,12 +222,12 @@ export const DailySchedulerPage: React.FC = () => {
             const slotEndMs = new Date(y, m - 1, d, eh, em, 0).getTime()
 
             const now = new Date()
-            
+
             // Re-calculate free blocks starting from NOW (or slot start if in future)
             const effectiveStartMs = Math.max(slotStartMs, now.getTime());
             const freeBlocks = computeFreeBlocks(effectiveStartMs, slotEndMs, approvedInSlot);
             const maxFreeMs = freeBlocks.reduce((acc, b) => Math.max(acc, b.end - b.start), 0);
-            
+
             // If durationOption is 0 (Full Slot), use the total max free time available
             const finalDurationMs = (durationOption > 0 ? durationOption : (maxFreeMs / 60000)) * 60000;
 
@@ -247,7 +253,7 @@ export const DailySchedulerPage: React.FC = () => {
 
             const startDate = new Date(bookingStart)
             const pad = (n: number) => n.toString().padStart(2, '0')
-            const isoLocal = `${startDate.getFullYear()}-${pad(startDate.getMonth()+1)}-${pad(startDate.getDate())}T${pad(startDate.getHours())}:${pad(startDate.getMinutes())}:00`
+            const isoLocal = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}T${pad(startDate.getHours())}:${pad(startDate.getMinutes())}:00`
 
             await bookingService.createBooking({
                 roomId: selectedRoom.id,
@@ -261,6 +267,7 @@ export const DailySchedulerPage: React.FC = () => {
             setTimeout(() => {
                 setModalOpen(false)
                 setModalSuccess('')
+                setSubmitting(false)
             }, 2000)
         } catch (err: unknown) {
             const error = err as any;
@@ -421,15 +428,15 @@ export const DailySchedulerPage: React.FC = () => {
                     const lines: any[] = [];
                     if (isPartiallyBooked) {
                         const ranges = approved.map(b => {
-                            const bStart = new Date(b.timeSlot).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                            const bEnd = new Date(new Date(b.timeSlot).getTime() + b.duration * 3600000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                            const bStart = new Date(b.timeSlot).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                            const bEnd = new Date(new Date(b.timeSlot).getTime() + b.duration * 3600000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                             return `${bStart} - ${bEnd}`;
                         }).join(', ');
                         lines.push({ label: 'Đã đặt', value: ranges });
                     }
                     lines.push({ label: 'Chờ duyệt', value: pendingForSlot.length });
                     lines.push(alreadyRequested ? { label: 'Trạng thái', value: 'Đã gửi yêu cầu' } : { label: 'Hành động', value: 'Nhấn để đặt' });
-                    
+
                     setHoveredTooltip({
                         title: isPartiallyBooked ? 'Khả dụng (Một phần)' : 'Khả dụng',
                         icon: <Users size={12} />,
@@ -443,7 +450,7 @@ export const DailySchedulerPage: React.FC = () => {
                 {pendingForSlot.length > 0 && !alreadyRequested && (
                     <span className="slot-requests-badge">+{pendingForSlot.length}</span>
                 )}
-                
+
                 {/* Visual Timeline for Partial Bookings */}
                 {isPartiallyBooked && (
                     <div className="slot-timeline" style={{ position: 'absolute', bottom: 4, left: '5%', width: '90%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
@@ -452,7 +459,7 @@ export const DailySchedulerPage: React.FC = () => {
                             const bEnd = bStart + (b.duration * 3600000);
                             const intersectStart = Math.max(slotStartMs, bStart);
                             const intersectEnd = Math.min(slotEndMs, bEnd);
-                            
+
                             if (intersectEnd > intersectStart) {
                                 const leftPercent = ((intersectStart - slotStartMs) / slotTotalMs) * 100;
                                 const widthPercent = ((intersectEnd - intersectStart) / slotTotalMs) * 100;
@@ -470,7 +477,7 @@ export const DailySchedulerPage: React.FC = () => {
                         })}
                     </div>
                 )}
-                
+
                 <div className="slot-content-wrapper" style={{ marginBottom: isPartiallyBooked ? '8px' : '0' }}>
                     <span className={`slot-status-pill ${alreadyRequested ? 'pill-requested' : 'pill-available'}`}>
                         {alreadyRequested ? 'ĐÃ YÊU CẦU' : 'KHẢ DỤNG'}
@@ -536,14 +543,14 @@ export const DailySchedulerPage: React.FC = () => {
 
                 {/* Slot System Toggle */}
                 <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: 'var(--radius-md)', gap: '4px', height: '32px', alignItems: 'center' }}>
-                    <button 
+                    <button
                         className={`btn ${slotSystem === 'New' ? 'btn-primary' : 'btn-ghost'}`}
                         onClick={() => setSlotSystem('New')}
                         style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', height: '24px' }}
                     >
                         Ca Mới
                     </button>
-                    <button 
+                    <button
                         className={`btn ${slotSystem === 'Old' ? 'btn-primary' : 'btn-ghost'}`}
                         onClick={() => setSlotSystem('Old')}
                         style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', height: '24px' }}
@@ -615,7 +622,7 @@ export const DailySchedulerPage: React.FC = () => {
                         <div className="scheduler-cell scheduler-header-cell scheduler-room-cell">Phòng</div>
                         {currentSlots.map(slot => (
                             <div key={slot.number} className="scheduler-cell scheduler-header-cell" style={{ fontSize: '0.6rem' }}>
-                                Ca {slot.number}<br/>
+                                Ca {slot.number}<br />
                                 <span style={{ fontWeight: 400, opacity: 0.8 }}>{slot.startTime}-{slot.endTime}</span>
                             </div>
                         ))}
@@ -669,8 +676,8 @@ export const DailySchedulerPage: React.FC = () => {
                                 const [y2, m2, d2] = selectedSlot.date.split('-').map(Number);
                                 const [sh2, sm2] = selectedSlot.slot.startTime.split(':').map(Number);
                                 const [eh2, em2] = selectedSlot.slot.endTime.split(':').map(Number);
-                                const slotStartMs2 = new Date(y2, m2-1, d2, sh2, sm2, 0).getTime();
-                                const slotEndMs2 = new Date(y2, m2-1, d2, eh2, em2, 0).getTime();
+                                const slotStartMs2 = new Date(y2, m2 - 1, d2, sh2, sm2, 0).getTime();
+                                const slotEndMs2 = new Date(y2, m2 - 1, d2, eh2, em2, 0).getTime();
                                 const slotTotalMs2 = slotEndMs2 - slotStartMs2;
                                 const effectiveStartMs = Math.max(slotStartMs2, Date.now());
                                 const freeBlocks2 = computeFreeBlocks(effectiveStartMs, slotEndMs2, approvedInSlot);
@@ -726,11 +733,11 @@ export const DailySchedulerPage: React.FC = () => {
                                                     const is = Math.max(slotStartMs2, bs);
                                                     const ie = Math.min(slotEndMs2, be);
                                                     if (ie <= is) return null;
-                                                    return <div key={idx} style={{ position: 'absolute', left: `${((is - slotStartMs2)/slotTotalMs2)*100}%`, width: `${((ie-is)/slotTotalMs2)*100}%`, height: '100%', background: '#ef4444', borderRadius: '2px' }} />;
+                                                    return <div key={idx} style={{ position: 'absolute', left: `${((is - slotStartMs2) / slotTotalMs2) * 100}%`, width: `${((ie - is) / slotTotalMs2) * 100}%`, height: '100%', background: '#ef4444', borderRadius: '2px' }} />;
                                                 })}
                                                 {/* Selected booking highlight */}
                                                 {bookStart2 !== null && bookEnd2 !== null && (
-                                                    <div style={{ position: 'absolute', left: `${((bookStart2 - slotStartMs2)/slotTotalMs2)*100}%`, width: `${((bookEnd2-bookStart2)/slotTotalMs2)*100}%`, height: '100%', background: 'rgba(99,102,241,0.7)', borderRadius: '2px', border: '1px solid #6366f1' }} />
+                                                    <div style={{ position: 'absolute', left: `${((bookStart2 - slotStartMs2) / slotTotalMs2) * 100}%`, width: `${((bookEnd2 - bookStart2) / slotTotalMs2) * 100}%`, height: '100%', background: 'rgba(99,102,241,0.7)', borderRadius: '2px', border: '1px solid #6366f1' }} />
                                                 )}
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -814,7 +821,7 @@ export const DailySchedulerPage: React.FC = () => {
                             <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={submitting}>
                                 Hủy
                             </Button>
-                            <Button variant="primary" onClick={handleConfirmBook} disabled={submitting}>
+                            <Button variant="primary" onClick={handleConfirmBook} disabled={submitting || !!modalSuccess}>
                                 {submitting ? <><Loading /> Đang xử lý</> : 'Xác nhận Đặt phòng'}
                             </Button>
                         </div>

@@ -16,13 +16,15 @@ public class BookingService : IBookingService
     private readonly IMapper _mapper;
     private readonly IConfigurationService _configurationService;
     private readonly INotificationService _notificationService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public BookingService(IUnitOfWork unitOfWork, IMapper mapper, IConfigurationService configurationService, INotificationService notificationService)
+    public BookingService(IUnitOfWork unitOfWork, IMapper mapper, IConfigurationService configurationService, INotificationService notificationService, IServiceScopeFactory scopeFactory)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _configurationService = configurationService;
         _notificationService = notificationService;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<PaginatedResult<BookingResponseDto>> GetBookingsAsync(PaginationParams @params, Guid? userId = null)
@@ -103,9 +105,15 @@ public class BookingService : IBookingService
             {
                 errors.Add("Không thể mượn hoặc đổi phòng vào thời gian đã qua.");
             }
-            else if (dto.TimeSlot < now.AddMinutes(-5))
+            if (dto.TimeSlot < now.AddMinutes(-5))
             {
                 errors.Add("Thời gian bắt đầu mượn phòng không thể ở quá khứ.");
+            }
+
+            // Reason check
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+            {
+                errors.Add("Vui lòng nhập lý do mượn phòng.");
             }
 
             // Duration check
@@ -264,7 +272,10 @@ public class BookingService : IBookingService
             var autoApproveEnabled = await _configurationService.GetValueAsync("Booking.AutoApproveEnabled", "false") == "true";
             var status = BookingStatus.Pending;
 
-            if (autoApproveEnabled && account != null && room?.RoomType != null)
+            // IMPORTANT: Change requests (Room/Schedule) are NEVER auto-approved.
+            var isChangeRequest = !string.IsNullOrEmpty(dto.Reason) && (dto.Reason.Contains("[Room Change Request]") || dto.Reason.Contains("[Schedule Change Request]"));
+
+            if (autoApproveEnabled && !isChangeRequest && account != null && room?.RoomType != null)
             {
                 var rulesJson = await _configurationService.GetValueAsync("Booking.AutoApproveRules", "[]");
                 try
@@ -315,8 +326,16 @@ public class BookingService : IBookingService
 
             if (status == BookingStatus.Approved)
             {
-                await _notificationService.SendNotificationAsync(userId, "Yêu cầu mượn phòng được phê duyệt tự động", 
-                    $"Yêu cầu mượn phòng {room?.RoomName} vào {dto.TimeSlot:dd/MM HH:mm} đã được hệ thống phê duyệt tự động.");
+                _ = Task.Run(async () => {
+                    using var scope = _scopeFactory.CreateScope();
+                    var scopedNotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    try {
+                        await scopedNotificationService.SendNotificationAsync(userId, "Yêu cầu mượn phòng được phê duyệt tự động", 
+                            $"Yêu cầu mượn phòng {room?.RoomName} vào {dto.TimeSlot:dd/MM HH:mm} đã được hệ thống phê duyệt tự động.");
+                    } catch (Exception ex) {
+                        Console.WriteLine($"Auto-approve notification error: {ex.Message}");
+                    }
+                });
             }
 
             return await GetBookingByIdAsync(booking.Id) ?? throw new InvalidOperationException("Failed to retrieve created booking");
@@ -455,13 +474,13 @@ public class BookingService : IBookingService
                                      .Select(cs => cs.StudentId.Value)
                                      .ToListAsync();
 
-                                 foreach (var studentId in studentIds)
-                                 {
-                                     await _notificationService.SendNotificationAsync(studentId, 
+                                 var notifyTasks = studentIds.Select(studentId => 
+                                     _notificationService.SendNotificationAsync(studentId, 
                                      "Thay đổi lịch học (Phê duyệt)", 
                                      $"Lịch học môn {schedule.Subject} đã được thay đổi sang phòng {booking.Room?.RoomName} vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
-                                         "/schedule");
-                                 }
+                                         "/schedule")
+                                 );
+                                 await Task.WhenAll(notifyTasks);
                              }
                          }
                      }
@@ -471,10 +490,10 @@ public class BookingService : IBookingService
         await _unitOfWork.SaveChangesAsync();
         await _unitOfWork.CommitTransactionAsync();
 
-        // --- NOTIFICATIONS ---
+        // --- NOTIFICATIONS (Fire and Forget to avoid blocking the UI) ---
         var isChangeRequest = !string.IsNullOrEmpty(booking.Reason) && (booking.Reason.Contains("[Room Change Request]") || booking.Reason.Contains("[Schedule Change Request]"));
         var requestTypeStr = isChangeRequest ? "Yêu cầu đổi phòng/lịch" : "Yêu cầu đặt phòng";
-        // Results Notification to Requester
+        
         var statusStr = status switch
         {
             BookingStatus.Approved => "được phê duyệt",
@@ -491,31 +510,45 @@ public class BookingService : IBookingService
             notificationMessage += $" Lý do: {booking.RejectReason}";
         }
 
-        await _notificationService.SendNotificationAsync(booking.RequestedBy, 
-            $"Kết quả: {requestTypeStr}", 
-            notificationMessage,
-            "/my-bookings");
+        // Fire and forget notification sending to prevent timeout errors on the frontend
+        // Using a new scope to avoid "DbContext disposed" or "Data reader closed" errors in background thread
+        _ = Task.Run(async () => {
+            using var scope = _scopeFactory.CreateScope();
+            var scopedNotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+            try 
+            {
+                // Results Notification to Requester
+                await scopedNotificationService.SendNotificationAsync(booking.RequestedBy, 
+                    $"Kết quả: {requestTypeStr}", 
+                    notificationMessage,
+                    "/my-bookings");
 
-        // Audit Log for Admin
-        await _notificationService.SendToRoleAsync(AccountRole.Admin, 
-            $"Nhật ký hệ thống: {requestTypeStr}", 
-            $"{requestTypeStr} của tài khoản ID {booking.RequestedBy} cho phòng {booking.Room?.RoomName} đã {statusStr}.",
-            "/admin/bookings");
+                // Audit Log for Admin
+                await scopedNotificationService.SendToRoleAsync(AccountRole.Admin, 
+                    $"Nhật ký hệ thống: {requestTypeStr}", 
+                    $"{requestTypeStr} của tài khoản ID {booking.RequestedBy} cho phòng {booking.Room?.RoomName} đã {statusStr}.",
+                    "/admin/bookings");
 
-        if (status == BookingStatus.Approved)
-        {
-            // Security Notification
-            await _notificationService.SendToRoleAsync(AccountRole.Guard, 
-                "Lịch trình phòng mới được phê duyệt", 
-                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
-                "/admin/booking-board");
+                if (status == BookingStatus.Approved)
+                {
+                    // Security Notification
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.Guard, 
+                        "Lịch trình phòng mới được phê duyệt", 
+                        $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}.",
+                        "/admin/booking-board");
 
-            // Asset Staff Notification
-            await _notificationService.SendToRoleAsync(AccountRole.AssetStaff, 
-                "Yêu cầu chuẩn bị thiết bị", 
-                $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}. Vui lòng kiểm tra và chuẩn bị thiết bị nếu cần.",
-                "/admin/booking-board");
-        }
+                    // Asset Staff Notification
+                    await scopedNotificationService.SendToRoleAsync(AccountRole.AssetStaff, 
+                        "Yêu cầu chuẩn bị thiết bị", 
+                        $"Phòng {booking.Room?.RoomName} đã được phê duyệt sử dụng vào lúc {booking.TimeSlot:HH:mm dd/MM/yyyy}. Vui lòng kiểm tra và chuẩn bị thiết bị nếu cần.",
+                        "/admin/booking-board");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Background notification error: {ex.Message}");
+            }
+        });
 
         return _mapper.Map<BookingResponseDto>(booking);
         }

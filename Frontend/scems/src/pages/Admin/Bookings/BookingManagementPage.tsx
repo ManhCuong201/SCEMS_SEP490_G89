@@ -16,6 +16,7 @@ export const BookingManagementPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [total, setTotal] = useState(0)
     const [rejectId, setRejectId] = useState<string | null>(null)
+    const [updatingId, setUpdatingId] = useState<string | null>(null)
 
     const loadBookings = async (page: number) => {
         setLoading(true)
@@ -37,12 +38,17 @@ export const BookingManagementPage: React.FC = () => {
     }, [currentPage])
 
     const handleStatusUpdate = async (id: string, newStatus: BookingStatus) => {
+        setUpdatingId(id)
+        setError('')
+        setSuccess('')
         try {
             await bookingService.updateStatus(id, newStatus)
             setSuccess('Cập nhật trạng thái thành công')
             loadBookings(currentPage)
         } catch (err: any) {
-            setError('Cập nhật trạng thái thất bại')
+            setError(err.response?.data?.message || 'Cập nhật trạng thái thất bại')
+        } finally {
+            setUpdatingId(null)
         }
     }
 
@@ -53,14 +59,18 @@ export const BookingManagementPage: React.FC = () => {
 
     const handleConfirmReject = async (reason: string) => {
         if (rejectId) {
+            setUpdatingId(rejectId)
+            setError('')
+            setSuccess('')
             try {
                 await bookingService.updateStatus(rejectId, BookingStatus.Rejected, reason)
                 setSuccess('Đã từ chối yêu cầu')
                 loadBookings(currentPage)
             } catch (err: any) {
-                setError('Từ chối yêu cầu thất bại')
+                setError(err.response?.data?.message || 'Từ chối yêu cầu thất bại')
             } finally {
                 setRejectId(null)
+                setUpdatingId(null)
             }
         }
     }
@@ -249,25 +259,31 @@ export const BookingManagementPage: React.FC = () => {
                             <button
                                 className="btn btn-sm"
                                 onClick={() => handleStatusUpdate(b.id, BookingStatus.Approved)}
+                                disabled={!!updatingId}
                                 style={{
                                     background: 'rgba(16, 185, 129, 0.1)',
                                     color: 'var(--color-success)',
                                     border: '1px solid rgba(16, 185, 129, 0.2)',
                                     padding: '0.4rem 0.8rem',
-                                    gap: '0.25rem'
+                                    gap: '0.25rem',
+                                    opacity: updatingId === b.id ? 0.7 : 1,
+                                    cursor: !!updatingId ? 'not-allowed' : 'pointer'
                                 }}
                             >
-                                <Check size={14} /> Duyệt
+                                {updatingId === b.id ? '...' : <><Check size={14} /> Duyệt</>}
                             </button>
                             <button
                                 className="btn btn-sm"
                                 onClick={(e) => handleRejectClick(b.id, e)}
+                                disabled={!!updatingId}
                                 style={{
                                     background: 'rgba(239, 68, 68, 0.1)',
                                     color: 'var(--color-danger)',
                                     border: '1px solid rgba(239, 68, 68, 0.2)',
                                     padding: '0.4rem 0.8rem',
-                                    gap: '0.25rem'
+                                    gap: '0.25rem',
+                                    opacity: !!updatingId ? 0.7 : 1,
+                                    cursor: !!updatingId ? 'not-allowed' : 'pointer'
                                 }}
                             >
                                 <X size={14} /> Từ chối
@@ -322,6 +338,7 @@ export const BookingManagementPage: React.FC = () => {
                 confirmText="Từ chối"
                 showInput
                 onConfirmWithReason={handleConfirmReject}
+                isLoading={updatingId === rejectId}
             />
         </div>
     )
