@@ -38,9 +38,9 @@ public class TeachingSchedulesController : ControllerBase
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin,BookingStaff,Guard")]
-    public async Task<ActionResult<List<ScheduleResponseDto>>> GetAllSchedules([FromQuery] DateTime start, [FromQuery] DateTime end)
+    public async Task<ActionResult<List<ScheduleResponseDto>>> GetAllSchedules([FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] string? classCode)
     {
-        var schedules = await _teachingScheduleService.GetAllSchedulesAsync(start, end);
+        var schedules = await _teachingScheduleService.GetAllSchedulesAsync(start, end, classCode);
         return Ok(schedules);
     }
 

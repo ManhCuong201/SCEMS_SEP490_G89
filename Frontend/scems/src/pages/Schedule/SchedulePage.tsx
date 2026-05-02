@@ -58,7 +58,7 @@ export const SchedulePage: React.FC = () => {
             const data = await scheduleService.getMySchedule(
                 format(startDate, 'yyyy-MM-dd'),
                 format(end, 'yyyy-MM-dd'),
-                user?.role === 'Student' ? classSearch : undefined
+                classSearch
             )
             setSchedules(data)
         } catch (error) {
@@ -194,21 +194,20 @@ export const SchedulePage: React.FC = () => {
                     <p className="text-muted" style={{ fontSize: '0.85rem' }}>Quản lý và xem lịch học của bạn</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    {user?.role === 'Student' && (
-                        <div className="search-box" style={{ width: '250px' }}>
-                            <div className="input-group input-group-sm">
-                                <span className="input-group-text"><Search size={16} /></span>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Mã lớp (VD: SE1701)"
-                                    value={classSearch}
-                                    onChange={(e) => setClassSearch(e.target.value)}
-                                    style={{ padding: '0.4rem 0.75rem' }}
-                                />
-                            </div>
+                    <div className="search-box" style={{ width: '250px' }}>
+                        <div className="input-group input-group-sm">
+                            <span className="input-group-text"><Search size={16} /></span>
+                            <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Mã lớp (VD: SE1701)"
+                                value={classSearch}
+                                onChange={(e) => setClassSearch(e.target.value)}
+                                style={{ padding: '0.4rem 0.75rem' }}
+                            />
                         </div>
-                    )}
+                    </div>
+                    {/* ... existing navigation ... */}
                 </div>
             </div>
 

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SCEMS.Tests;
 
@@ -21,6 +22,7 @@ public class EquipmentServiceTests
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<INotificationService> _notificationMock;
+    private readonly Mock<IServiceScopeFactory> _scopeFactoryMock;
     private readonly EquipmentService _service;
 
     public EquipmentServiceTests()
@@ -28,7 +30,16 @@ public class EquipmentServiceTests
         _uowMock = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mapperMock = new Mock<IMapper>();
         _notificationMock = new Mock<INotificationService>();
-        _service = new EquipmentService(_uowMock.Object, _mapperMock.Object, _notificationMock.Object);
+        _scopeFactoryMock = new Mock<IServiceScopeFactory>();
+
+        // Setup for IServiceScopeFactory to avoid null references in background tasks
+        var scopeMock = new Mock<IServiceScope>();
+        var serviceProviderMock = new Mock<IServiceProvider>();
+        serviceProviderMock.Setup(x => x.GetService(typeof(INotificationService))).Returns(_notificationMock.Object);
+        scopeMock.Setup(x => x.ServiceProvider).Returns(serviceProviderMock.Object);
+        _scopeFactoryMock.Setup(x => x.CreateScope()).Returns(scopeMock.Object);
+
+        _service = new EquipmentService(_uowMock.Object, _mapperMock.Object, _notificationMock.Object, _scopeFactoryMock.Object);
     }
 
     // UTC_EQ_01: Delete equipment that does not exist returns false

@@ -38,44 +38,47 @@ public class TeachingScheduleService : ITeachingScheduleService
         }
         else if (account.Role == AccountRole.Student)
         {
-            if (!string.IsNullOrEmpty(classCode))
+            // Auto-resolve student's enrolled classes if no specific filter is provided
+            // or ensure they can only filter within their enrolled classes
+            var enrolledClassCodes = await _unitOfWork.ClassStudents.GetAll()
+                .Where(cs => cs.StudentId == userId)
+                .Include(cs => cs.Class)
+                .Select(cs => cs.Class != null ? cs.Class.ClassCode : cs.PendingStudentIdentifier)
+                .Where(c => c != null)
+                .ToListAsync();
+
+            if (enrolledClassCodes.Any())
             {
-                query = query.Where(ts => ts.ClassCode == classCode);
+                query = query.Where(ts => enrolledClassCodes.Contains(ts.ClassCode));
             }
             else
             {
-                // Auto-resolve student's enrolled classes
-                var enrolledClassCodes = await _unitOfWork.ClassStudents.GetAll()
-                    .Where(cs => cs.StudentId == userId)
-                    .Include(cs => cs.Class)
-                    .Select(cs => cs.Class != null ? cs.Class.ClassCode : cs.PendingStudentIdentifier)
-                    .Where(c => c != null)
-                    .ToListAsync();
-
-                if (enrolledClassCodes.Any())
-                {
-                    query = query.Where(ts => enrolledClassCodes.Contains(ts.ClassCode));
-                }
-                else
-                {
-                    return new List<ScheduleResponseDto>();
-                }
+                return new List<ScheduleResponseDto>();
             }
+        }
+
+        if (!string.IsNullOrEmpty(classCode))
+        {
+            query = query.Where(ts => ts.ClassCode.ToLower().Contains(classCode.ToLower()));
         }
 
         var schedules = await query.OrderBy(ts => ts.Date).ThenBy(ts => ts.Slot).ToListAsync();
         return _mapper.Map<List<ScheduleResponseDto>>(schedules);
     }
 
-    public async Task<List<ScheduleResponseDto>> GetAllSchedulesAsync(DateTime start, DateTime end)
+    public async Task<List<ScheduleResponseDto>> GetAllSchedulesAsync(DateTime start, DateTime end, string? classCode = null)
     {
-        var schedules = await _unitOfWork.TeachingSchedules.GetAll()
+        IQueryable<Teaching_Schedule> query = _unitOfWork.TeachingSchedules.GetAll()
             .AsNoTracking()
             .Include(ts => ts.Room)
-            .Where(ts => ts.Date >= start.Date && ts.Date <= end.Date)
-            .OrderBy(ts => ts.Date).ThenBy(ts => ts.Slot)
-            .ToListAsync();
+            .Where(ts => ts.Date >= start.Date && ts.Date <= end.Date);
 
+        if (!string.IsNullOrEmpty(classCode))
+        {
+            query = query.Where(ts => ts.ClassCode.ToLower().Contains(classCode.ToLower()));
+        }
+
+        var schedules = await query.OrderBy(ts => ts.Date).ThenBy(ts => ts.Slot).ToListAsync();
         return _mapper.Map<List<ScheduleResponseDto>>(schedules);
     }
 

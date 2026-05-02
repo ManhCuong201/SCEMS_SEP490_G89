@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Application.DTOs.Import;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SCEMS.Tests;
 
@@ -86,7 +87,14 @@ public class ImportTests
         context.EquipmentTypes.Add(type);
         await context.SaveChangesAsync();
 
-        var service = new EquipmentService(unitOfWork, mapperMock.Object, notificationMock.Object);
+        var scopeFactoryMock = new Mock<IServiceScopeFactory>();
+        var scopeMock = new Mock<IServiceScope>();
+        var serviceProviderMock = new Mock<IServiceProvider>();
+        serviceProviderMock.Setup(x => x.GetService(typeof(INotificationService))).Returns(notificationMock.Object);
+        scopeMock.Setup(x => x.ServiceProvider).Returns(serviceProviderMock.Object);
+        scopeFactoryMock.Setup(x => x.CreateScope()).Returns(scopeMock.Object);
+
+        var service = new EquipmentService(unitOfWork, mapperMock.Object, notificationMock.Object, scopeFactoryMock.Object);
         
         // Create Excel file
         using var stream = new MemoryStream();

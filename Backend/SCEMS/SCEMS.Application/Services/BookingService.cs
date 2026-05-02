@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Booking;
 using SCEMS.Application.Services.Interfaces;

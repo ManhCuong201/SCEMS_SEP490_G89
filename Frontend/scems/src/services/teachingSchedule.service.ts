@@ -9,9 +9,9 @@ export const scheduleService = {
         return data;
     },
 
-    async getAllSchedules(start: string, end: string): Promise<ScheduleResponse[]> {
+    async getAllSchedules(start: string, end: string, classCode?: string): Promise<ScheduleResponse[]> {
         const { data } = await api.get<ScheduleResponse[]>('/teaching-schedules/all', {
-            params: { start, end }
+            params: { start, end, classCode }
         });
         return data;
     },

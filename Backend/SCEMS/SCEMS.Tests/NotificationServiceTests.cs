@@ -19,13 +19,17 @@ public class NotificationServiceTests
 {
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<INotificationDispatcher> _dispatcherMock;
+    private readonly Mock<IEmailService> _emailMock;
+    private readonly Mock<IConfigurationService> _configMock;
     private readonly NotificationService _service;
 
     public NotificationServiceTests()
     {
         _uowMock = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _dispatcherMock = new Mock<INotificationDispatcher>();
-        _service = new NotificationService(_uowMock.Object, _dispatcherMock.Object);
+        _emailMock = new Mock<IEmailService>();
+        _configMock = new Mock<IConfigurationService>();
+        _service = new NotificationService(_uowMock.Object, _dispatcherMock.Object, _emailMock.Object, _configMock.Object);
     }
 
     // UTC_NS_01: Send notification persists to DB and dispatches via SignalR

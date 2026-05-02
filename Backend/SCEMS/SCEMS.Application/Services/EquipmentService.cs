@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 
 using SCEMS.Application.Common;
 using SCEMS.Application.DTOs.Equipment;

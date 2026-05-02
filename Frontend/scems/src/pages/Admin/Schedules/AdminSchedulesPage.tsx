@@ -15,6 +15,7 @@ export const AdminSchedulesPage: React.FC = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [classSearch, setClassSearch] = useState('');
 
     const getWeekRange = (date: Date) => {
         const start = new Date(date);
@@ -33,8 +34,11 @@ export const AdminSchedulesPage: React.FC = () => {
     const { start: weekStart, end: weekEnd } = getWeekRange(currentDate);
 
     useEffect(() => {
-        loadSchedules();
-    }, [currentDate]);
+        const timer = setTimeout(() => {
+            loadSchedules();
+        }, 300); // Debounce search
+        return () => clearTimeout(timer);
+    }, [currentDate, classSearch]);
 
     const getLocalISOString = (date: Date) => {
         const offset = date.getTimezoneOffset() * 60000; // offset in milliseconds
@@ -47,7 +51,7 @@ export const AdminSchedulesPage: React.FC = () => {
             setLoading(true);
             const startStr = getLocalISOString(weekStart);
             const endStr = getLocalISOString(weekEnd);
-            const data = await scheduleService.getAllSchedules(startStr, endStr);
+            const data = await scheduleService.getAllSchedules(startStr, endStr, classSearch);
             setSchedules(data);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Tải lịch học thất bại');
@@ -147,6 +151,22 @@ export const AdminSchedulesPage: React.FC = () => {
                                 </div>
                             </>
                         )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginRight: '0.5rem' }}>
+                        <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="Lọc mã lớp (VD: SE1701)..." 
+                            value={classSearch}
+                            onChange={(e) => setClassSearch(e.target.value)}
+                            style={{ 
+                                padding: '0.5rem 1rem', 
+                                borderRadius: '8px', 
+                                border: '1px solid #e2e8f0',
+                                width: '200px',
+                                fontSize: '0.9rem'
+                            }}
+                        />
                     </div>
                     <div className="week-navigation" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>

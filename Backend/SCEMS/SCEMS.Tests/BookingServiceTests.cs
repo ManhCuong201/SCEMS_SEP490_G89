@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SCEMS.Tests;
 
@@ -24,6 +25,7 @@ public class BookingServiceTests
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<INotificationService> _notificationMock;
     private readonly Mock<IConfigurationService> _configMock;
+    private readonly Mock<IServiceScopeFactory> _scopeFactoryMock;
     private readonly BookingService _service;
 
     public BookingServiceTests()
@@ -32,6 +34,14 @@ public class BookingServiceTests
         _mapperMock = new Mock<IMapper>();
         _notificationMock = new Mock<INotificationService>();
         _configMock = new Mock<IConfigurationService>();
+        _scopeFactoryMock = new Mock<IServiceScopeFactory>();
+
+        // Setup for IServiceScopeFactory to avoid null references in background tasks
+        var scopeMock = new Mock<IServiceScope>();
+        var serviceProviderMock = new Mock<IServiceProvider>();
+        serviceProviderMock.Setup(x => x.GetService(typeof(INotificationService))).Returns(_notificationMock.Object);
+        scopeMock.Setup(x => x.ServiceProvider).Returns(serviceProviderMock.Object);
+        _scopeFactoryMock.Setup(x => x.CreateScope()).Returns(scopeMock.Object);
 
         _configMock.Setup(c => c.GetValueAsync("Booking.StartHour", It.IsAny<int>())).ReturnsAsync(7);
         _configMock.Setup(c => c.GetValueAsync("Booking.EndHour", It.IsAny<int>())).ReturnsAsync(22);
@@ -42,7 +52,7 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.TeachingSchedules.GetAll()).Returns(new List<Teaching_Schedule>().BuildMockDbSet());
         _uowMock.Setup(u => u.ClassStudents.GetAll()).Returns(new List<ClassStudent>().BuildMockDbSet());
 
-        _service = new BookingService(_uowMock.Object, _mapperMock.Object, _configMock.Object, _notificationMock.Object);
+        _service = new BookingService(_uowMock.Object, _mapperMock.Object, _configMock.Object, _notificationMock.Object, _scopeFactoryMock.Object);
     }
 
     // UTC_BS_01: Booking in past time
