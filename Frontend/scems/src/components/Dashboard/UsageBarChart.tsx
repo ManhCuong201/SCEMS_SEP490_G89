@@ -36,6 +36,20 @@ export const UsageBarChart: React.FC<UsageBarChartProps> = ({ data, title }) => 
                     weight: 'bold' as const
                 }
             },
+            tooltip: {
+                callbacks: {
+                    label: (context: any) => {
+                        const value = context.parsed.y || 0;
+                        const h = Math.floor(value);
+                        const m = Math.round((value - h) * 60);
+                        let durationText = '';
+                        if (h > 0) durationText += `${h} giờ`;
+                        if (m > 0) durationText += (durationText ? ' ' : '') + `${m} phút`;
+                        if (!durationText) durationText = '0 phút';
+                        return `Số giờ: ${durationText}`;
+                    }
+                }
+            }
         },
         scales: {
             y: {

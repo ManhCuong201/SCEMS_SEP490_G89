@@ -54,6 +54,17 @@ export const UsagePieChart: React.FC<UsagePieChartProps> = ({ data, title, unit 
                     label: (context: any) => {
                         const label = context.label || '';
                         const value = context.parsed || 0;
+                        
+                        if (unit === 'giờ') {
+                            const h = Math.floor(value);
+                            const m = Math.round((value - h) * 60);
+                            let durationText = '';
+                            if (h > 0) durationText += `${h} giờ`;
+                            if (m > 0) durationText += (durationText ? ' ' : '') + `${m} phút`;
+                            if (!durationText) durationText = '0 phút';
+                            return `${label}: ${durationText}`;
+                        }
+                        
                         return `${label}: ${value} ${unit}`;
                     }
                 }
