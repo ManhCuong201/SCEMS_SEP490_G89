@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using SCEMS.Application.Services.Interfaces;
 using SCEMS.Domain.Enums;
+using SCEMS.Infrastructure.Repositories;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
