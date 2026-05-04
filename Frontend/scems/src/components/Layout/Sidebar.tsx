@@ -87,6 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
               <div style={{ margin: '0.5rem 0', borderTop: '1px solid var(--border-glass)' }}></div>
               <NavLink href="/admin/classes" label="Quản lý Lớp học" icon={<Users size={20} />} active={isActive('/admin/classes')} onClose={onClose} />
               <NavLink href="/admin/schedules" label="Lịch trình" icon={<CalendarDays size={20} />} active={isActive('/admin/schedules')} onClose={onClose} />
+              <NavLink href="/admin/settings" label="Cấu hình duyệt tự động" icon={<Settings size={20} />} active={isActive('/admin/settings')} onClose={onClose} />
             </>
           )}
           {user?.role === 'Guard' && (
@@ -103,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
       <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-glass)' }}>
         <p style={{ fontSize: '0.75rem', color: 'var(--slate-500)', textAlign: 'center' }}>
-          SCEMS Admin v1.0
+          SCEMS System v1.0
         </p>
       </div>
     </aside>

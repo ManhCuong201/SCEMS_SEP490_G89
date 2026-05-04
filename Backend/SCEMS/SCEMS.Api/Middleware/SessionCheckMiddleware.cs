@@ -21,27 +21,20 @@ public class SessionCheckMiddleware
         var user = context.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
-            if (roleClaim == AccountRole.BookingStaff.ToString())
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var sidClaim = user.FindFirst("sid")?.Value;
+
+            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
             {
-                var sidClaim = user.FindFirst("sid")?.Value;
-                if (string.IsNullOrEmpty(sidClaim))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsJsonAsync(new { message = "Phiên làm việc không hợp lệ." });
-                    return;
-                }
-
-                // Use service to check global session ID
                 using var scope = context.RequestServices.CreateScope();
-                var configService = scope.ServiceProvider.GetRequiredService<IConfigurationService>();
-                var activeSessionId = await configService.GetValueAsync("Security.ActiveBookingStaffSessionId", "");
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                var account = await unitOfWork.Accounts.GetByIdAsync(userId);
 
-                if (sidClaim != activeSessionId)
+                if (account == null || account.CurrentSessionId != sidClaim)
                 {
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     await context.Response.WriteAsJsonAsync(new { 
-                        message = "Một nhân viên quản lý đặt phòng khác đã đăng nhập. Bạn đã bị đăng xuất để tránh xung đột dữ liệu.",
+                        message = "Phiên làm việc đã hết hạn hoặc có người khác đã đăng nhập vào tài khoản này.",
                         code = "SESSION_INVALIDATED"
                     });
                     return;

@@ -65,7 +65,8 @@ const SystemSettingsPage: React.FC = () => {
             'Booking.StartHour',
             'Booking.EndHour',
             'Booking.SlotDurationMinutes',
-            'Booking.MaxDurationHours'
+            'Booking.MaxDurationHours',
+            'Classroom.AutoLock'
         ];
 
         let filtered = settings.filter(s => s.key.startsWith(prefix) && !hiddenKeys.includes(s.key));

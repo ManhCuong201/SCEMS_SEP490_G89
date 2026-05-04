@@ -45,36 +45,73 @@ public class AuthController : ControllerBase
         }
 
         var account = await _unitOfWork.Accounts.GetByEmailOrCodeAsync(request.Email);
-        if (account == null || account.PasswordHash == null || !_passwordHasher.VerifyPassword(request.Password, account.PasswordHash))
+        
+        if (account != null)
         {
-            return Unauthorized(new { message = "Invalid email or password" });
-        }
-
-        if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)
-        {
-             return Unauthorized(new { message = "Account is blocked" });
-        }
-
-        // Handle Single Session for BookingStaff
-        if (account.Role == SCEMS.Domain.Enums.AccountRole.BookingStaff)
-        {
-            var newSessionId = Guid.NewGuid().ToString();
-            
-            // Send ForceLogout to previous active session if exists
-            var previousActiveStaffIdStr = await _configurationService.GetValueAsync("Security.ActiveBookingStaffId", "");
-            if (Guid.TryParse(previousActiveStaffIdStr, out var previousId) && previousId != Guid.Empty)
+            if (account.Status == SCEMS.Domain.Enums.AccountStatus.Blocked)
             {
-                await _notificationDispatcher.DispatchLogoutSignalAsync(previousId);
+                return Unauthorized(new { message = "Tài khoản đã bị khóa vĩnh viễn bởi quản trị viên." });
             }
 
-            // Update Global Session and Active Staff ID
-            await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffSessionId", newSessionId);
-            await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffId", account.Id.ToString());
+            if (account.LockoutEnd.HasValue && account.LockoutEnd > DateTime.Now)
+            {
+                var remainingMinutes = Math.Ceiling((account.LockoutEnd.Value - DateTime.Now).TotalMinutes);
+                return Unauthorized(new { message = $"Tài khoản bị tạm khóa do nhập sai nhiều lần. Vui lòng thử lại sau {remainingMinutes} phút." });
+            }
+        }
 
-            account.CurrentSessionId = newSessionId;
+        if (account == null || account.PasswordHash == null || !_passwordHasher.VerifyPassword(request.Password, account.PasswordHash))
+        {
+            if (account != null)
+            {
+                account.FailedLoginAttempts++;
+                var maxAttempts = await _configurationService.GetValueAsync("Security.MaxLoginAttempts", 5);
+                
+                if (account.FailedLoginAttempts >= maxAttempts)
+                {
+                    account.LockoutEnd = DateTime.Now.AddMinutes(30);
+                    account.FailedLoginAttempts = 0;
+                }
+                
+                _unitOfWork.Accounts.Update(account);
+                await _unitOfWork.SaveChangesAsync();
+
+                if (account.LockoutEnd.HasValue)
+                {
+                    return Unauthorized(new { message = "Bạn đã nhập sai quá nhiều lần. Tài khoản bị tạm khóa trong 30 phút." });
+                }
+            }
+            return Unauthorized(new { message = "Email hoặc mật khẩu không chính xác." });
+        }
+
+        // Reset failed attempts on success
+        if (account.FailedLoginAttempts > 0 || account.LockoutEnd.HasValue)
+        {
+            account.FailedLoginAttempts = 0;
+            account.LockoutEnd = null;
             _unitOfWork.Accounts.Update(account);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        // Handle Single Session for All Roles
+        var newSessionId = Guid.NewGuid().ToString();
+        
+        // Send ForceLogout to previous active session if exists
+        if (!string.IsNullOrEmpty(account.CurrentSessionId))
+        {
+            await _notificationDispatcher.DispatchLogoutSignalAsync(account.Id);
+        }
+
+        if (account.Role == SCEMS.Domain.Enums.AccountRole.BookingStaff)
+        {
+            // Specifically for BookingStaff, we still update global settings for extra safety in middleware
+            await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffSessionId", newSessionId);
+            await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffId", account.Id.ToString());
+        }
+
+        account.CurrentSessionId = newSessionId;
+        _unitOfWork.Accounts.Update(account);
+        await _unitOfWork.SaveChangesAsync();
 
         var token = await _jwtService.GenerateTokenAsync(account);
 
@@ -168,24 +205,25 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "Account is blocked" });
             }
 
-            // Handle Single Session for BookingStaff
+            // Handle Single Session for All Roles
+            var newSessionId = Guid.NewGuid().ToString();
+            
+            // Send ForceLogout to previous active session if exists
+            if (!string.IsNullOrEmpty(account.CurrentSessionId))
+            {
+                await _notificationDispatcher.DispatchLogoutSignalAsync(account.Id);
+            }
+
             if (account.Role == SCEMS.Domain.Enums.AccountRole.BookingStaff)
             {
-                var newSessionId = Guid.NewGuid().ToString();
-                
-                var previousActiveStaffIdStr = await _configurationService.GetValueAsync("Security.ActiveBookingStaffId", "");
-                if (Guid.TryParse(previousActiveStaffIdStr, out var previousId) && previousId != Guid.Empty)
-                {
-                    await _notificationDispatcher.DispatchLogoutSignalAsync(previousId);
-                }
-
+                // Specifically for BookingStaff, we still update global settings for extra safety in middleware
                 await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffSessionId", newSessionId);
                 await _configurationService.UpdateSettingAsync("Security.ActiveBookingStaffId", account.Id.ToString());
-
-                account.CurrentSessionId = newSessionId;
-                _unitOfWork.Accounts.Update(account);
-                await _unitOfWork.SaveChangesAsync();
             }
+
+            account.CurrentSessionId = newSessionId;
+            _unitOfWork.Accounts.Update(account);
+            await _unitOfWork.SaveChangesAsync();
 
             var token = await _jwtService.GenerateTokenAsync(account);
 

@@ -14,6 +14,9 @@ public class Account : BaseEntity
     
     public string? CurrentSessionId { get; set; }
     
+    public int FailedLoginAttempts { get; set; }
+    public DateTime? LockoutEnd { get; set; }
+    
     // Navigation properties will be added via fluent API or here
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
